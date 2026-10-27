@@ -70,14 +70,16 @@ export class InMemoryConversationRepository implements ConversationRepository {
   async findLatestOpenByEmployee(employeeId: string) {
     return [...this.items.values()].find((c) => c.employeeId === employeeId && c.status !== "closed") ?? null;
   }
-  async listAll() {
-    return [...this.items.values()];
+  async listRecent(limit: number) {
+    return [...this.items.values()].slice(0, limit);
   }
   async insert(conversation: Conversation) {
     this.items.set(conversation.id, conversation);
   }
-  async update(conversation: Conversation) {
+  async update(conversation: Conversation, expectedStatus: Conversation["status"]) {
+    if (this.items.get(conversation.id)?.status !== expectedStatus) return false;
     this.items.set(conversation.id, conversation);
+    return true;
   }
 }
 
@@ -112,6 +114,9 @@ export class InMemoryMessageRepository implements MessageRepository {
   async countByRoleSince(role: MessageRole) {
     return this.items.filter((m) => m.role === role).length;
   }
+  async countByEmployeeSince() {
+    return this.items.filter((m) => m.role === "employee").length;
+  }
 }
 
 export class InMemoryDraftRepository implements DraftRepository {
@@ -130,5 +135,16 @@ export class InMemoryDraftRepository implements DraftRepository {
   async setStatus(id: number, status: DraftStatus) {
     const draft = this.items.find((d) => d.id === id);
     if (draft) draft.status = status;
+  }
+  async claimPending(id: number, employeeId: string, status: DraftStatus) {
+    const draft = this.items.find((d) => d.id === id && d.employeeId === employeeId && d.status === "pending");
+    if (!draft) return null;
+    draft.status = status;
+    return { ...draft };
+  }
+  async cancelPending(conversationId: string, since?: Date) {
+    for (const d of this.items) {
+      if (d.conversationId === conversationId && d.status === "pending" && (!since || d.createdAt >= since)) d.status = "cancelled";
+    }
   }
 }

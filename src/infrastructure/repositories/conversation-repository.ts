@@ -60,8 +60,8 @@ export class DrizzleConversationRepository implements ConversationRepository {
     return row ? toDomain(row) : null;
   }
 
-  async listAll(): Promise<Conversation[]> {
-    const rows = await this.db.select().from(conversations).orderBy(desc(conversations.updatedAt));
+  async listRecent(limit: number): Promise<Conversation[]> {
+    const rows = await this.db.select().from(conversations).orderBy(desc(conversations.updatedAt)).limit(limit);
     return rows.map(toDomain);
   }
 
@@ -69,7 +69,12 @@ export class DrizzleConversationRepository implements ConversationRepository {
     await this.db.insert(conversations).values(toRow(conversation));
   }
 
-  async update(conversation: Conversation): Promise<void> {
-    await this.db.update(conversations).set(toRow(conversation)).where(eq(conversations.id, conversation.id));
+  async update(conversation: Conversation, expectedStatus: Conversation["status"]): Promise<boolean> {
+    const updated = await this.db
+      .update(conversations)
+      .set(toRow(conversation))
+      .where(and(eq(conversations.id, conversation.id), eq(conversations.status, expectedStatus)))
+      .returning({ id: conversations.id });
+    return updated.length > 0;
   }
 }

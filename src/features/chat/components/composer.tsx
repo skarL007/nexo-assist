@@ -67,8 +67,12 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
           <ArrowUp className="size-4" /> Enviar
         </Button>
       </form>
-      <p className="text-right text-xs text-muted-foreground">
-        {limit - remaining}/{limit} mensagens nesta sessão
+      <p className="flex justify-between gap-4 text-xs text-muted-foreground">
+        {/* As mensagens vão para um modelo de IA externo: nada de senha ou dado pessoal real. */}
+        <span>Protótipo com dados fictícios · não envie senhas nem dados pessoais.</span>
+        <span className="shrink-0">
+          {limit - remaining}/{limit} mensagens nesta sessão
+        </span>
       </p>
     </div>
   );

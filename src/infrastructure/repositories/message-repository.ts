@@ -3,7 +3,7 @@ import { and, asc, count, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import type { MessageRepository, NewMessage } from "@/application/ports";
 import type { ChatMessage, MessageRole } from "@/domain/message";
 import type { Database } from "../db/client";
-import { messages } from "../db/schema";
+import { conversations, messages } from "../db/schema";
 
 type Row = typeof messages.$inferSelect;
 
@@ -51,15 +51,26 @@ export class DrizzleMessageRepository implements MessageRepository {
   }
 
   async lastByConversations(conversationIds: string[]): Promise<Map<string, ChatMessage>> {
-    const result = new Map<string, ChatMessage>();
-    if (conversationIds.length === 0) return result;
-    const rows = await this.db
-      .select()
+    if (conversationIds.length === 0) return new Map();
+    // A última de cada conversa = maior rowid (ordem de inserção). Sem o trace, que é grande.
+    const lastRowIds = this.db
+      .select({ rowid: sql<number>`max(rowid)` })
       .from(messages)
       .where(inArray(messages.conversationId, conversationIds))
-      .orderBy(...oldestFirst);
-    for (const row of rows) result.set(row.conversationId, toDomain(row)); // o último sobrescreve
-    return result;
+      .groupBy(messages.conversationId);
+    const rows = await this.db
+      .select({
+        id: messages.id,
+        conversationId: messages.conversationId,
+        role: messages.role,
+        authorName: messages.authorName,
+        text: messages.text,
+        cards: messages.cards,
+        createdAt: messages.createdAt,
+      })
+      .from(messages)
+      .where(inArray(sql`rowid`, lastRowIds));
+    return new Map(rows.map((row) => [row.conversationId, toDomain({ ...row, trace: null })]));
   }
 
   async countByRole(conversationId: string, role: MessageRole): Promise<number> {
@@ -67,6 +78,15 @@ export class DrizzleMessageRepository implements MessageRepository {
       .select({ total: count() })
       .from(messages)
       .where(and(eq(messages.conversationId, conversationId), eq(messages.role, role)));
+    return row?.total ?? 0;
+  }
+
+  async countByEmployeeSince(employeeId: string, since: Date): Promise<number> {
+    const [row] = await this.db
+      .select({ total: count() })
+      .from(messages)
+      .innerJoin(conversations, eq(messages.conversationId, conversations.id))
+      .where(and(eq(conversations.employeeId, employeeId), eq(messages.role, "employee"), gte(messages.createdAt, since)));
     return row?.total ?? 0;
   }
 

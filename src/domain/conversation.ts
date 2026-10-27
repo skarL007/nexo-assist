@@ -33,6 +33,13 @@ export const STATUS_LABEL: Record<ConversationStatus, string> = {
 /** Limite de mensagens do funcionário por sessão (conversa). */
 export const MESSAGE_LIMIT_PER_SESSION = 30;
 
+/**
+ * Limites por pessoa, somando todas as conversas: sem eles, bastaria abrir
+ * "Nova conversa" a cada 30 mensagens para gastar o modelo à vontade.
+ */
+export const EMPLOYEE_MESSAGES_PER_HOUR = 40;
+export const EMPLOYEE_MESSAGES_PER_DAY = 120;
+
 export interface Handoff {
   reason: HandoffReason;
   summary: string;

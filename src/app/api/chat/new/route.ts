@@ -7,6 +7,7 @@ import { conversationView } from "@/server/views";
 export const POST = handle(async () => {
   const employee = await requireUser("employee");
   const services = createServices();
-  await services.conversations.closeOpen(employee.id);
+  const closed = await services.conversations.closeOpen(employee.id);
+  if (closed) await services.drafts.cancelPending(closed.id);
   return Response.json(await conversationView(services, null));
 });

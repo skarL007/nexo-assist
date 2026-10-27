@@ -62,43 +62,63 @@ export class DraftService {
   }
 
   /**
-   * Confirma um rascunho. `shownBefore` impede que o agent crie e confirme
-   * o mesmo rascunho na mesma resposta: o funcionário precisa tê-lo visto.
+   * Confirma um rascunho.
+   * - O rascunho é "reservado" de forma atômica: dois cliques (ou Ctrl+Enter repetido) criam um chamado só.
+   * - Pelo agent (`fromTurn`), o rascunho precisa ser desta conversa e ter sido mostrado num turno anterior.
+   * - Se criar o chamado falhar, o rascunho volta a ficar pendente para tentar de novo.
    */
-  async confirm(draftId: number, employeeId: string, shownBefore?: Date): Promise<ConfirmResult> {
-    const draft = await this.getPending(draftId, employeeId);
-    if (shownBefore && draft.createdAt >= shownBefore) {
-      throw new DomainError("draft_not_pending", "O funcionário ainda não viu este rascunho. Mostre e espere a confirmação.");
-    }
-
-    let ticket: Ticket;
-    let handedOff = false;
-    if (draft.kind === "create") {
-      const fields = draft.fields as NewTicketFields;
-      ticket = await this.tickets.create(employeeId, fields);
-      if (fields.priority === "critical") {
-        ticket = await this.tickets.markTransferred(employeeId, ticket.code);
-        await this.conversations.handoff(draft.conversationId, {
-          reason: "critical",
-          summary: `${ticket.code} · ${fields.title}. ${fields.description}`,
-          ticketCode: ticket.code,
-          confidence: null,
-        });
-        handedOff = true;
+  async confirm(
+    draftId: number,
+    employeeId: string,
+    fromTurn?: { conversationId: string; startedAt: Date },
+  ): Promise<ConfirmResult> {
+    if (fromTurn) {
+      const draft = await this.getPending(draftId, employeeId);
+      if (draft.conversationId !== fromTurn.conversationId || draft.createdAt >= fromTurn.startedAt) {
+        throw new DomainError("draft_not_pending", "O funcionário ainda não viu este rascunho. Mostre e espere a confirmação.");
       }
-    } else {
+    }
+    const draft = await this.claim(draftId, employeeId, "confirmed");
+
+    try {
+      const { ticket, handedOff } = await this.apply(draft, employeeId);
+      return { conversationId: draft.conversationId, ticket, draft: this.snapshot({ ...draft, status: "confirmed" }), handedOff };
+    } catch (error) {
+      await this.drafts.setStatus(draft.id, "pending");
+      throw error;
+    }
+  }
+
+  private async apply(draft: Draft, employeeId: string): Promise<{ ticket: Ticket; handedOff: boolean }> {
+    if (draft.kind === "update") {
       const fields = draft.fields as TicketUpdateFields;
-      ticket = await this.tickets.addComment(employeeId, fields.ticketCode, fields.comment, fields.reopen);
+      return { ticket: await this.tickets.addComment(employeeId, fields.ticketCode, fields.comment, fields.reopen), handedOff: false };
     }
 
-    await this.drafts.setStatus(draft.id, "confirmed");
-    return { conversationId: draft.conversationId, ticket, draft: this.snapshot({ ...draft, status: "confirmed" }), handedOff };
+    const fields = draft.fields as NewTicketFields;
+    let ticket = await this.tickets.create(employeeId, fields);
+    if (fields.priority !== "critical") return { ticket, handedOff: false };
+
+    // Crítico vai para um analista — se a conversa ainda estiver com o agent.
+    const conversation = await this.conversations.get(draft.conversationId);
+    if (conversation.status !== "with_agent") return { ticket, handedOff: false };
+    ticket = await this.tickets.markTransferred(employeeId, ticket.code);
+    await this.conversations.handoff(draft.conversationId, {
+      reason: "critical",
+      summary: `${ticket.code} · ${fields.title}. ${fields.description}`,
+      ticketCode: ticket.code,
+      confidence: null,
+    });
+    return { ticket, handedOff: true };
   }
 
   async cancel(draftId: number, employeeId: string): Promise<Draft> {
-    const draft = await this.getPending(draftId, employeeId);
-    await this.drafts.setStatus(draft.id, "cancelled");
-    return draft;
+    return this.claim(draftId, employeeId, "cancelled");
+  }
+
+  /** Descarta os pendentes da conversa — ao encerrá-la, ou os criados num turno que falhou. */
+  async cancelPending(conversationId: string, since?: Date): Promise<void> {
+    await this.drafts.cancelPending(conversationId, since);
   }
 
   /** Confirmação pelo botão: confirma e registra a resposta do agent, sem chamar o modelo. */
@@ -138,6 +158,14 @@ export class DraftService {
   async pending(conversationId: string): Promise<DraftSnapshot[]> {
     const drafts = await this.drafts.listByConversation(conversationId);
     return drafts.filter((d) => d.status === "pending").map((d) => this.snapshot(d));
+  }
+
+  /** Reserva o rascunho; se não der, explica por quê sem revelar rascunho de outra pessoa. */
+  private async claim(draftId: number, employeeId: string, status: DraftStatus): Promise<Draft> {
+    const claimed = await this.drafts.claimPending(draftId, employeeId, status);
+    if (claimed) return claimed;
+    await this.getPending(draftId, employeeId); // lança not_found ou draft_not_pending
+    throw new DomainError("draft_not_pending", "Este rascunho já foi confirmado ou descartado.");
   }
 
   private async getPending(draftId: number, employeeId: string): Promise<Draft> {

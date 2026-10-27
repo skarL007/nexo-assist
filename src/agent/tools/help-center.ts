@@ -9,7 +9,7 @@ export const searchHelpCenter = createTool({
     "Busca artigos da central de ajuda de TI. Use para dúvidas e antes de abrir chamado, " +
     "para ver se há solução de autoatendimento. Use palavras-chave (ex.: 'vpn erro 809').",
   inputSchema: z.object({
-    query: z.string().min(2).describe("Palavras-chave do problema ou da dúvida"),
+    query: z.string().min(2).max(200).describe("Palavras-chave do problema ou da dúvida"),
   }),
   execute: async ({ query }, context) => {
     const turn = turnFrom(context);

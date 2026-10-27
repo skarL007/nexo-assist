@@ -108,8 +108,11 @@ export const confirmDraft = createTool({
     const { drafts, tickets } = turn.services;
 
     return attempt(turn, `não confirmou o rascunho D-${draftId}`, async () => {
-      // startedAt garante que o rascunho foi mostrado num turno anterior.
-      const result = await drafts.confirm(draftId, turn.employee.id, turn.startedAt);
+      // O rascunho tem de ser desta conversa e ter sido mostrado num turno anterior.
+      const result = await drafts.confirm(draftId, turn.employee.id, {
+        conversationId: turn.conversationId,
+        startedAt: turn.startedAt,
+      });
       const verb = result.draft.kind === "create" ? "criou" : "atualizou";
       turn.recorder.step(`${verb} o ${result.ticket.code}`, "Confirmado pelo funcionário na conversa");
       turn.recorder.card({ kind: "ticket", ticket: tickets.snapshot(result.ticket) });

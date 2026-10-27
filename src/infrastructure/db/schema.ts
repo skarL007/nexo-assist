@@ -2,7 +2,7 @@
  * Tabelas do banco (SQLite/libSQL). Local é um arquivo; no deploy é o Turso.
  * Colunas JSON guardam estruturas que só são lidas inteiras (cards, trace).
  */
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import type { ConversationStatus, HandoffReason } from "@/domain/conversation";
 import type { EmployeeRole } from "@/domain/employee";
 import type { Card, DraftKind, DraftStatus, MessageRole, NewTicketFields, TicketUpdateFields, TurnTrace } from "@/domain/message";
@@ -39,7 +39,7 @@ export const tickets = sqliteTable("tickets", {
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),
   resolvedAt: timestamp("resolved_at"),
-});
+}, (t) => [index("tickets_owner_idx").on(t.ownerId)]);
 
 export const ticketComments = sqliteTable("ticket_comments", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -61,7 +61,7 @@ export const conversations = sqliteTable("conversations", {
   handoffAt: timestamp("handoff_at"),
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),
-});
+}, (t) => [index("conversations_employee_idx").on(t.employeeId, t.status), index("conversations_updated_idx").on(t.updatedAt)]);
 
 export const messages = sqliteTable("messages", {
   id: text("id").primaryKey(),
@@ -72,7 +72,7 @@ export const messages = sqliteTable("messages", {
   cards: text("cards", { mode: "json" }).$type<Card[]>().notNull(),
   trace: text("trace", { mode: "json" }).$type<TurnTrace>(),
   createdAt: timestamp("created_at").notNull(),
-});
+}, (t) => [index("messages_conversation_idx").on(t.conversationId, t.createdAt), index("messages_role_created_idx").on(t.role, t.createdAt)]);
 
 export const drafts = sqliteTable("drafts", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -82,4 +82,4 @@ export const drafts = sqliteTable("drafts", {
   status: text("status").$type<DraftStatus>().notNull(),
   fields: text("fields", { mode: "json" }).$type<NewTicketFields | TicketUpdateFields>().notNull(),
   createdAt: timestamp("created_at").notNull(),
-});
+}, (t) => [index("drafts_conversation_idx").on(t.conversationId)]);

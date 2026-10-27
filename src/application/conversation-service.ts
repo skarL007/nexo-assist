@@ -29,21 +29,22 @@ export class ConversationService {
     return this.conversations.findLatestOpenByEmployee(employeeId);
   }
 
-  /** Para o console do analista. */
-  async listAll(): Promise<Conversation[]> {
-    return this.conversations.listAll();
+  /** Para o console do analista: as mais recentes, com teto para não ler a tabela inteira. */
+  async listRecent(limit = 200): Promise<Conversation[]> {
+    return this.conversations.listRecent(limit);
   }
 
   async getOrStart(employeeId: string): Promise<Conversation> {
     return (await this.findOpen(employeeId)) ?? this.start(employeeId);
   }
 
-  /** "Nova conversa": encerra a atual; a próxima mensagem abre outra sessão. */
-  async closeOpen(employeeId: string): Promise<void> {
+  /** "Nova conversa": encerra a atual; a próxima mensagem abre outra sessão. Devolve a encerrada. */
+  async closeOpen(employeeId: string): Promise<Conversation | null> {
     const current = await this.findOpen(employeeId);
-    if (!current) return;
-    await this.save(current, nextStatus(current.status, "close"));
+    if (!current) return null;
+    const closed = await this.save(current, nextStatus(current.status, "close"));
     await this.messages.add({ conversationId: current.id, role: "system", text: "Conversa encerrada pelo funcionário" });
+    return closed;
   }
 
   /** Busca a conversa garantindo que é do funcionário (privacidade). */
@@ -97,12 +98,16 @@ export class ConversationService {
     if (conversation.status !== "with_analyst" || conversation.analystId !== analyst.id) {
       throw new DomainError("forbidden", "Assuma o atendimento antes de responder.");
     }
-    await this.save(conversation, conversation.status);
+    await this.save(conversation, conversation.status); // falha se a conversa foi devolvida ou encerrada nesse meio-tempo
     return this.messages.add({ conversationId, role: "analyst", authorName: analyst.name, text });
   }
 
   private async analystAction(conversationId: string, analyst: Employee, action: ConversationAction, note: string) {
     const conversation = await this.get(conversationId);
+    // Conversa assumida por outro analista: só ele pode devolver ou encerrar.
+    if (conversation.status === "with_analyst" && conversation.analystId !== analyst.id) {
+      throw new DomainError("forbidden", "Outro analista está atendendo esta conversa.");
+    }
     const status = nextStatus(conversation.status, action);
     const updated = await this.save(conversation, status, {
       analystId: action === "assume" ? analyst.id : action === "release" ? null : conversation.analystId,
@@ -127,9 +132,12 @@ export class ConversationService {
     return conversation;
   }
 
+  /** Grava a mudança só se ninguém mexeu na conversa desde que ela foi lida. */
   private async save(conversation: Conversation, status: Conversation["status"], patch: Partial<Conversation> = {}) {
     const updated: Conversation = { ...conversation, ...patch, status, updatedAt: this.clock.now() };
-    await this.conversations.update(updated);
+    if (!(await this.conversations.update(updated, conversation.status))) {
+      throw new DomainError("conflict", "A conversa acabou de mudar. Atualize e tente de novo.");
+    }
     return updated;
   }
 }

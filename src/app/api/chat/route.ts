@@ -6,7 +6,7 @@ import { runAgentTurn } from "@/agent/run-turn";
 import { sendMessageSchema, type ChatStreamEvent } from "@/contracts/chat";
 import { DomainError } from "@/domain/errors";
 import { createServices } from "@/infrastructure/container";
-import { handle, parseBody } from "@/server/http";
+import { handle, logError, parseBody } from "@/server/http";
 import { requireUser } from "@/server/session";
 import { conversationView } from "@/server/views";
 
@@ -27,9 +27,10 @@ export const POST = handle(async (request: Request) => {
     async start(controller) {
       const send = (event: ChatStreamEvent) => controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
       try {
-        for await (const event of runAgentTurn(employee, text)) send(event);
+        // Se o funcionário fechar a aba, o sinal cancela a chamada ao modelo (não gasta à toa).
+        for await (const event of runAgentTurn(employee, text, request.signal)) send(event);
       } catch (error) {
-        if (!(error instanceof DomainError)) console.error(error);
+        if (!(error instanceof DomainError)) logError(error);
         send({
           type: "error",
           message: error instanceof DomainError ? error.message : "Não consegui responder agora. Tente de novo em instantes.",

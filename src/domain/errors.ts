@@ -15,6 +15,7 @@ export type DomainErrorCode =
   | "invalid_transition"
   | "reopen_window_expired"
   | "draft_not_pending"
+  | "conflict"
   | "message_limit"
   | "daily_limit"
   | "legacy_unavailable";

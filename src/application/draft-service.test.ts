@@ -51,7 +51,33 @@ describe("rascunho antes de criar", () => {
     const { drafts, conversation } = await setup();
     const draft = await drafts.proposeNewTicket(conversation.id, "ana", fields);
     // turno que começou antes (ou no mesmo instante) da criação do rascunho
-    await expect(drafts.confirm(draft.id, "ana", clock.now())).rejects.toMatchObject({ code: "draft_not_pending" });
+    const sameTurn = { conversationId: conversation.id, startedAt: clock.now() };
+    await expect(drafts.confirm(draft.id, "ana", sameTurn)).rejects.toMatchObject({ code: "draft_not_pending" });
+  });
+
+  it("o agent não confirma rascunho de outra conversa", async () => {
+    const { drafts, conversation } = await setup();
+    const draft = await drafts.proposeNewTicket(conversation.id, "ana", fields);
+    const otherTurn = { conversationId: "outra-conversa", startedAt: new Date("2099-01-01") };
+    await expect(drafts.confirm(draft.id, "ana", otherTurn)).rejects.toMatchObject({ code: "draft_not_pending" });
+  });
+
+  it("dois cliques ao mesmo tempo criam um chamado só", async () => {
+    const { ticketRepo, drafts, conversation } = await setup();
+    const draft = await drafts.proposeNewTicket(conversation.id, "ana", fields);
+    const results = await Promise.allSettled([drafts.confirm(draft.id, "ana"), drafts.confirm(draft.id, "ana")]);
+    expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+    expect(ticketRepo.tickets.size).toBe(1);
+  });
+
+  it("se criar o chamado falhar, o rascunho volta a ficar pendente", async () => {
+    const { ticketRepo, drafts, conversation } = await setup();
+    const draft = await drafts.proposeNewTicket(conversation.id, "ana", fields);
+    ticketRepo.insert = async () => {
+      throw new Error("banco fora do ar");
+    };
+    await expect(drafts.confirm(draft.id, "ana")).rejects.toThrow("banco fora do ar");
+    expect((await drafts.statuses(conversation.id))[draft.id]).toBe("pending");
   });
 
   it("outra pessoa não confirma o rascunho da Ana", async () => {
@@ -69,6 +95,16 @@ describe("rascunho antes de criar", () => {
 });
 
 describe("caso crítico", () => {
+  it("não quebra se a conversa já estiver com um analista: cria o chamado sem transferir de novo", async () => {
+    const { drafts, conversations, conversation } = await setup();
+    const draft = await drafts.proposeNewTicket(conversation.id, "ana", { ...fields, priority: "critical", impact: "team" });
+    await conversations.handoff(conversation.id, { reason: "employee_request", summary: "pediu", ticketCode: null, confidence: null });
+
+    const result = await drafts.confirm(draft.id, "ana");
+    expect(result.handedOff).toBe(false);
+    expect((await drafts.statuses(conversation.id))[draft.id]).toBe("confirmed");
+  });
+
   it("transfere a conversa para um analista ao confirmar", async () => {
     const { drafts, conversations, conversation } = await setup();
     const draft = await drafts.proposeNewTicket(conversation.id, "ana", { ...fields, priority: "critical", impact: "team" });
