@@ -57,3 +57,4 @@ Ver `evals/scenarios.ts`. Exemplos:
 - Histórico: últimas 20 mensagens; cards viram resumos curtos.
 - Regras determinísticas fora do modelo (prioridade, prazo, duplicidade, busca).
 - `temperature: 0.2`, `maxSteps: 6`, teto diário (`DAILY_AGENT_TURN_LIMIT`).
+- Teto total opcional (`TOTAL_AGENT_TURN_LIMIT`): conta as respostas que chamaram o modelo (com `usage` no trace); ao chegar nele, o chat responde 429 e o modelo não é chamado. No deploy: 150 respostas, cerca de R$ 10.

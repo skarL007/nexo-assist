@@ -40,6 +40,14 @@ export const MESSAGE_LIMIT_PER_SESSION = 30;
 export const EMPLOYEE_MESSAGES_PER_HOUR = 40;
 export const EMPLOYEE_MESSAGES_PER_DAY = 120;
 
+/**
+ * Teto total de respostas do modelo no deploy (TOTAL_AGENT_TURN_LIMIT): limita o gasto
+ * da demonstração a um valor fixo. Sem teto configurado, não bloqueia.
+ */
+export function totalBudgetReached(modelReplies: number, limit: number | undefined): boolean {
+  return limit !== undefined && modelReplies >= limit;
+}
+
 export interface Handoff {
   reason: HandoffReason;
   summary: string;

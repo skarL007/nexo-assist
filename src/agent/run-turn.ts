@@ -10,7 +10,7 @@
 import { RequestContext } from "@mastra/core/request-context";
 import type { ChatStreamEvent } from "@/contracts/chat";
 import { env } from "@/config/env";
-import { agentCanReply, EMPLOYEE_MESSAGES_PER_DAY, EMPLOYEE_MESSAGES_PER_HOUR } from "@/domain/conversation";
+import { agentCanReply, EMPLOYEE_MESSAGES_PER_DAY, EMPLOYEE_MESSAGES_PER_HOUR, totalBudgetReached } from "@/domain/conversation";
 import type { Employee } from "@/domain/employee";
 import { DomainError } from "@/domain/errors";
 import type { ToolCallLog, TurnTrace } from "@/domain/message";
@@ -51,7 +51,7 @@ export async function* runAgentTurn(employee: Employee, text: string, abortSigna
   }
 
   // Teto global conferido DEPOIS de gravar: pedidos simultâneos enxergam uns aos outros.
-  await assertWithinDailyBudget(services);
+  await assertWithinBudget(services);
   const keyVar = apiKeyVarFor(env().LLM_MODEL);
   if (keyVar && !env()[keyVar]) throw new Error(`${keyVar} não configurada.`);
 
@@ -183,11 +183,14 @@ async function assertWithinPersonalLimits(services: Services, employeeId: string
   }
 }
 
-/** Teto global de mensagens que chegam ao modelo em 24h (proteção de custo do deploy). */
-async function assertWithinDailyBudget(services: Services) {
+/** Tetos globais de custo do deploy: mensagens em 24h e, se configurado, respostas do modelo no total. */
+async function assertWithinBudget(services: Services) {
   const last24h = await services.messages.countByRoleSince("employee", new Date(Date.now() - DAY_MS));
   if (last24h > env().DAILY_AGENT_TURN_LIMIT) {
     throw new DomainError("daily_limit", "O Nexo Assist atingiu o limite de uso de hoje. Fale com o service desk pelo ramal 4000.");
+  }
+  if (totalBudgetReached(await services.messages.countModelReplies(), env().TOTAL_AGENT_TURN_LIMIT)) {
+    throw new DomainError("daily_limit", "O Nexo Assist atingiu o limite de uso desta demonstração. Fale com o service desk pelo ramal 4000.");
   }
 }
 
