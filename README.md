@@ -230,6 +230,8 @@ O prompt ([`agent/instructions.ts`](src/agent/instructions.ts)) cuida só da con
 | **Evals** (12 cenários, modelo real) | intenção, tools esperadas e proibidas, transferência, caso crítico, reabertura e vazamento de dados de outra pessoa | `npm run eval` |
 | **Trace em toda resposta** | qualquer decisão pode ser auditada na própria interface e no console do analista | — |
 
+O [CI](.github/workflows/ci.yml) roda tipos, lint, testes unitários e E2E em todo push e pull request, sem segredos. Os evals ficam fora porque chamam o modelo real e precisam de chave.
+
 Os evals já pagaram o próprio custo. Um deles pegou o agent abrindo rascunho novo para um problema que já tinha chamado aberto; o ajuste nas instruções (consultar `listMyTickets` antes) levou o resultado a 10/10. Outro mostrou 10,8 s de latência por causa do "raciocínio" do Gemini; com `thinkingLevel: "minimal"` a latência caiu e os 10 cenários continuaram passando. Depois, o [benchmark](#benchmark-de-modelos) achou um defeito que nenhum modelo resolvia, porque estava no prompt: reabrir chamado resolvido. A regra foi para o código e virou um cenário novo, assim como o caso crítico que vários modelos não tratavam: hoje são 12/12.
 
 O processo de desenvolvimento (SDD, TDD, skills, MCPs e uso de IA) está em [`docs/PROCESSO-IA.md`](docs/PROCESSO-IA.md), e as especificações em [`docs/specs/`](docs/specs).
