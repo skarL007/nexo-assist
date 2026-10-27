@@ -2,6 +2,7 @@
  * Chamado (ticket) — tipos, valores permitidos e rótulos em português.
  * Arquivo puro: sem banco, sem rede. Pode ser importado no servidor e no browser.
  */
+import { tokenize } from "./knowledge";
 
 export const TICKET_TYPES = ["INC", "REQ"] as const;
 export type TicketType = (typeof TICKET_TYPES)[number];
@@ -79,4 +80,19 @@ export const isOpen = (ticket: Pick<Ticket, "status">) => ticket.status !== "res
 export function canReopen(ticket: Pick<Ticket, "status" | "resolvedAt">, now: Date): boolean {
   if (ticket.status !== "resolved" || !ticket.resolvedAt) return false;
   return now.getTime() - ticket.resolvedAt.getTime() <= REOPEN_WINDOW_DAYS * DAY_MS;
+}
+
+// Palavras que aparecem em quase todo título e não dizem qual é o problema.
+const GENERIC_WORDS = new Set(["problema", "problemas", "erro", "erros", "falha", "funciona", "funcionando", "consigo", "preciso", "pedido", "chamado", "ajuda"]);
+
+const keywords = (title: string) => new Set(tokenize(title).filter((word) => word.length >= 3 && !GENERIC_WORDS.has(word)));
+
+/**
+ * Possível duplicado: mesma categoria e pelo menos uma palavra relevante em comum no título.
+ * Só a categoria juntava "Tela não está ligando" com "Segundo monitor para home office".
+ */
+export function sameProblem(ticket: Pick<Ticket, "category" | "title">, category: Category, title: string): boolean {
+  if (ticket.category !== category) return false;
+  const existing = keywords(ticket.title);
+  return [...keywords(title)].some((word) => existing.has(word));
 }

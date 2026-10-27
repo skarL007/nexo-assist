@@ -19,6 +19,10 @@ with_agent ──handoff──▶ waiting_analyst ──assume──▶ with_ana
 - Os botões de demonstração ("Ana · funcionária", "Rafael · analista") entram com um clique.
 - Senha vazia mostra "Informe uma senha (na demonstração, qualquer uma funciona)". "Esqueci minha senha" explica o mesmo.
 
+## Rascunho
+
+- Enquanto o Nexo responde, os botões do rascunho (e o Ctrl+Enter) ficam travados, com o aviso "Aguarde o Nexo responder para confirmar". A resposta em andamento foi montada com os rascunhos de antes; confirmar no meio dela deixava a resposta desatualizada ("o rascunho ainda está pronto").
+
 ## Sessão
 
 - Uma conversa aberta por funcionário. Ao voltar, ele continua nela (história 6).

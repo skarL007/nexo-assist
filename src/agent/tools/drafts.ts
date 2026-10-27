@@ -31,10 +31,10 @@ export const draftNewTicket = createTool({
 
     return attempt(turn, "não conseguiu montar o rascunho", async () => {
       if (!input.ignoreDuplicates) {
-        const duplicates = await tickets.findPossibleDuplicates(turn.employee.id, input.category);
+        const duplicates = await tickets.findPossibleDuplicates(turn.employee.id, input.category, input.title);
         if (duplicates.length > 0) {
           const snapshots = duplicates.map((t) => tickets.snapshot(t));
-          turn.recorder.step("verificou duplicidade", `${snapshots.length} chamado(s) da mesma categoria: ${snapshots.map((t) => t.code).join(", ")}`);
+          turn.recorder.step("verificou duplicidade", `${snapshots.length} chamado(s) parecido(s) (mesma categoria e título): ${snapshots.map((t) => t.code).join(", ")}`);
           turn.recorder.card({ kind: "ticket_choice", tickets: snapshots });
           return {
             possibleDuplicates: snapshots.map((t) => ({ code: t.code, title: t.title, status: t.status })),

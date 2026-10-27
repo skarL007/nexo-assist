@@ -37,7 +37,8 @@ Aceite: sexta 17h + 4h úteis = segunda 11h; pedido no sábado começa a contar 
 
 ## Duplicidade e reabertura
 
-- Antes de montar um rascunho novo, procurar chamados do funcionário **na mesma categoria** que estejam abertos ou resolvidos há até 7 dias. Se houver, mostrar a lista e perguntar se é um deles.
+- Antes de montar um rascunho novo, procurar chamados do funcionário abertos ou resolvidos há até 7 dias que sejam **da mesma categoria e tenham palavra relevante em comum no título** (sem acentos, sem palavras vazias nem genéricas como "problema" e "erro"). Se houver, mostrar a lista e perguntar se é um deles.
+- Só a categoria não basta: "Tela não está ligando" não é o mesmo problema que "Segundo monitor para home office", embora os dois sejam de Hardware. Só o título conta, porque a descrição traz palavras genéricas demais.
 - Se for, o caminho é **atualizar** (comentário) o existente. Resolvido há até 7 dias é reaberto ao confirmar. Depois disso, abre-se um novo.
 
 ## Privacidade

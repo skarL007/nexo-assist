@@ -22,12 +22,15 @@ export interface DraftActions {
   onEdit: () => void;
   /** Só o rascunho pendente mais recente atende ao Ctrl/⌘ + Enter. */
   shortcut?: boolean;
+  /** O Nexo está respondendo: a resposta usa os rascunhos de antes, então confirmar agora a deixaria desatualizada. */
+  locked?: boolean;
 }
 
 /** Rascunho de chamado: nada é criado até o funcionário clicar em Confirmar. */
 export function DraftCard({ draft, status, actions }: { draft: DraftSnapshot; status: DraftStatus; actions?: DraftActions }) {
   const [busy, setBusy] = useState(false);
   const pending = status === "pending" && !!actions;
+  const disabled = busy || !!actions?.locked;
 
   const run = async (fn: () => Promise<unknown>) => {
     setBusy(true);
@@ -40,7 +43,7 @@ export function DraftCard({ draft, status, actions }: { draft: DraftSnapshot; st
 
   // Ctrl/⌘ + Enter confirma o rascunho mais recente, como no protótipo.
   useEffect(() => {
-    if (!pending || !actions.shortcut || busy) return;
+    if (!pending || !actions.shortcut || disabled) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
@@ -49,19 +52,20 @@ export function DraftCard({ draft, status, actions }: { draft: DraftSnapshot; st
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [pending, actions, busy]);
+  }, [pending, actions, disabled]);
 
   const footer = pending ? (
     <>
-      <Button size="sm" disabled={busy} onClick={() => run(actions.onConfirm)}>
+      <Button size="sm" disabled={disabled} onClick={() => run(actions.onConfirm)}>
         Confirmar {actions.shortcut && <kbd className="ml-1 rounded bg-primary-foreground/20 px-1 text-[10px]">Ctrl ↵</kbd>}
       </Button>
-      <Button size="sm" variant="outline" disabled={busy} onClick={actions.onEdit}>
+      <Button size="sm" variant="outline" disabled={disabled} onClick={actions.onEdit}>
         Editar
       </Button>
-      <Button size="sm" variant="ghost" disabled={busy} onClick={() => run(actions.onCancel)}>
+      <Button size="sm" variant="ghost" disabled={disabled} onClick={() => run(actions.onCancel)}>
         Cancelar
       </Button>
+      {actions.locked && <span className="text-xs text-muted-foreground">Aguarde o Nexo responder para confirmar.</span>}
     </>
   ) : undefined;
 
