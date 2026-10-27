@@ -9,7 +9,7 @@ A cada mensagem, entender o que o funcionário quer, escolher **uma** linha de a
 ```
 mensagem → limites → salva → (conversa com analista? para aqui)
         → passo 0 forçado: recordUnderstanding
-        → passos 1..5: tools livres (ou nenhuma, se já transferiu)
+        → passos 1..5: tools de ação, sem recordUnderstanding (ou nenhuma, se já transferiu)
         → resposta salva com trace
 ```
 

@@ -19,6 +19,7 @@ import { conversationView } from "@/server/views";
 import { apiKeyVarFor, providerOptionsFor } from "./model-config";
 import { stripMarkdown, stripSystemNotes, toModelMessages } from "./model-history";
 import { nexoAgent } from "./nexo-agent";
+import { stepPolicy } from "./step-policy";
 import { turnBriefing } from "./turn-briefing";
 import { TURN_KEY, TurnRecorder, type TurnContext } from "./turn-context";
 
@@ -87,11 +88,7 @@ async function* replyWithAgent(turn: TurnContext, abortSignal?: AbortSignal): As
     // O modelo "pensa" antes de responder; para atendimento, raciocínio mínimo basta e corta a latência.
     providerOptions: providerOptionsFor(env().LLM_MODEL, env().OPENROUTER_REASONING_EFFORT, conversationId),
     // Passo 0: obriga o modelo a registrar o que entendeu. Depois de transferir, não age mais.
-    prepareStep: ({ stepNumber }) => {
-      if (stepNumber === 0) return { toolChoice: { type: "tool", toolName: "recordUnderstanding" } };
-      if (recorder.handedOff) return { toolChoice: "none" };
-      return undefined;
-    },
+    prepareStep: ({ stepNumber }) => stepPolicy(stepNumber, recorder.handedOff),
   });
 
   let reply = "";
