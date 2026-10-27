@@ -10,7 +10,8 @@ import type { Card, ChatMessage } from "@/domain/message";
 /** Mensagens longas do histórico são cortadas antes de ir ao modelo. */
 export const HISTORY_MESSAGE_MAX_CHARS = 1500;
 
-const SYSTEM_NOTE = /\s*⟦[^⟧]*⟧/g;
+// Sem o fecho ⟧, a nota vai até o fim do texto: o modelo nunca deveria escrever ⟦.
+const SYSTEM_NOTE = /\s*⟦[^⟧]*(?:⟧|$)/g;
 // Formato antigo das notas (entre colchetes), que o modelo aprendeu a copiar.
 const LEGACY_NOTE = /\s*\[(?:opções:|card [A-Z]+-\d+|lista para escolher:|rascunho D-\d+)[^\]]*\]/g;
 

@@ -47,6 +47,12 @@ describe("stripSystemNotes", () => {
     expect(stripSystemNotes("Montei o rascunho.\n\n⟦sistema: rascunho D-1 exibido para confirmação⟧")).toBe("Montei o rascunho.");
   });
 
+  it("remove nota sem o fecho, que o modelo às vezes deixa aberta", () => {
+    expect(stripSystemNotes("Confirme se posso prosseguir. ⟦sistema: botões de resposta rápida exibidos: Confirmar / Cancelar")).toBe(
+      "Confirme se posso prosseguir.",
+    );
+  });
+
   it("remove o formato antigo de anotação", () => {
     expect(stripSystemNotes("Confira e me confirme. [opções: Pode criar | Alterar detalhes | Cancelar]")).toBe("Confira e me confirme.");
     expect(stripSystemNotes("Veja abaixo [card INC-20311: Notebook lento · open]")).toBe("Veja abaixo");
