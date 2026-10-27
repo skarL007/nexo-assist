@@ -23,6 +23,7 @@ import { TURN_KEY, TurnRecorder, type TurnContext } from "./turn-context";
 /** Quantas mensagens anteriores vão para o modelo (custo × contexto). */
 const HISTORY_LIMIT = 20;
 const MAX_STEPS = 6;
+const THINKING_LEVEL = "minimal";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export async function* runAgentTurn(employee: Employee, text: string): AsyncGenerator<ChatStreamEvent> {
@@ -60,6 +61,8 @@ export async function* runAgentTurn(employee: Employee, text: string): AsyncGene
     system: turnBriefing(employee, startedAt, pendingDrafts),
     maxSteps: MAX_STEPS,
     modelSettings: { temperature: 0.2 },
+    // Gemini "pensa" antes de responder; para atendimento, raciocínio mínimo basta e corta a latência.
+    providerOptions: { google: { thinkingConfig: { thinkingLevel: THINKING_LEVEL } } },
     // Passo 0: obriga o modelo a registrar o que entendeu. Depois de transferir, não age mais.
     prepareStep: ({ stepNumber }) => {
       if (stepNumber === 0) return { toolChoice: { type: "tool", toolName: "recordUnderstanding" } };
