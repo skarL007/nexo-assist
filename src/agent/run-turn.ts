@@ -44,7 +44,7 @@ export async function* runAgentTurn(employee: Employee, text: string): AsyncGene
     return;
   }
 
-  if (!env().OPENAI_API_KEY) throw new Error("OPENAI_API_KEY não configurada.");
+  if (!env().GOOGLE_GENERATIVE_AI_API_KEY) throw new Error("GOOGLE_GENERATIVE_AI_API_KEY não configurada.");
 
   const [history, pendingDrafts] = await Promise.all([
     services.messages.listRecent(conversation.id, HISTORY_LIMIT),
