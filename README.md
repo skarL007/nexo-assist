@@ -1,8 +1,25 @@
 # Nexo Assist
 
-Agent de atendimento do service desk de TI da Nexo. O funcionário descreve o problema com as próprias palavras e o agent consulta os chamados dele, busca na central de ajuda, abre ou atualiza chamados (sempre com confirmação) e chama um analista quando precisa. O analista atende pelo console: vê a fila, assume a conversa com o agent pausado e depois devolve ou encerra.
+Agent de atendimento do service desk de TI da Nexo. O funcionário descreve o problema com as próprias palavras. O agent consulta os chamados dele, busca na central de ajuda, abre ou atualiza chamados (sempre com confirmação) e chama um analista quando precisa. O analista atende pelo console: vê a fila, assume a conversa com o agent pausado e depois devolve ou encerra.
 
-**Stack:** TypeScript estrito · Next.js 16 (App Router) · Mastra (agent) · Google Gemini · Drizzle + libSQL (SQLite local / Turso no deploy) · Redux Toolkit + RTK Query · Zod · shadcn/ui + Tailwind · Vitest · Playwright.
+Cada resposta do agent mostra **o que ele entendeu, o que fez e por quê**: passos ao vivo, decisão com confiança, chamadas de tool com entrada e saída, regras que agiram, tokens e latência.
+
+**Stack:** TypeScript estrito · Next.js 16 (App Router) · Mastra (agent) · Google Gemini 3.5 Flash · Drizzle + libSQL (SQLite local, Turso no deploy) · Redux Toolkit + RTK Query · Zod · shadcn/ui + Tailwind · Vitest · Playwright.
+
+<!-- DEMO -->
+
+---
+
+## Sumário
+
+1. [Como rodar](#como-rodar)
+2. [Arquitetura](#arquitetura)
+3. [Como o agent decide](#como-o-agent-decide)
+4. [Como garanti a qualidade das decisões](#como-garanti-a-qualidade-das-decisões)
+5. [Escolha do modelo](#escolha-do-modelo)
+6. [Deploy e segurança](#deploy-e-segurança)
+7. [Trade-offs](#trade-offs)
+8. [O que eu faria com mais tempo](#o-que-eu-faria-com-mais-tempo)
 
 ---
 
@@ -13,13 +30,13 @@ Pré-requisitos: Node 22+ e uma chave do Gemini ([Google AI Studio](https://aist
 ```bash
 npm install
 cp .env.example .env          # preencha GOOGLE_GENERATIVE_AI_API_KEY
-npm run db:setup              # cria o banco local (local.db) e os dados de exemplo
+npm run db:setup              # cria o banco local (local.db) com os dados de exemplo
 npm run dev                   # http://localhost:3000
 ```
 
-Qualquer senha funciona para os usuários de exemplo:
+Qualquer senha funciona para os usuários de exemplo (regra do desafio). Na tela de login há botões de acesso rápido.
 
-| Quem | E-mail | Para ver |
+| Quem | E-mail | O que dá para ver |
 |---|---|---|
 | Ana Souza (funcionária) | `ana.souza@nexo.com.br` | 3 chamados abertos, 1 vencido (INC-20311), 1 resolvido há 4 dias (pode reabrir) |
 | Elisa Prado (funcionária) | `elisa.prado@nexo.com.br` | conversa em andamento com o agent |
@@ -28,16 +45,52 @@ Qualquer senha funciona para os usuários de exemplo:
 Outros comandos:
 
 ```bash
-npm test              # testes unitários (domínio, serviços, filtros) — sem LLM
+npm test              # 62 testes unitários (domínio, serviços, HTTP) — sem LLM
 npm run test:e2e      # Playwright contra o build de produção — sem LLM
 npm run eval          # 10 cenários de decisão do agent com o modelo real
 npm run db:seed       # volta os dados ao estado inicial
 npm run typecheck && npm run lint
 ```
 
+Todas as variáveis estão documentadas em [`.env.example`](.env.example) e são validadas com Zod em [`src/config/env.ts`](src/config/env.ts), o único arquivo que lê `process.env`.
+
 ---
 
 ## Arquitetura
+
+```mermaid
+flowchart LR
+  subgraph Browser
+    UI["Chat do funcionário<br/>Redux + stream NDJSON"]
+    CON["Console do analista<br/>RTK Query + polling"]
+  end
+
+  subgraph Next["Next.js 16 (Vercel)"]
+    PX["proxy.ts<br/>porta de acesso por token"]
+    API["app/api<br/>Zod + sessão JWT"]
+    AG["agent/<br/>Mastra + 10 tools"]
+    APP["application/<br/>TicketService · ConversationService · DraftService"]
+    DOM["domain/<br/>regras puras do service desk"]
+    INF["infrastructure/<br/>Drizzle + repositórios"]
+    LEG["FlakyTicketRepository<br/>legado instável simulado"]
+  end
+
+  GEM[("Google Gemini<br/>3.5 Flash")]
+  DB[("SQLite local<br/>Turso no deploy")]
+
+  UI --> PX
+  CON --> PX
+  PX --> API
+  API --> AG
+  API --> APP
+  AG -- "tools" --> APP
+  AG <--> GEM
+  APP --> DOM
+  APP -- "portas" --> INF
+  INF --> LEG
+  LEG --> DB
+  INF --> DB
+```
 
 ```
 src/
@@ -45,93 +98,223 @@ src/
 ├── application/      Casos de uso: serviços de chamados, conversas e rascunhos + portas (interfaces)
 ├── infrastructure/   Banco (Drizzle), repositórios, legado instável simulado, composição
 ├── agent/            Agent Mastra: instruções, tools, orquestração de um turno
-├── server/           Sessão (JWT em cookie), helpers HTTP, montagem das respostas da API
+├── server/           Sessão (JWT em cookie), porta de acesso, helpers HTTP, montagem das respostas
 ├── contracts/        Tipos e schemas Zod compartilhados entre servidor e browser
 ├── app/              Páginas e rotas do Next.js (finas: validam, chamam um serviço, respondem)
 ├── features/         Telas: chat (slice Redux + stream), console (RTK Query), login
 └── components/       UI compartilhada: mensagens, cards, trace, shadcn/ui
 ```
 
-A dependência só aponta para dentro: `app → agent/application → domain`. O domínio não conhece Next, Mastra nem banco, e por isso as regras (prioridade, prazo, reabertura, transições) são testadas sem mock. A aplicação depende de **portas** (`application/ports.ts`), e a infraestrutura as implementa. Só um arquivo liga as peças: `infrastructure/container.ts`.
+**Dependências só apontam para dentro** (`app → agent/application → domain`). O domínio não conhece Next, Mastra nem banco, por isso prioridade, prazo, reabertura e transições são testados sem mock. A aplicação depende de **portas** ([`application/ports.ts`](src/application/ports.ts)), que a infraestrutura implementa. Um único arquivo liga as peças: [`infrastructure/container.ts`](src/infrastructure/container.ts).
 
-**Serviço de chamados separado do agent.** O agent não toca no banco. As tools chamam o `TicketService`, que é o mesmo serviço usado pelas rotas e pelos botões. O "sistema legado" é um *decorator* (`FlakyTicketRepository`) que falha aleatoriamente (`LEGACY_FAILURE_RATE`, 15% por padrão). O serviço tenta de novo com backoff (200 ms, 400 ms), e cada nova tentativa aparece no trace como "sistema de chamados instável".
+**O serviço de chamados é separado do agent.** O agent não toca no banco. As tools chamam o `TicketService`, que é o mesmo serviço usado pelas rotas e pelos botões. O "sistema legado" é um *decorator* (`FlakyTicketRepository`) que falha aleatoriamente (`LEGACY_FAILURE_RATE`, 15% por padrão). O serviço tenta de novo com backoff, e cada nova tentativa aparece no trace como "sistema de chamados instável".
 
 **Persistência.** Conversas, mensagens (com cards e trace), rascunhos, chamados e o estado de cada conversa ficam no SQLite/Turso e sobrevivem a um restart. Ao voltar outro dia, o funcionário cai na conversa aberta dele.
 
-**Tempo real.** `POST /api/chat` responde em NDJSON (um evento JSON por linha): `employee_message`, `step` ("consultou seus chamados"), `card`, `text` (tokens) e `done`. O thunk do Redux lê o stream e despacha cada evento. Mensagens do analista chegam por polling (4 s), o que basta para a escala do desafio e não exige WebSocket na Vercel.
+**Tempo real.** `POST /api/chat` responde em NDJSON (um evento JSON por linha): `employee_message`, `step`, `card`, `text` (tokens) e `done`. O thunk do Redux lê o stream e despacha cada evento. As mensagens do analista chegam por polling a cada 4 s, o que basta para a escala do desafio e não exige WebSocket na Vercel.
+
+### Estados da conversa
+
+O agent só responde em **Com o agent**. Nos outros estados a mensagem é salva e ele fica em silêncio. As transições ficam numa tabela em [`domain/conversation.ts`](src/domain/conversation.ts), e o banco só aceita a mudança se o estado ainda for o esperado (update condicional), então analista e agent não se atropelam.
+
+```mermaid
+stateDiagram-v2
+  state "Com o agent" as with_agent
+  state "Aguardando atendente" as waiting_analyst
+  state "Com analista" as with_analyst
+  state "Encerrada" as closed
+
+  [*] --> with_agent: funcionário escreve
+  with_agent --> waiting_analyst: transferência
+  waiting_analyst --> with_analyst: analista assume
+  with_agent --> with_analyst: analista assume direto
+  with_analyst --> with_agent: analista devolve
+  waiting_analyst --> with_agent: analista devolve
+  with_agent --> closed: nova conversa
+  waiting_analyst --> closed: analista encerra
+  with_analyst --> closed: analista encerra
+  closed --> [*]
+```
+
+A transferência acontece por quatro motivos: o funcionário pediu, caso crítico, chamado com prazo vencido ou confiança do agent abaixo de 50%.
 
 ---
 
 ## Como o agent decide
 
-Cada mensagem do funcionário vira um **turno** (`agent/run-turn.ts`):
+Cada mensagem do funcionário vira um **turno** ([`agent/run-turn.ts`](src/agent/run-turn.ts)):
 
-1. **Limites:** 30 mensagens por sessão e um teto diário de respostas (proteção de custo).
-2. **Pausa:** se a conversa está com um analista, a mensagem é salva e o agent não é chamado.
-3. **Entendimento obrigatório:** o primeiro passo do modelo é *forçado* (`prepareStep` + `toolChoice`) a chamar `recordUnderstanding`, com intenção, o que entendeu, confiança (0–1) e motivo. Daí sai o painel "por quê?" de cada resposta.
-4. **Ação:** o modelo escolhe as tools pela intenção (dúvida → central; consulta → chamados; problema novo → perguntas e rascunho; analista → transferência). No máximo 6 passos.
-5. **Registro:** a resposta é salva com o trace completo: decisão, passos visíveis, chamadas de tool cruas (entrada/saída/tempo), regras do sistema que agiram, modelo, tokens e latência.
+```mermaid
+sequenceDiagram
+  autonumber
+  actor F as Funcionário
+  participant UI as Chat (Redux)
+  participant R as POST /api/chat
+  participant T as runAgentTurn
+  participant M as Gemini via Mastra
+  participant S as Serviços e banco
+
+  F->>UI: "Minha VPN não conecta, erro 809"
+  UI->>R: texto + cookie de sessão
+  R->>T: funcionário vem do JWT, nunca do corpo
+  T->>S: confere limites e salva a mensagem
+  T-->>UI: employee_message
+  T->>M: últimas 20 mensagens + contexto do turno
+  M->>T: passo 0 forçado: recordUnderstanding
+  T-->>UI: step "entendeu: problema novo, 92%"
+  loop até 6 passos
+    M->>S: tool (searchHelpCenter, listMyTickets, draftNewTicket...)
+    S-->>M: resultado
+    T-->>UI: step ou card
+  end
+  M-->>UI: text (tokens em tempo real)
+  T->>S: salva a resposta com o trace completo
+  T-->>UI: done
+```
+
+1. **Limites:** 30 mensagens por sessão, 40 por hora e 120 por dia por pessoa, e um teto global diário (proteção de custo).
+2. **Pausa:** se a conversa está com um analista, a mensagem é salva e o modelo não é chamado.
+3. **Entendimento obrigatório:** o primeiro passo do modelo é *forçado* (`prepareStep` + `toolChoice`) a chamar `recordUnderstanding` com a intenção, o que entendeu, a confiança (0–1) e o motivo. É daí que sai o painel "por quê?" de cada resposta.
+4. **Ação:** o modelo escolhe as tools pela intenção, no máximo 6 passos.
+5. **Registro:** a resposta é salva com o trace completo: decisão, passos visíveis, chamadas de tool cruas (entrada, saída, tempo), regras do sistema que agiram, modelo, tokens e latência.
+
+```mermaid
+flowchart TD
+  A["Mensagem do funcionário"] --> B{"Conversa com analista?"}
+  B -- sim --> P["Salva e o agent fica em silêncio"]
+  B -- não --> C["recordUnderstanding (forçado)<br/>intenção + confiança + motivo"]
+  C --> D{"Confiança abaixo de 0,5?"}
+  D -- sim --> H["transferToAnalyst"]
+  D -- não --> E{"Intenção"}
+  E -- dúvida --> Q["searchHelpCenter<br/>responde com o artigo"]
+  E -- status --> S["listMyTickets / getTicket<br/>se vencido, oferece analista"]
+  E -- problema novo --> N["listMyTickets: já existe?<br/>searchHelpCenter: autoatendimento?<br/>pergunta o que falta"]
+  N --> DR["draftNewTicket<br/>prioridade e prazo calculados em código"]
+  E -- complementar ou reabrir --> U["draftTicketUpdate<br/>reabre só até 7 dias"]
+  DR --> CF{"Funcionário confirma?"}
+  U --> CF
+  CF -- sim --> OK["Chamado criado ou atualizado<br/>se crítico, transfere sozinho"]
+  CF -- não --> X["Rascunho descartado"]
+  E -- falar com analista --> H
+  E -- fora de TI --> O["Explica o escopo e redireciona"]
+```
 
 ### O que é garantido em código (não depende do prompt)
 
+O modelo decide **o que fazer**. As regras do service desk ficam em código testado, para que um prompt mal interpretado não quebre uma regra.
+
 | Regra (Anexo A) | Onde |
 |---|---|
-| Prioridade = impacto × urgência (o modelo informa os dois, o código calcula) | `domain/priority.ts` |
-| Prazo em horas/dias úteis (seg–sex, 8h–18h; crítico 1h corrida) | `domain/business-time.ts` |
-| Só cria/atualiza depois da confirmação: o agent monta rascunho; `confirmDraft` recusa rascunho criado no mesmo turno | `application/draft-service.ts` |
-| Sem duplicidade: antes do rascunho, procura aberto ou resolvido há ≤7 dias da mesma categoria | `TicketService.findPossibleDuplicates` |
-| Reabrir só até 7 dias | `domain/ticket.ts` (`canReopen`) |
-| Confiança < 50% → transfere sozinho | `agent/tools/understanding.ts` |
+| Prioridade = impacto × urgência (o modelo informa os dois, o código calcula) | [`domain/priority.ts`](src/domain/priority.ts) |
+| Prazo em horas/dias úteis (seg–sex, 8h–18h; crítico 1h corrida) | [`domain/business-time.ts`](src/domain/business-time.ts) |
+| Só cria/atualiza depois da confirmação. O agent monta rascunho; `confirmDraft` só aceita rascunho mostrado num turno anterior da mesma conversa, e a confirmação é atômica (clique duplo não cria dois chamados) | [`application/draft-service.ts`](src/application/draft-service.ts) |
+| Sem duplicidade: antes do rascunho, procura chamado aberto ou resolvido há até 7 dias da mesma categoria | `TicketService.findPossibleDuplicates` |
+| Reabrir só até 7 dias | [`domain/ticket.ts`](src/domain/ticket.ts) (`canReopen`) |
+| Confiança abaixo de 50% → transfere sozinho | [`agent/tools/understanding.ts`](src/agent/tools/understanding.ts) |
 | Chamado crítico confirmado → transfere sozinho | `DraftService.confirm` |
-| Agent mudo com analista; depois de transferir não chama mais tools | `run-turn.ts` (`agentCanReply`, `toolChoice: "none"`) |
-| Privacidade: o funcionário vem do cookie assinado, nunca de argumento do modelo; chamado alheio responde "não encontrado" | `agent/turn-context.ts`, `TicketService.getMine` |
+| Agent mudo com analista; depois de transferir, não chama mais tools | `run-turn.ts` (`agentCanReply`, `toolChoice: "none"`) |
+| Privacidade: o funcionário vem do cookie assinado, nunca de argumento do modelo; chamado de outra pessoa responde "não encontrado" | [`agent/turn-context.ts`](src/agent/turn-context.ts), `TicketService.getMine` |
 
-O prompt (`agent/instructions.ts`) cuida só da conversa: perguntar uma coisa por vez, oferecer respostas rápidas, não repetir o que o card mostra e redirecionar o que não é de TI.
+O prompt ([`agent/instructions.ts`](src/agent/instructions.ts)) cuida só da conversa: perguntar uma coisa por vez, oferecer respostas rápidas, não repetir o que o card já mostra e redirecionar o que não é de TI.
 
-### Como garanti a qualidade das decisões
+---
 
-- **Testes de regra (Vitest, 47):** prazos com fim de semana, matriz de prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado, confirmação obrigatória, transferência em caso crítico.
-- **E2E (Playwright, 6):** login, permissões (funcionário não acessa console nem API do analista) e o ciclo da transferência ponta a ponta.
-- **Evals (`npm run eval`):** 10 conversas reais com o modelo, conferindo intenção, ferramentas esperadas e proibidas, transferência e vazamento de dados de outra pessoa.
-- **Trace em toda resposta:** dá para auditar cada decisão na própria interface (e no console do analista).
+## Como garanti a qualidade das decisões
+
+| Camada | O que cobre | Comando |
+|---|---|---|
+| **Testes unitários** (Vitest, 62) | prazos com fim de semana, matriz de prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado, confirmação obrigatória, clique duplo, transferência em caso crítico, bloqueio de CSRF | `npm test` |
+| **E2E** (Playwright, 6) | login, permissões (funcionário não acessa o console nem a API do analista) e o ciclo da transferência de ponta a ponta, contra o build de produção | `npm run test:e2e` |
+| **Evals** (10 cenários, modelo real) | intenção, tools esperadas e proibidas, transferência e vazamento de dados de outra pessoa | `npm run eval` |
+| **Trace em toda resposta** | qualquer decisão pode ser auditada na própria interface e no console do analista | — |
+
+Os evals já pagaram o próprio custo. Um deles pegou o agent abrindo rascunho novo para um problema que já tinha chamado aberto; o ajuste nas instruções (consultar `listMyTickets` antes) levou o resultado a 10/10. Outro mostrou 10,8 s de latência por causa do "raciocínio" do Gemini; com `thinkingLevel: "minimal"` a latência caiu e os 10 cenários continuaram passando.
+
+O processo de desenvolvimento (SDD, TDD, skills, MCPs e uso de IA) está em [`docs/PROCESSO-IA.md`](docs/PROCESSO-IA.md), e as especificações em [`docs/specs/`](docs/specs).
 
 ---
 
 ## Escolha do modelo
 
-**Gemini 3.5 Flash** (`google/gemini-3.5-flash`): tool calling confiável (inclusive a escolha forçada de tool no primeiro passo), latência baixa e custo por conversa de frações de centavo. A troca de modelo é uma variável (`LLM_MODEL`), graças ao roteador de modelos do Mastra. Para usar OpenAI, por exemplo, basta `LLM_MODEL=openai/gpt-4.1-mini` com `OPENAI_API_KEY`, ajustando a checagem de chave em `run-turn.ts`.
+**Gemini 3.5 Flash** (`google/gemini-3.5-flash`):
 
-**Custo consciente:** o histórico enviado ao modelo tem no máximo 20 mensagens, e os cards viram resumos curtos entre colchetes. Prioridade, prazo, duplicidade e busca na central são código, sem gastar token. A temperatura é 0.2 e o limite é de 6 passos por turno.
+- **Tool calling confiável**, inclusive a escolha forçada de tool no primeiro passo, que é a base da transparência.
+- **Latência baixa** com `thinkingLevel: "minimal"`: atendimento precisa de resposta rápida, não de raciocínio longo.
+- **Custo de frações de centavo por conversa**, o que permite um deploy aberto para avaliação sem risco de conta alta.
+
+A troca de modelo é uma variável (`LLM_MODEL`), graças ao roteador de modelos do Mastra. Para usar OpenAI, por exemplo, basta `LLM_MODEL=openai/gpt-4.1-mini` com `OPENAI_API_KEY`, ajustando a checagem de chave em `run-turn.ts`. Os evals dizem se a troca piorou alguma decisão.
+
+**Custo sob controle:** o histórico enviado ao modelo tem no máximo 20 mensagens (cada uma cortada em 1.500 caracteres) e os cards viram resumos curtos entre colchetes. Prioridade, prazo, duplicidade e busca na central são código e não gastam token. Temperatura 0.2, até 6 passos e até 800 tokens de saída por passo.
 
 ---
 
-## Deploy (Vercel + Turso)
+## Deploy e segurança
 
-1. Crie o banco: `turso db create nexo-assist`, depois pegue a URL (`turso db show nexo-assist --url`) e um token (`turso db tokens create nexo-assist`).
-2. Aplique o schema e os dados apontando para o Turso:
+O deploy roda na **Vercel** com o banco no **Turso** (libSQL, compatível com o SQLite local).
+
+### Como fiz o deploy
+
+1. Criei o banco no Turso e um token de acesso a ele:
+   ```bash
+   turso db create nexo-assist
+   turso db show nexo-assist --url
+   turso db tokens create nexo-assist
+   ```
+2. Apliquei as migrations e os dados de exemplo apontando para o Turso:
    ```bash
    DATABASE_URL=libsql://... DATABASE_AUTH_TOKEN=... npm run db:setup
    ```
-3. Na Vercel, importe o repositório e configure as variáveis: `GOOGLE_GENERATIVE_AI_API_KEY`, `LLM_MODEL`, `DATABASE_URL`, `DATABASE_AUTH_TOKEN`, `AUTH_SECRET` (32+ caracteres aleatórios) e `DAILY_AGENT_TURN_LIMIT`.
-4. Proteção contra abuso: 30 mensagens por sessão, teto diário global de respostas do agent (`DAILY_AGENT_TURN_LIMIT`), login obrigatório para chegar ao LLM e chaves só no servidor. Recomendo também um limite de gasto no projeto do Google Cloud.
+3. Importei o repositório na Vercel e configurei as variáveis (todas só no servidor): `GOOGLE_GENERATIVE_AI_API_KEY`, `LLM_MODEL`, `DATABASE_URL`, `DATABASE_AUTH_TOKEN`, `AUTH_SECRET` (32+ caracteres aleatórios), `ACCESS_TOKEN` e `DAILY_AGENT_TURN_LIMIT`.
+4. Compartilho o link já com o token: `https://<deploy>/?access=<ACCESS_TOKEN>`.
+
+### Como protegi as chaves e limitei o uso
+
+```mermaid
+flowchart LR
+  V["Visitante"] --> G{"proxy.ts<br/>token de acesso confere?"}
+  G -- não --> D["401 · Acesso restrito"]
+  G -- sim --> C["Cookie httpOnly por 30 dias<br/>token sai da URL"]
+  C --> L["Login<br/>JWT HS256 em cookie, 8 h"]
+  L --> X{"Mesma origem?<br/>Corpo em JSON?"}
+  X -- não --> B["403 / 415"]
+  X -- sim --> LIM{"Dentro dos limites?"}
+  LIM -- não --> M["Aviso amigável, sem chamar o modelo"]
+  LIM -- sim --> GEM["Gemini<br/>chave só no servidor"]
+```
+
+| Risco | Proteção |
+|---|---|
+| Qualquer pessoa usar o agent (e a minha cota) | **Porta de acesso por token** em [`proxy.ts`](src/proxy.ts): sem `?access=` válido, nenhuma página ou API responde. A comparação é em tempo constante ([`server/access-gate.ts`](src/server/access-gate.ts)) e o token vira um cookie httpOnly, saindo da URL. |
+| Vazamento de chave | Chaves só em variáveis de ambiente do servidor, validadas com Zod. Nada com prefixo `NEXT_PUBLIC_`. `.env` fora do git. |
+| Custo inesperado | 30 mensagens por sessão, 40 por hora e 120 por dia por pessoa, teto global diário (`DAILY_AGENT_TURN_LIMIT`), 800 tokens de saída por passo, histórico truncado, e a chamada ao modelo é cancelada quando o funcionário fecha a aba. Recomendo também um limite de gasto no projeto do Google Cloud. |
+| Requisição forjada de outro site (CSRF) | Toda mutação exige mesma origem (`Sec-Fetch-Site`/`Origin`) e corpo JSON ([`server/http.ts`](src/server/http.ts)). |
+| Ação em nome de outra pessoa | A identidade vem só do JWT da sessão (algoritmo fixo HS256). O modelo nunca recebe nem informa id de funcionário. |
+| Corridas (clique duplo, analista e agent ao mesmo tempo) | Confirmação de rascunho atômica no banco e update de conversa condicionado ao estado esperado. |
+| Clickjacking e afins | CSP, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy` e sem `X-Powered-By` ([`next.config.ts`](next.config.ts)). |
+
+Antes do deploy fiz uma auditoria de segurança do código inteiro; as correções estão no commit `fix(security): correções da auditoria de segurança`.
 
 ---
 
 ## Trade-offs
 
 - **Polling em vez de WebSocket/SSE** para as mensagens do analista: simples e compatível com serverless. O custo é uma latência de até 4 s.
-- **Busca por palavras-chave** na central: com 9 artigos, é grátis e explicável (o trace mostra os termos que bateram). Com centenas de artigos, eu trocaria por embeddings sem mudar quem chama.
-- **Duplicidade por categoria** e a decisão final com o modelo: barato e transparente, mas pode sugerir um chamado não relacionado da mesma categoria (o funcionário escolhe "não é nenhum desses").
-- **Histórico próprio em vez da memória do Mastra:** o console do analista precisa ler e escrever na mesma conversa, então mantive uma única tabela `messages` como fonte da verdade.
-- **Login sem senha real**, como pede o desafio: a sessão é um JWT assinado em cookie httpOnly, então a troca para SSO corporativo fica isolada em `server/session.ts`.
+- **Busca por palavras-chave** na central: com 9 artigos é grátis e explicável (o trace mostra os termos que bateram). Com centenas de artigos, eu trocaria por embeddings sem mudar quem chama.
+- **Duplicidade por categoria**, com a decisão final para o modelo: barato e transparente, mas pode sugerir um chamado não relacionado da mesma categoria (o funcionário escolhe "não é nenhum desses").
+- **Histórico próprio em vez da memória do Mastra:** o console do analista lê e escreve na mesma conversa, então mantive uma única tabela `messages` como fonte da verdade.
+- **Limites contados no próprio banco** em vez de Redis: um serviço a menos, consistente entre instâncias serverless, ao custo de duas consultas indexadas por mensagem.
+- **Porta de acesso por link com token** em vez de contas para avaliadores: zero atrito para quem avalia e suficiente para proteger a cota. Para produção, seria SSO.
+- **CSP sem nonce** (`'unsafe-inline'` em scripts): mantém as páginas estáticas e o deploy simples. Com nonce, a CSP fica mais rígida, mas toda página passa a ser dinâmica.
+- **Login sem senha real**, como pede o desafio: a sessão é um JWT assinado em cookie httpOnly, então a troca para SSO corporativo fica isolada em [`server/session.ts`](src/server/session.ts).
 
 ## O que eu faria com mais tempo
 
 - Eventos em tempo real (SSE) para o console e o chat do analista.
 - Busca semântica na central e detecção de duplicidade por similaridade de texto.
-- Evals rodando no CI com limiar mínimo e histórico de resultados por versão do prompt.
-- Rate limit por usuário e IP (ex.: Upstash) além do teto global.
-- Métricas do painel: taxa de resolução sem fila, tempo até a primeira resposta, motivos de transferência.
+- Evals no CI com limiar mínimo e histórico de resultados por versão do prompt.
+- Rate limit por IP na borda (Vercel Firewall) além dos limites por pessoa.
+- Observabilidade: traces do Mastra exportados via OpenTelemetry e painel de métricas (resolução sem fila, tempo até a primeira resposta, motivos de transferência).
+- SSO corporativo e CSP com nonce.
 
 ## Documentação
 
