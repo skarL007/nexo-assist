@@ -15,6 +15,7 @@ export const PATHS = {
   steps: `${RESULTS_DIR}/passos-geval.json`,
   calibration: `${RESULTS_DIR}/calibracao.json`,
   runs: `${RESULTS_DIR}/execucoes.json`,
+  prices: `${RESULTS_DIR}/precos.json`,
 };
 
 const llmCallSchema = z.object({
@@ -22,6 +23,8 @@ const llmCallSchema = z.object({
   provider: z.string().nullable(),
   costUsd: z.number(),
   inputTokens: z.number(),
+  cachedTokens: z.number(),
+  cacheWriteTokens: z.number(),
   outputTokens: z.number(),
   reasoningTokens: z.number(),
   toolCalls: z.array(z.string()),
@@ -35,7 +38,8 @@ export const turnRecordSchema = z.object({
   reply: z.string(),
   /** Cards da resposta já descritos em texto (o juiz precisa vê-los). */
   cards: z.array(z.string()),
-  decision: z.object({ intent: z.string(), confidence: z.number() }).nullable(),
+  /** O que o modelo registrou em recordUnderstanding (é o "por quê?" que o funcionário vê). */
+  decision: z.object({ intent: z.string(), understanding: z.string(), confidence: z.number(), reasoning: z.string() }).nullable(),
   /** Primeira tool executada: tem que ser recordUnderstanding (passo 0 forçado). */
   firstTool: z.string().nullable(),
   toolCalls: z.array(z.object({ tool: z.string(), input: z.string(), output: z.string() })),
@@ -76,6 +80,9 @@ export const judgmentSchema = z.object({
   /** Como a nota foi obtida em cada critério: logprobs, amostragem ou texto (sem logprobs). */
   methods: z.record(z.string(), z.string()),
   costUsd: z.number(),
+  savedUsd: z.number(),
+  inputTokens: z.number(),
+  cachedTokens: z.number(),
   error: z.string().nullable(),
 });
 export type Judgment = z.infer<typeof judgmentSchema>;

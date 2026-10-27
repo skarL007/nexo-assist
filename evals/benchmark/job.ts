@@ -5,7 +5,9 @@
  */
 import { z } from "zod";
 import { REASONING_EFFORTS } from "@/agent/model-config";
+import { scenarios as coreScenarios, type Scenario } from "../scenarios";
 import { conversationRecordSchema, readJsonl, RESULTS_DIR, type ConversationRecord } from "./records";
+import { prdScenarios } from "./scenarios-prd";
 
 export const jobSchema = z.object({
   candidate: z.string(),
@@ -29,6 +31,12 @@ export const progressSchema = z.discriminatedUnion("type", [
 export type Progress = z.infer<typeof progressSchema>;
 
 /** Cada candidato tem seu arquivo de conversas (processos em paralelo não disputam o mesmo arquivo). */
+/** Cenários de uma repetição: os 10 do `npm run eval` sempre; os extras do PRD só na 1ª (orçamento). */
+export function scenariosForRep(rep: number, filter?: string): Scenario[] {
+  const all = rep === 1 ? [...coreScenarios, ...prdScenarios] : coreScenarios;
+  return filter ? all.filter((s) => s.name.toLowerCase().includes(filter.toLowerCase())) : all;
+}
+
 export const conversationsFile = (candidate: string) => `${RESULTS_DIR}/conversas/${candidate}.jsonl`;
 
 export const loadConversations = (candidate: string): ConversationRecord[] =>

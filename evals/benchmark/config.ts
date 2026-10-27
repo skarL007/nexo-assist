@@ -110,7 +110,7 @@ export const JUDGES: Judge[] = [
     method: "logprobs",
     samples: 1,
     effort: "none",
-    tokens: { input: 3_000, output: 80 },
+    tokens: { input: 3_500, output: 80 },
   },
   // GLM-5.3 não devolve logprobs pelo OpenRouter (testado) e não aceita desligar o raciocínio.
   {
@@ -118,9 +118,9 @@ export const JUDGES: Judge[] = [
     model: "z-ai/glm-5.3",
     label: "GLM-5.3",
     method: "amostragem",
-    samples: 3,
+    samples: 2,
     effort: "minimal",
-    tokens: { input: 3_000, output: 250 },
+    tokens: { input: 3_500, output: 250 },
   },
 ];
 
@@ -137,11 +137,11 @@ export const BUDGET = {
 };
 
 /**
- * Tokens por turno para a estimativa de pré-voo. Medido no último `npm run eval`
- * (11 turnos, Gemini 3.5 Flash): 9.956 de entrada e 208 de saída. A saída leva folga
- * porque outros modelos gastam tokens de raciocínio.
+ * Tokens por turno para a estimativa de pré-voo. Medido na 1ª rodada do benchmark
+ * (95 turnos de 5 modelos, somando todos os passos): 6.668 de entrada e 221 de saída.
+ * Leva folga porque tokenizadores variam (o DeepSeek conta ~10 mil) e há raciocínio.
  */
-export const TOKENS_PER_TURN = { input: 10_000, output: 400 };
+export const TOKENS_PER_TURN = { input: 7_500, output: 300 };
 
 export const RUN = {
   repetitions: 2,

@@ -6,6 +6,7 @@
 import { ANCHORS, BUSINESS, MIN_FORCED_TOOL_COMPLIANCE, type Candidate, type Weights } from "./config";
 import type { GateResult } from "./gate";
 import { CRITERIA } from "./geval";
+import type { Pricing } from "./openrouter";
 import type { ConversationRecord, Judgment } from "./records";
 import { bootstrapMean, mean, percentile, randomWeights, seededRandom, spearman, type Interval } from "./stats";
 
@@ -39,7 +40,36 @@ export interface CandidateSummary {
   usage: { callsPerTurn: number; inputTokensPerTurn: number; outputTokensPerTurn: number; reasoningTokensPerTurn: number };
   providers: Record<string, number>;
   quality: { overall: Interval; byCriterion: Record<string, number>; byJudge: Record<string, number> };
-  scores: (DimensionScores & { composite: number }) | null;
+  cache: CacheStats;
+  /** `compositeNoCache` = mesmo score se o provedor não tivesse cache (custo contrafactual). */
+  scores: (DimensionScores & { composite: number; compositeNoCache: number }) | null;
+}
+
+export interface CacheStats {
+  /** Tokens de entrada lidos do cache ÷ tokens de entrada. */
+  hitRate: number;
+  /** Quanto o cache do provedor economizou (leitura com desconto menos o extra de escrita). */
+  savedUsd: number;
+  /** O que o benchmark teria custado sem cache (cobrado + economizado). */
+  noCacheTotalUsd: number;
+  noCachePerAtendimentoUsd: number;
+  /** Mediana da duração das chamadas sem nada do cache × com parte do prompt do cache. */
+  coldCallMs: number;
+  warmCallMs: number;
+  coldCalls: number;
+  warmCalls: number;
+}
+
+/**
+ * Economia do cache numa chamada, pelos preços do catálogo: tokens lidos do cache
+ * custam `input_cache_read` em vez de `prompt`; escrever no cache pode custar mais
+ * que o `prompt` (ex.: 1,25× na OpenAI a partir do GPT-5.6).
+ */
+export function cacheSavingsUsd(call: { cachedTokens: number; cacheWriteTokens: number }, pricing: Pricing | undefined): number {
+  if (!pricing) return 0;
+  const read = pricing.input_cache_read ?? pricing.prompt;
+  const write = pricing.input_cache_write ?? pricing.prompt;
+  return call.cachedTokens * (pricing.prompt - read) - call.cacheWriteTokens * Math.max(0, write - pricing.prompt);
 }
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
@@ -82,6 +112,7 @@ export function summarizeCandidate(
   judgments: Judgment[],
   gate: GateResult | undefined,
   weights: Weights,
+  pricing?: Pricing,
 ): CandidateSummary {
   const turns = conversations.flatMap((c) => c.turns);
   const answered = turns.filter((t) => t.llmCalls.some((call) => call.status === 200));
@@ -123,6 +154,23 @@ export function summarizeCandidate(
   };
   const passRate = bootstrapMean(conversations.map((c) => (c.failures.length === 0 ? 1 : 0)));
   const overall = bootstrapMean(conversationQuality);
+
+  const okCalls = calls.filter((c) => c.status === 200);
+  const inputTokens = okCalls.reduce((sum, c) => sum + c.inputTokens, 0);
+  const savedUsd = okCalls.reduce((sum, c) => sum + cacheSavingsUsd(c, pricing), 0);
+  const noCacheTotalUsd = totalUsd + savedUsd;
+  const cold = okCalls.filter((c) => c.cachedTokens === 0);
+  const warm = okCalls.filter((c) => c.cachedTokens > 0);
+  const cache: CacheStats = {
+    hitRate: inputTokens ? okCalls.reduce((sum, c) => sum + c.cachedTokens, 0) / inputTokens : 0,
+    savedUsd,
+    noCacheTotalUsd,
+    noCachePerAtendimentoUsd: turns.length ? (noCacheTotalUsd / turns.length) * BUSINESS.turnsPerAtendimento : NaN,
+    coldCallMs: percentile(cold.map((c) => c.latencyMs), 50),
+    warmCallMs: percentile(warm.map((c) => c.latencyMs), 50),
+    coldCalls: cold.length,
+    warmCalls: warm.length,
+  };
 
   let status: CandidateSummary["status"] = "avaliado";
   let disqualifiedReason: string | null = null;
@@ -172,7 +220,14 @@ export function summarizeCandidate(
     },
     providers,
     quality: { overall, byCriterion, byJudge },
-    scores: dimensions ? { ...dimensions, composite: compositeScore(dimensions, weights) } : null,
+    cache,
+    scores: dimensions
+      ? {
+          ...dimensions,
+          composite: compositeScore(dimensions, weights),
+          compositeNoCache: compositeScore({ ...dimensions, cost: costScore(cache.noCachePerAtendimentoUsd) }, weights),
+        }
+      : null,
   };
 }
 

@@ -1,25 +1,37 @@
 import { describe, expect, it } from "vitest";
 import { WEIGHTS, type Candidate } from "./config";
 import type { GateResult } from "./gate";
+import { CRITERIA } from "./geval";
 import type { ConversationRecord, Judgment, TurnRecord } from "./records";
-import { compositeScore, costScore, latencyScore, paretoFrontier, projectMonthlyCost, summarizeCandidate, weightSensitivity } from "./scoring";
+import {
+  cacheSavingsUsd,
+  compositeScore,
+  costScore,
+  latencyScore,
+  paretoFrontier,
+  projectMonthlyCost,
+  summarizeCandidate,
+  weightSensitivity,
+} from "./scoring";
 
 const candidate: Candidate = { key: "x", model: "v/x", label: "X", tier: "econômico", effort: "minimal", why: "" };
+
+const call = { status: 200, provider: "P", cacheWriteTokens: 0, outputTokens: 50, reasoningTokens: 0, error: null };
 
 function turn(overrides: Partial<TurnRecord> = {}): TurnRecord {
   return {
     text: "oi",
     reply: "Olá!",
     cards: [],
-    decision: { intent: "greeting", confidence: 0.9 },
+    decision: { intent: "greeting", understanding: "Cumprimento", confidence: 0.9, reasoning: "Só responder" },
     firstTool: "recordUnderstanding",
     toolCalls: [{ tool: "recordUnderstanding", input: "{}", output: "{}" }],
     guardrails: [],
     latencyMs: 4_000,
     ttftMs: 3_000,
     llmCalls: [
-      { status: 200, provider: "P", costUsd: 0.001, inputTokens: 1_000, outputTokens: 50, reasoningTokens: 0, toolCalls: ["recordUnderstanding"], finishReason: "tool_calls", error: null, latencyMs: 900 },
-      { status: 200, provider: "P", costUsd: 0.001, inputTokens: 1_100, outputTokens: 40, reasoningTokens: 0, toolCalls: [], finishReason: "stop", error: null, latencyMs: 900 },
+      { ...call, costUsd: 0.001, inputTokens: 1_000, cachedTokens: 0, toolCalls: ["recordUnderstanding"], finishReason: "tool_calls", latencyMs: 1_200 },
+      { ...call, costUsd: 0.001, inputTokens: 1_100, cachedTokens: 1_000, toolCalls: [], finishReason: "stop", latencyMs: 800 },
     ],
     error: null,
     ...overrides,
@@ -35,9 +47,12 @@ const judgment = (scenario: string, rep: number, judge: string, score: number): 
   candidate: "x",
   scenario,
   rep,
-  scores: { resolucao: score, conducao: score, clareza: score, aderencia: score, tom: score, idioma: score },
+  scores: Object.fromEntries(CRITERIA.map((c) => [c.id, score])),
   methods: {},
   costUsd: 0,
+  savedUsd: 0,
+  inputTokens: 0,
+  cachedTokens: 0,
   error: null,
 });
 
@@ -93,6 +108,30 @@ describe("resumo de um candidato", () => {
     expect(summary.status).toBe("desqualificado");
     expect(summary.disqualifiedReason).toContain("Provider returned error");
     expect(summary.scores).toBeNull();
+  });
+});
+
+describe("engenharia de cache", () => {
+  // GPT-6 Luna: entrada US$ 0,10/1M, leitura do cache US$ 0,01/1M, escrita US$ 0,125/1M.
+  const luna = { prompt: 0.1e-6, completion: 0.5e-6, input_cache_read: 0.01e-6, input_cache_write: 0.125e-6 };
+
+  it("leitura do cache economiza a diferença de preço; escrita cara desconta", () => {
+    expect(cacheSavingsUsd({ cachedTokens: 1_000_000, cacheWriteTokens: 0 }, luna)).toBeCloseTo(0.09);
+    expect(cacheSavingsUsd({ cachedTokens: 0, cacheWriteTokens: 1_000_000 }, luna)).toBeCloseTo(-0.025);
+  });
+
+  it("sem preço de cache no catálogo, não há economia a contar", () => {
+    expect(cacheSavingsUsd({ cachedTokens: 5_000, cacheWriteTokens: 0 }, { prompt: 1e-6, completion: 2e-6 })).toBe(0);
+  });
+
+  it("resumo traz acerto de cache, custo contrafactual e latência fria × quente", () => {
+    const summary = summarizeCandidate(candidate, [conversation("a", 1)], [judgment("a", 1, "j1", 4)], undefined, WEIGHTS, luna);
+    expect(summary.cache.hitRate).toBeCloseTo(1_000 / 2_100);
+    expect(summary.cache.savedUsd).toBeCloseTo(1_000 * 0.09e-6);
+    expect(summary.cache.noCacheTotalUsd).toBeCloseTo(summary.cost.totalUsd + summary.cache.savedUsd);
+    expect(summary.cache.coldCallMs).toBe(1_200);
+    expect(summary.cache.warmCallMs).toBe(800);
+    expect(summary.scores!.compositeNoCache).toBeLessThanOrEqual(summary.scores!.composite);
   });
 });
 

@@ -7,14 +7,14 @@
  * é iniciado pelo `npm run benchmark`.
  */
 import { execSync } from "node:child_process";
-import { mkdirSync } from "node:fs";
+import { appendFileSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import type { Employee } from "@/domain/employee";
 import type { ChatMessage } from "@/domain/message";
 import { checkScenario } from "../checks";
 import type { Scenario } from "../scenarios";
 import { installCostMeter, type CostMeter } from "./cost-meter";
-import { conversationsFile, databaseFile, JOB_ENV, jobSchema, PROGRESS_PREFIX, type CandidateJob, type Progress } from "./job";
+import { conversationsFile, databaseFile, JOB_ENV, jobSchema, PROGRESS_PREFIX, scenariosForRep, type CandidateJob, type Progress } from "./job";
 import { appendJsonl, clip, conversationKey, conversationRecordSchema, readJsonl, type ConversationRecord, type TurnRecord } from "./records";
 import { describeCard } from "./transcript";
 
@@ -28,10 +28,12 @@ process.env.LEGACY_FAILURE_RATE = "0";
 process.env.LLM_MODEL = `openrouter/${job.model}`;
 process.env.OPENROUTER_REASONING_EFFORT = job.effort;
 
-const meter = installCostMeter();
+// Diagnóstico opcional: grava cada corpo enviado ao OpenRouter (para ver a ordem do prompt).
+const dumpFile = process.env.BENCHMARK_DUMP_REQUESTS;
+const meter = installCostMeter(dumpFile ? (body) => appendFileSync(dumpFile, `${body}\n`) : undefined);
 
 const MAX_ATTEMPTS = 3;
-const RETRY_WAIT_MS = 20_000;
+const RETRY_WAIT_MS = 15_000;
 
 const conversationCost = (record: ConversationRecord) =>
   record.turns.flatMap((t) => t.llmCalls).reduce((sum, c) => sum + c.costUsd, 0);
@@ -46,15 +48,14 @@ function report(progress: Progress) {
 async function main() {
   const { runAgentTurn } = await import("@/agent/run-turn");
   const { createServices } = await import("@/infrastructure/container");
-  const { scenarios: all } = await import("../scenarios");
-  const scenarios = job.scenarioFilter ? all.filter((s) => s.name.toLowerCase().includes(job.scenarioFilter!.toLowerCase())) : all;
 
   const file = conversationsFile(job.candidate);
   const done = new Set(readJsonl(file, conversationRecordSchema).map(conversationKey));
   let spent = 0;
 
+  // Cenários do mesmo modelo em sequência: o cache do provedor fica quente entre eles.
   for (let rep = 1; rep <= job.reps; rep++) {
-    const todo = scenarios.filter((s) => !done.has(conversationKey({ candidate: job.candidate, scenario: s.name, rep })));
+    const todo = scenariosForRep(rep, job.scenarioFilter).filter((s) => !done.has(conversationKey({ candidate: job.candidate, scenario: s.name, rep })));
     if (todo.length === 0) continue;
     // Cada repetição começa dos dados de exemplo originais.
     execSync("npm run db:setup", { stdio: "ignore", env: process.env });
@@ -122,7 +123,14 @@ async function runScenario(job: CandidateJob, scenario: Scenario, rep: number, e
       text,
       reply: reply?.text ?? "",
       cards: reply?.cards.map(describeCard) ?? [],
-      decision: trace?.decision ? { intent: trace.decision.intent, confidence: trace.decision.confidence } : null,
+      decision: trace?.decision
+        ? {
+            intent: trace.decision.intent,
+            understanding: trace.decision.understanding,
+            confidence: trace.decision.confidence,
+            reasoning: trace.decision.reasoning,
+          }
+        : null,
       firstTool: trace?.toolCalls[0]?.tool ?? null,
       toolCalls: (trace?.toolCalls ?? []).map((c) => ({ tool: c.tool, input: clip(c.input, 200), output: clip(c.output) })),
       guardrails: trace?.guardrails ?? [],

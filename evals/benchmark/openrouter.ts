@@ -8,7 +8,9 @@
  *   GET  /key                     limite e uso da chave (gasto real)
  *   POST /chat/completions        juízes e pré-voo; `usage.cost` vem em toda resposta
  */
+import { createHash } from "node:crypto";
 import { z } from "zod";
+import { appendJsonl, readJsonl, RESULTS_DIR } from "./records";
 
 const API = "https://openrouter.ai/api/v1";
 
@@ -18,7 +20,14 @@ function apiKey(): string {
   return key;
 }
 
-const pricingSchema = z.object({ prompt: z.coerce.number(), completion: z.coerce.number() });
+/** US$ por token. Leitura/escrita de cache só existem para modelos que fazem cache. */
+export const pricingSchema = z.object({
+  prompt: z.coerce.number(),
+  completion: z.coerce.number(),
+  input_cache_read: z.coerce.number().optional(),
+  input_cache_write: z.coerce.number().optional(),
+});
+export type Pricing = z.infer<typeof pricingSchema>;
 
 const modelSchema = z.object({
   id: z.string(),
@@ -57,6 +66,7 @@ const usageSchema = z.object({
   prompt_tokens: z.number().default(0),
   completion_tokens: z.number().default(0),
   cost: z.number().default(0),
+  prompt_tokens_details: z.object({ cached_tokens: z.number().nullish() }).nullish(),
   completion_tokens_details: z.object({ reasoning_tokens: z.number().nullish() }).nullish(),
 });
 
@@ -85,10 +95,14 @@ export interface Completion {
   text: string;
   toolCalls: string[];
   logprobs: TokenLogprob[];
+  /** Custo cobrado quando a resposta foi gerada (num acerto do cache local, nada é cobrado de novo). */
   costUsd: number;
   inputTokens: number;
+  cachedTokens: number;
   outputTokens: number;
   error: string | null;
+  /** true = veio do cache local de respostas, sem chamar a API. */
+  fromCache: boolean;
 }
 
 async function getJson(path: string, auth: boolean): Promise<unknown> {
@@ -115,6 +129,39 @@ export async function keyInfo(): Promise<KeyInfo> {
   return keySchema.parse(await getJson("/key", true)).data;
 }
 
+/**
+ * Cache local de respostas, endereçado pelo conteúdo: a chave é o hash de
+ * modelo + mensagens + parâmetros (+ `salt`, que separa amostras repetidas de propósito).
+ * Pedido idêntico ao de uma execução anterior não é pago de novo.
+ */
+const RESPONSE_CACHE = `${RESULTS_DIR}/respostas.jsonl`;
+const cachedResponseSchema = z.object({ key: z.string(), completion: z.custom<Completion>() });
+let responseCache: Map<string, Completion> | null = null;
+
+export function responseCacheKey(body: Record<string, unknown>, salt = ""): string {
+  return createHash("sha256").update(JSON.stringify(body)).update(salt).digest("hex").slice(0, 32);
+}
+
+function loadResponseCache(): Map<string, Completion> {
+  responseCache ??= new Map(readJsonl(RESPONSE_CACHE, cachedResponseSchema).map((r) => [r.key, r.completion]));
+  return responseCache;
+}
+
+/** Chat com o cache local: devolve a resposta guardada ou chama a API e guarda se deu certo. */
+export async function cachedChat(body: Record<string, unknown>, salt = ""): Promise<Completion> {
+  const key = responseCacheKey(body, salt);
+  const hit = loadResponseCache().get(key);
+  if (hit) return { ...hit, fromCache: true };
+  const result = await chat(body);
+  if (result.ok) {
+    // As alternativas só importam nos dígitos da nota; nos outros tokens basta o texto.
+    const logprobs = result.logprobs.map((t) => (/[1-5]/.test(t.token) ? t : { ...t, top_logprobs: [] }));
+    loadResponseCache().set(key, result);
+    appendJsonl(RESPONSE_CACHE, { key, completion: { ...result, logprobs } });
+  }
+  return result;
+}
+
 /** Uma chamada de chat sem streaming. Erro HTTP vira `ok: false` com a mensagem, não exceção. */
 export async function chat(body: Record<string, unknown>, timeoutMs = 120_000): Promise<Completion> {
   const response = await fetch(`${API}/chat/completions`, {
@@ -135,7 +182,9 @@ export async function chat(body: Record<string, unknown>, timeoutMs = 120_000): 
     logprobs: choice?.logprobs?.content ?? [],
     costUsd: data.usage?.cost ?? 0,
     inputTokens: data.usage?.prompt_tokens ?? 0,
+    cachedTokens: data.usage?.prompt_tokens_details?.cached_tokens ?? 0,
     outputTokens: data.usage?.completion_tokens ?? 0,
     error: data.error?.message ?? (response.ok ? null : `HTTP ${response.status}`),
+    fromCache: false,
   };
 }
