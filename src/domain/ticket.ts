@@ -88,11 +88,12 @@ const GENERIC_WORDS = new Set(["problema", "problemas", "erro", "erros", "falha"
 const keywords = (title: string) => new Set(tokenize(title).filter((word) => word.length >= 3 && !GENERIC_WORDS.has(word)));
 
 /**
- * Possível duplicado: mesma categoria e pelo menos uma palavra relevante em comum no título.
- * Só a categoria juntava "Tela não está ligando" com "Segundo monitor para home office".
+ * Possível duplicado: mesmo tipo, mesma categoria e pelo menos uma palavra relevante em comum no título.
+ * Só a categoria juntava "Tela não está ligando" com "Segundo monitor para home office"; e um pedido
+ * (REQ) de monitor novo não é o mesmo problema que um incidente (INC) com o monitor.
  */
-export function sameProblem(ticket: Pick<Ticket, "category" | "title">, category: Category, title: string): boolean {
-  if (ticket.category !== category) return false;
+export function sameProblem(ticket: Pick<Ticket, "type" | "category" | "title">, candidate: Pick<Ticket, "type" | "category" | "title">): boolean {
+  if (ticket.type !== candidate.type || ticket.category !== candidate.category) return false;
   const existing = keywords(ticket.title);
-  return [...keywords(title)].some((word) => existing.has(word));
+  return [...keywords(candidate.title)].some((word) => existing.has(word));
 }

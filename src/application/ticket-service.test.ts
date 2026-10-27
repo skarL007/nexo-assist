@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DomainError } from "@/domain/errors";
+import type { Category } from "@/domain/ticket";
 import { FlakyTicketRepository } from "@/infrastructure/legacy-ticket-system";
 import { fixedClock, InMemoryTicketRepository, makeTicket } from "./test-doubles";
 import { TicketService } from "./ticket-service";
@@ -25,22 +26,30 @@ describe("privacidade", () => {
 });
 
 describe("duplicidade e reabertura", () => {
-  it("considera duplicado um aberto da mesma categoria com palavra em comum no título", async () => {
+  const incident = (category: Category, title: string) => ({ type: "INC" as const, category, title });
+
+  it("considera duplicado um aberto do mesmo tipo e categoria com palavra em comum no título", async () => {
     const { service } = setup();
-    expect(await service.findPossibleDuplicates("ana", "hardware", "Notebook continua lento")).toHaveLength(1);
-    expect(await service.findPossibleDuplicates("ana", "network", "Notebook continua lento")).toHaveLength(0);
+    expect(await service.findPossibleDuplicates("ana", incident("hardware", "Notebook continua lento"))).toHaveLength(1);
+    expect(await service.findPossibleDuplicates("ana", incident("network", "Notebook continua lento"))).toHaveLength(0);
   });
 
   it("não oferece chamado da mesma categoria que é outro problema", async () => {
     // Achado no teste em produção: "tela não liga" oferecia o pedido de segundo monitor.
     const { service } = setup([makeTicket({ code: "REQ-10442", type: "REQ", title: "Segundo monitor para home office" })]);
-    expect(await service.findPossibleDuplicates("ana", "hardware", "Tela não está ligando")).toHaveLength(0);
+    expect(await service.findPossibleDuplicates("ana", incident("hardware", "Tela não está ligando"))).toHaveLength(0);
+  });
+
+  it("pedido (REQ) e incidente (INC) não são o mesmo problema, mesmo com palavra em comum", async () => {
+    // "Monitor da direita não liga" (INC) não é o pedido "Segundo monitor para home office" (REQ).
+    const { service } = setup([makeTicket({ code: "REQ-10442", type: "REQ", title: "Segundo monitor para home office" })]);
+    expect(await service.findPossibleDuplicates("ana", incident("hardware", "Monitor da direita não liga"))).toHaveLength(0);
   });
 
   it("ignora acentos, maiúsculas e palavras genéricas na comparação", async () => {
     const { service } = setup([makeTicket({ title: "Erro na impressão do 3º andar" })]);
-    expect(await service.findPossibleDuplicates("ana", "hardware", "IMPRESSAO falhando")).toHaveLength(1);
-    expect(await service.findPossibleDuplicates("ana", "hardware", "Erro no teclado")).toHaveLength(0);
+    expect(await service.findPossibleDuplicates("ana", incident("hardware", "IMPRESSAO falhando"))).toHaveLength(1);
+    expect(await service.findPossibleDuplicates("ana", incident("hardware", "Erro no teclado"))).toHaveLength(0);
   });
 
   it("lista como reabríveis só os resolvidos há até 7 dias", async () => {
