@@ -33,6 +33,10 @@ export function env(): Env {
   if (parsed.NODE_ENV === "production" && parsed.AUTH_SECRET === DEV_SECRET) {
     throw new Error("Defina AUTH_SECRET em produção.");
   }
+  // Na Vercel o disco é temporário: sem DATABASE_URL os dados sumiriam a cada deploy.
+  if (parsed.NODE_ENV === "production" && !defined.DATABASE_URL) {
+    throw new Error("Defina DATABASE_URL em produção.");
+  }
   cached = parsed;
   return parsed;
 }

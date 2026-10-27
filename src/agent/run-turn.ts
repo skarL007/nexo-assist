@@ -10,7 +10,7 @@
 import { RequestContext } from "@mastra/core/request-context";
 import type { ChatStreamEvent } from "@/contracts/chat";
 import { env } from "@/config/env";
-import { agentCanReply } from "@/domain/conversation";
+import { agentCanReply, EMPLOYEE_MESSAGES_PER_DAY, EMPLOYEE_MESSAGES_PER_HOUR } from "@/domain/conversation";
 import type { Employee } from "@/domain/employee";
 import { DomainError } from "@/domain/errors";
 import type { ChatMessage, DraftSnapshot, ToolCallLog, TurnTrace } from "@/domain/message";
@@ -24,9 +24,14 @@ import { TURN_KEY, TurnRecorder, type TurnContext } from "./turn-context";
 const HISTORY_LIMIT = 20;
 const MAX_STEPS = 6;
 const THINKING_LEVEL = "minimal";
-const DAY_MS = 24 * 60 * 60 * 1000;
+/** Teto de tokens de saída por passo: respostas curtas por regra, não só por pedido no prompt. */
+const MAX_OUTPUT_TOKENS = 800;
+/** Mensagens longas do histórico são cortadas antes de ir ao modelo. */
+const HISTORY_MESSAGE_MAX_CHARS = 1500;
+const HOUR_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * HOUR_MS;
 
-export async function* runAgentTurn(employee: Employee, text: string): AsyncGenerator<ChatStreamEvent> {
+export async function* runAgentTurn(employee: Employee, text: string, abortSignal?: AbortSignal): AsyncGenerator<ChatStreamEvent> {
   const startedAt = new Date();
   const recorder = new TurnRecorder();
   const services = createServices({
@@ -34,7 +39,7 @@ export async function* runAgentTurn(employee: Employee, text: string): AsyncGene
   });
 
   const conversation = await services.conversations.getOrStart(employee.id);
-  await assertWithinLimits(services, conversation.id);
+  await assertWithinPersonalLimits(services, employee.id, conversation.id);
 
   const employeeMessage = await services.messages.add({ conversationId: conversation.id, role: "employee", text });
   yield { type: "employee_message", message: employeeMessage };
@@ -45,22 +50,40 @@ export async function* runAgentTurn(employee: Employee, text: string): AsyncGene
     return;
   }
 
+  // Teto global conferido DEPOIS de gravar: pedidos simultâneos enxergam uns aos outros.
+  await assertWithinDailyBudget(services);
   if (!env().GOOGLE_GENERATIVE_AI_API_KEY) throw new Error("GOOGLE_GENERATIVE_AI_API_KEY não configurada.");
 
+  try {
+    yield* replyWithAgent({ employee, conversationId: conversation.id, startedAt, services, recorder }, abortSignal);
+  } catch (error) {
+    // Rascunho criado num turno que falhou nunca foi mostrado: não pode ser confirmado depois.
+    await services.drafts.cancelPending(conversation.id, startedAt);
+    throw error;
+  }
+
+  const updated = await services.conversations.get(conversation.id);
+  yield { type: "done", conversation: await conversationView(services, updated) };
+}
+
+/** Roda o modelo com as tools, repassa os eventos e salva a resposta com o trace. */
+async function* replyWithAgent(turn: TurnContext, abortSignal?: AbortSignal): AsyncGenerator<ChatStreamEvent> {
+  const { employee, conversationId, startedAt, services, recorder } = turn;
+
   const [history, pendingDrafts] = await Promise.all([
-    services.messages.listRecent(conversation.id, HISTORY_LIMIT),
-    services.drafts.pending(conversation.id),
+    services.messages.listRecent(conversationId, HISTORY_LIMIT),
+    services.drafts.pending(conversationId),
   ]);
 
   const requestContext = new RequestContext();
-  const turn: TurnContext = { employee, conversationId: conversation.id, startedAt, services, recorder };
   requestContext.set(TURN_KEY, turn);
 
   const stream = await nexoAgent().stream(toModelMessages(history), {
     requestContext,
     system: turnBriefing(employee, startedAt, pendingDrafts),
     maxSteps: MAX_STEPS,
-    modelSettings: { temperature: 0.2 },
+    abortSignal,
+    modelSettings: { temperature: 0.2, maxOutputTokens: MAX_OUTPUT_TOKENS },
     // Gemini "pensa" antes de responder; para atendimento, raciocínio mínimo basta e corta a latência.
     providerOptions: { google: { thinkingConfig: { thinkingLevel: THINKING_LEVEL } } },
     // Passo 0: obriga o modelo a registrar o que entendeu. Depois de transferir, não age mais.
@@ -107,23 +130,33 @@ export async function* runAgentTurn(employee: Employee, text: string): AsyncGene
   };
 
   await services.messages.add({
-    conversationId: conversation.id,
+    conversationId,
     role: "agent",
     text: reply.trim() || fallbackReply(recorder),
     cards: recorder.cards,
     trace,
   });
-
-  const updated = await services.conversations.get(conversation.id);
-  yield { type: "done", conversation: await conversationView(services, updated) };
 }
 
-async function assertWithinLimits(services: Services, conversationId: string) {
+/** Limites por sessão e por pessoa (somando todas as conversas dela). */
+async function assertWithinPersonalLimits(services: Services, employeeId: string, conversationId: string) {
   if ((await services.conversations.remainingMessages(conversationId)) <= 0) {
     throw new DomainError("message_limit", "Você chegou ao limite de mensagens desta sessão. Comece uma nova conversa para continuar.");
   }
-  const repliesLast24h = await services.messages.countByRoleSince("agent", new Date(Date.now() - DAY_MS));
-  if (repliesLast24h >= env().DAILY_AGENT_TURN_LIMIT) {
+  const now = Date.now();
+  const [lastHour, lastDay] = await Promise.all([
+    services.messages.countByEmployeeSince(employeeId, new Date(now - HOUR_MS)),
+    services.messages.countByEmployeeSince(employeeId, new Date(now - DAY_MS)),
+  ]);
+  if (lastHour >= EMPLOYEE_MESSAGES_PER_HOUR || lastDay >= EMPLOYEE_MESSAGES_PER_DAY) {
+    throw new DomainError("message_limit", "Você enviou muitas mensagens em pouco tempo. Tente de novo mais tarde.");
+  }
+}
+
+/** Teto global de mensagens que chegam ao modelo em 24h (proteção de custo do deploy). */
+async function assertWithinDailyBudget(services: Services) {
+  const last24h = await services.messages.countByRoleSince("employee", new Date(Date.now() - DAY_MS));
+  if (last24h > env().DAILY_AGENT_TURN_LIMIT) {
     throw new DomainError("daily_limit", "O Nexo Assist atingiu o limite de uso de hoje. Fale com o service desk pelo ramal 4000.");
   }
 }
@@ -146,10 +179,11 @@ function turnBriefing(employee: Employee, now: Date, pendingDrafts: DraftSnapsho
 /** Histórico em formato de chat. Cards viram um resumo curto entre colchetes (economiza tokens). */
 function toModelMessages(history: ChatMessage[]) {
   return history.map((message) => {
-    if (message.role === "employee") return { role: "user" as const, content: message.text };
+    const text = message.text.slice(0, HISTORY_MESSAGE_MAX_CHARS);
+    if (message.role === "employee") return { role: "user" as const, content: text };
     const prefix = message.role === "analyst" ? `[Analista ${message.authorName}] ` : message.role === "system" ? "[Sistema] " : "";
     const cards = message.cards.map(describeCard).filter(Boolean).join(" ");
-    return { role: "assistant" as const, content: `${prefix}${message.text} ${cards}`.trim() };
+    return { role: "assistant" as const, content: `${prefix}${text} ${cards}`.trim() };
   });
 }
 

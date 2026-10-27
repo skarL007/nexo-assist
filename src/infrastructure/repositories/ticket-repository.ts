@@ -1,5 +1,6 @@
-import { desc, eq, like } from "drizzle-orm";
+import { desc, eq, like, sql } from "drizzle-orm";
 import type { TicketRepository } from "@/application/ports";
+import { DomainError } from "@/domain/errors";
 import type { Ticket, TicketType } from "@/domain/ticket";
 import type { Database } from "../db/client";
 import { ticketComments, tickets } from "../db/schema";
@@ -20,13 +21,23 @@ export class DrizzleTicketRepository implements TicketRepository {
   }
 
   async nextCode(type: TicketType): Promise<string> {
-    const rows = await this.db.select({ code: tickets.code }).from(tickets).where(like(tickets.code, `${type}-%`));
-    const highest = rows.reduce((max, row) => Math.max(max, Number(row.code.split("-")[1])), FIRST_NUMBER[type]);
-    return `${type}-${highest + 1}`;
+    const [row] = await this.db
+      .select({ highest: sql<number | null>`max(cast(substr(${tickets.code}, 5) as integer))` })
+      .from(tickets)
+      .where(like(tickets.code, `${type}-%`));
+    return `${type}-${Math.max(row?.highest ?? 0, FIRST_NUMBER[type]) + 1}`;
   }
 
+  /** Se dois chamados pegarem o mesmo número ao mesmo tempo, avisa com "conflict" (o serviço tenta de novo). */
   async insert(ticket: Ticket): Promise<void> {
-    await this.db.insert(tickets).values(ticket);
+    try {
+      await this.db.insert(tickets).values(ticket);
+    } catch (error) {
+      if (String((error as Error).message).includes("UNIQUE")) {
+        throw new DomainError("conflict", `O código ${ticket.code} acabou de ser usado.`);
+      }
+      throw error;
+    }
   }
 
   async update(ticket: Ticket): Promise<void> {

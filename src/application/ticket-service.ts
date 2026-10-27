@@ -52,6 +52,15 @@ export class TicketService {
   }
 
   async create(employeeId: string, fields: NewTicketFields): Promise<Ticket> {
+    // Dois chamados criados no mesmo instante podem pegar o mesmo número: tenta o próximo.
+    return withRetry(() => this.createOnce(employeeId, fields), {
+      attempts: 3,
+      baseDelayMs: 0,
+      shouldRetry: (error) => error instanceof DomainError && error.code === "conflict",
+    });
+  }
+
+  private async createOnce(employeeId: string, fields: NewTicketFields): Promise<Ticket> {
     const now = this.clock.now();
     const code = await this.call(() => this.repo.nextCode(fields.type));
     const ticket: Ticket = {

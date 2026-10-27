@@ -50,6 +50,7 @@ export function ChatScreen({ firstName }: { firstName: string }) {
   }, [messageCount, live?.text, live?.steps.length, live?.cards.length, optimisticText]);
 
   const send = useCallback((text: string) => void dispatch(sendMessage(text)), [dispatch]);
+  const shortcutDraftId = useMemo(() => latestPendingDraftId(conversation), [conversation]);
 
   const actions: CardActions = useMemo(
     () => ({
@@ -58,9 +59,10 @@ export function ChatScreen({ firstName }: { firstName: string }) {
         onConfirm: () => dispatch(resolveDraft({ draftId, action: "confirm" })),
         onCancel: () => dispatch(resolveDraft({ draftId, action: "cancel" })),
         onEdit: () => composer.current?.prefill(`Quero mudar no rascunho D-${draftId}: `),
+        shortcut: draftId === shortcutDraftId,
       }),
     }),
-    [dispatch, send],
+    [dispatch, send, shortcutDraftId],
   );
 
   if (!conversation) {
@@ -131,6 +133,17 @@ export function ChatScreen({ firstName }: { firstName: string }) {
       </footer>
     </>
   );
+}
+
+/** Rascunho pendente mais recente: o único que o atalho de teclado confirma (nunca vários de uma vez). */
+function latestPendingDraftId(conversation: ConversationView | null): number | null {
+  if (!conversation) return null;
+  const pendingIds = conversation.messages
+    .flatMap((message) => message.cards)
+    .flatMap((card) =>
+      card.kind === "draft" && (conversation.draftStatuses[card.draft.id] ?? card.draft.status) === "pending" ? [card.draft.id] : [],
+    );
+  return pendingIds.at(-1) ?? null;
 }
 
 function ConversationStatus({ conversation }: { conversation: ConversationView }) {

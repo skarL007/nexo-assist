@@ -39,18 +39,27 @@ export interface NewMessage {
 export interface ConversationRepository {
   findById(id: string): Promise<Conversation | null>;
   findLatestOpenByEmployee(employeeId: string): Promise<Conversation | null>;
-  listAll(): Promise<Conversation[]>;
+  /** As mais recentes primeiro, até `limit`. */
+  listRecent(limit: number): Promise<Conversation[]>;
   insert(conversation: Conversation): Promise<void>;
-  update(conversation: Conversation): Promise<void>;
+  /**
+   * Grava só se o estado no banco ainda for `expectedStatus` (evita que duas
+   * ações ao mesmo tempo se sobrescrevam). Devolve false se outra ação venceu.
+   */
+  update(conversation: Conversation, expectedStatus: Conversation["status"]): Promise<boolean>;
 }
 
 export interface MessageRepository {
   add(message: NewMessage): Promise<ChatMessage>;
   listByConversation(conversationId: string): Promise<ChatMessage[]>;
   listRecent(conversationId: string, limit: number): Promise<ChatMessage[]>;
+  /** Última mensagem de cada conversa, sem o trace (lista do console). */
   lastByConversations(conversationIds: string[]): Promise<Map<string, ChatMessage>>;
   countByRole(conversationId: string, role: MessageRole): Promise<number>;
+  /** Mensagens de um papel no sistema todo desde `since` (teto global de custo). */
   countByRoleSince(role: MessageRole, since: Date): Promise<number>;
+  /** Mensagens do funcionário em todas as conversas dele desde `since` (limite por pessoa). */
+  countByEmployeeSince(employeeId: string, since: Date): Promise<number>;
 }
 
 export interface Draft {
@@ -68,6 +77,13 @@ export interface DraftRepository {
   findById(id: number): Promise<Draft | null>;
   listByConversation(conversationId: string): Promise<Draft[]>;
   setStatus(id: number, status: DraftStatus): Promise<void>;
+  /**
+   * Muda de "pending" para `status` de forma atômica: só um pedido vence.
+   * Devolve o rascunho se conseguiu, ou null se ele não estava mais pendente.
+   */
+  claimPending(id: number, employeeId: string, status: DraftStatus): Promise<Draft | null>;
+  /** Descarta os pendentes da conversa (opcionalmente só os criados desde `since`). */
+  cancelPending(conversationId: string, since?: Date): Promise<void>;
 }
 
 export interface Clock {

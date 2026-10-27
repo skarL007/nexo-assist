@@ -45,7 +45,7 @@ export default async function LoginPage() {
         </div>
         <footer className="flex justify-between text-xs text-muted-foreground">
           <span>© Nexo · Tecnologia da Informação</span>
-          <span>Privacidade e uso de dados</span>
+          <span>Protótipo · todos os dados são fictícios</span>
         </footer>
       </section>
     </main>

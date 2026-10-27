@@ -41,6 +41,17 @@ describe("transferência para analista", () => {
     expect(released.analystId).toBeNull();
   });
 
+  it("um analista não devolve nem encerra a conversa que outro assumiu", async () => {
+    const { service } = setup();
+    const { id } = await service.getOrStart("ana");
+    await service.handoff(id, { reason: "employee_request", summary: "pediu", ticketCode: null, confidence: null });
+    await service.assume(id, rafael);
+
+    const juliana = { ...rafael, id: "juliana", name: "Juliana Costa" };
+    await expect(service.release(id, juliana)).rejects.toMatchObject({ code: "forbidden" });
+    await expect(service.close(id, juliana)).rejects.toMatchObject({ code: "forbidden" });
+  });
+
   it("analista só responde depois de assumir", async () => {
     const { service } = setup();
     const { id } = await service.getOrStart("ana");

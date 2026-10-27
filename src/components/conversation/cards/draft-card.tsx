@@ -20,6 +20,8 @@ export interface DraftActions {
   onConfirm: () => Promise<unknown>;
   onCancel: () => Promise<unknown>;
   onEdit: () => void;
+  /** Só o rascunho pendente mais recente atende ao Ctrl/⌘ + Enter. */
+  shortcut?: boolean;
 }
 
 /** Rascunho de chamado: nada é criado até o funcionário clicar em Confirmar. */
@@ -38,7 +40,7 @@ export function DraftCard({ draft, status, actions }: { draft: DraftSnapshot; st
 
   // Ctrl/⌘ + Enter confirma o rascunho mais recente, como no protótipo.
   useEffect(() => {
-    if (!pending) return;
+    if (!pending || !actions.shortcut || busy) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
@@ -47,12 +49,12 @@ export function DraftCard({ draft, status, actions }: { draft: DraftSnapshot; st
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [pending, actions]);
+  }, [pending, actions, busy]);
 
   const footer = pending ? (
     <>
       <Button size="sm" disabled={busy} onClick={() => run(actions.onConfirm)}>
-        Confirmar <kbd className="ml-1 rounded bg-primary-foreground/20 px-1 text-[10px]">Ctrl ↵</kbd>
+        Confirmar {actions.shortcut && <kbd className="ml-1 rounded bg-primary-foreground/20 px-1 text-[10px]">Ctrl ↵</kbd>}
       </Button>
       <Button size="sm" variant="outline" disabled={busy} onClick={actions.onEdit}>
         Editar

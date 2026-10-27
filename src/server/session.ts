@@ -42,8 +42,11 @@ export async function currentUser(): Promise<Employee | null> {
   const token = (await cookies()).get(COOKIE)?.value;
   if (!token) return null;
   try {
-    const { payload } = await jwtVerify(token, secret());
-    return payload.sub ? await createServices().employees.findById(payload.sub) : null;
+    const { payload } = await jwtVerify(token, secret(), { algorithms: ["HS256"] });
+    const employee = payload.sub ? await createServices().employees.findById(payload.sub) : null;
+    // Sessão emitida antes da última troca de senha deixa de valer.
+    if (!employee || (payload.iat ?? 0) * 1000 < employee.passwordChangedAt.getTime()) return null;
+    return employee;
   } catch {
     return null;
   }
