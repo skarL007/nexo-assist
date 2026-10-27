@@ -1,0 +1,63 @@
+{
+  "criteria": "decisao,regras,conducao,clareza,transparencia,tom,idioma",
+  "judges": {
+    "kimi-k3": {
+      "excelente": {
+        "decisao": 4.795514417450079,
+        "regras": 4.94739135245021,
+        "conducao": 4.791135439171013,
+        "clareza": 4.9360199155422775,
+        "transparencia": 4.376783502879115,
+        "tom": 4.023250224178323,
+        "idioma": 4.996951192921336
+      },
+      "mediana": {
+        "decisao": 2.3008402585709926,
+        "regras": 3.2214776134966954,
+        "conducao": 1.5590642414596407,
+        "clareza": 1.3357325562978672,
+        "transparencia": 1.4363831721122138,
+        "tom": 3.1707965059123078,
+        "idioma": 4.5157127142221345
+      },
+      "ruim": {
+        "decisao": 1.02016183179173,
+        "regras": 1.005087107262508,
+        "conducao": 1.0277342688782458,
+        "clareza": 1.0973030604754834,
+        "transparencia": 1.0008179376207453,
+        "tom": 1.5118028332123112,
+        "idioma": 1.2311508468590773
+      }
+    },
+    "glm-5.3": {
+      "excelente": {
+        "decisao": 5,
+        "regras": 5,
+        "conducao": 5,
+        "clareza": 5,
+        "transparencia": 5,
+        "tom": 4.5,
+        "idioma": 5
+      },
+      "mediana": {
+        "decisao": 2.5,
+        "regras": 3.5,
+        "conducao": 2,
+        "clareza": 2,
+        "transparencia": 2.5,
+        "tom": 4,
+        "idioma": 4.5
+      },
+      "ruim": {
+        "decisao": 1,
+        "regras": 1,
+        "conducao": 1,
+        "clareza": 1.5,
+        "transparencia": 1,
+        "tom": 2.5,
+        "idioma": 1.5
+      }
+    }
+  }
+}
