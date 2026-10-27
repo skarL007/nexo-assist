@@ -3,6 +3,7 @@
  * Leitura preguiçosa: o build do Next não quebra se uma chave faltar.
  */
 import { z } from "zod";
+import { REASONING_EFFORTS } from "@/agent/model-config";
 
 const DEV_SECRET = "dev-only-secret-change-me-dev-only-secret";
 
@@ -10,6 +11,10 @@ const schema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   /** Chave do Gemini (Google AI Studio). O Mastra lê esta variável sozinho. */
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
+  /** Chave do OpenRouter: benchmark de modelos e LLM_MODEL="openrouter/<fornecedor>/<modelo>". */
+  OPENROUTER_API_KEY: z.string().optional(),
+  /** Raciocínio pedido aos modelos via OpenRouter ("minimal" = mesmo nível do Gemini direto). */
+  OPENROUTER_REASONING_EFFORT: z.enum(REASONING_EFFORTS).default("minimal"),
   /** Formato "provedor/modelo" do roteador de modelos do Mastra. */
   LLM_MODEL: z.string().default("google/gemini-3.5-flash"),
   DATABASE_URL: z.string().default("file:local.db"),

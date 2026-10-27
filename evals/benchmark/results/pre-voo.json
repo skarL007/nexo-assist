@@ -1,0 +1,90 @@
+{
+  "gemini-3.5-flash": {
+    "candidate": "gemini-3.5-flash",
+    "model": "google/gemini-3.5-flash",
+    "effort": "minimal",
+    "passed": true,
+    "toolCalled": "recordUnderstanding",
+    "provider": "Google",
+    "error": null,
+    "costUsd": 0.000495,
+    "checkedAt": "2026-10-27T19:35:18.788Z"
+  },
+  "gemini-3.8-flash": {
+    "candidate": "gemini-3.8-flash",
+    "model": "google/gemini-3.8-flash",
+    "effort": "minimal",
+    "passed": true,
+    "toolCalled": "recordUnderstanding",
+    "provider": "Google",
+    "error": null,
+    "costUsd": 0.0005385,
+    "checkedAt": "2026-10-27T19:35:22.849Z"
+  },
+  "gemini-3.5-flash-lite": {
+    "candidate": "gemini-3.5-flash-lite",
+    "model": "google/gemini-3.5-flash-lite",
+    "effort": "minimal",
+    "passed": true,
+    "toolCalled": "recordUnderstanding",
+    "provider": "Google",
+    "error": null,
+    "costUsd": 0.0001319,
+    "checkedAt": "2026-10-27T19:35:24.526Z"
+  },
+  "gpt-6-luna": {
+    "candidate": "gpt-6-luna",
+    "model": "openai/gpt-6-luna",
+    "effort": "minimal",
+    "passed": true,
+    "toolCalled": "recordUnderstanding",
+    "provider": "OpenAI",
+    "error": null,
+    "costUsd": 0.0000363,
+    "checkedAt": "2026-10-27T19:35:26.058Z"
+  },
+  "deepseek-v4.1-flash": {
+    "candidate": "deepseek-v4.1-flash",
+    "model": "deepseek/deepseek-v4.1-flash",
+    "effort": "minimal",
+    "passed": true,
+    "toolCalled": "recordUnderstanding",
+    "provider": "Sail Research",
+    "error": null,
+    "costUsd": 0.00005908,
+    "checkedAt": "2026-10-27T19:35:27.774Z"
+  },
+  "mistral-small-4": {
+    "candidate": "mistral-small-4",
+    "model": "mistralai/mistral-small-2603",
+    "effort": "minimal",
+    "passed": true,
+    "toolCalled": "recordUnderstanding",
+    "provider": "Mistral",
+    "error": null,
+    "costUsd": 0.0000468,
+    "checkedAt": "2026-10-27T19:35:29.207Z"
+  },
+  "qwen3.8-flash": {
+    "candidate": "qwen3.8-flash",
+    "model": "qwen/qwen3.8-flash",
+    "effort": "minimal",
+    "passed": false,
+    "toolCalled": null,
+    "provider": null,
+    "error": "Provider returned error",
+    "costUsd": 0,
+    "checkedAt": "2026-10-27T19:35:35.799Z"
+  },
+  "qwen3.8-flash-sem-raciocinio": {
+    "candidate": "qwen3.8-flash-sem-raciocinio",
+    "model": "qwen/qwen3.8-flash",
+    "effort": "none",
+    "passed": true,
+    "toolCalled": "recordUnderstanding",
+    "provider": "Alibaba",
+    "error": null,
+    "costUsd": 0.00009321,
+    "checkedAt": "2026-10-27T19:35:38.503Z"
+  }
+}
