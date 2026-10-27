@@ -1,0 +1,1558 @@
+{
+  "generatedAt": "2026-10-27T20:26:33.454Z",
+  "premissas": {
+    "weights": {
+      "effectiveness": 0.4,
+      "quality": 0.3,
+      "latency": 0.15,
+      "cost": 0.15
+    },
+    "anchors": {
+      "latencyMs": {
+        "best": 2000,
+        "worst": 12000
+      },
+      "costPerAtendimentoUsd": {
+        "best": 0.001,
+        "worst": 0.1
+      }
+    },
+    "business": {
+      "turnsPerAtendimento": 3,
+      "atendimentosPerEmployeeMonth": 0.4,
+      "atendimentosPerEmployeeMonthHigh": 1,
+      "employeeCounts": [
+        500,
+        2000,
+        10000
+      ],
+      "humanCostPerTicketUsd": 15.56
+    },
+    "judges": [
+      {
+        "key": "kimi-k3",
+        "model": "moonshotai/kimi-k3",
+        "method": "logprobs",
+        "samples": 1
+      },
+      {
+        "key": "glm-5.3",
+        "model": "z-ai/glm-5.3",
+        "method": "amostragem",
+        "samples": 2
+      }
+    ]
+  },
+  "criterios": [
+    {
+      "id": "decisao",
+      "name": "Qualidade da decisão",
+      "definition": "Entende o que o funcionário quer e escolhe a ação certa: dúvida → central de ajuda; consulta → chamados dele; problema relatado → verifica chamado parecido antes de abrir outro; complemento → atualização; analista quando pedido, em caso crítico ou chamado vencido. Usa só dados que as ferramentas devolveram, sem inventar.",
+      "prd": "Como vamos avaliar: Qualidade das decisões · Sucesso: resolução sem fila, encaminhamento certo",
+      "rules": "specs/02-agent (linha de ação por intenção) · instructions.ts"
+    },
+    {
+      "id": "regras",
+      "name": "Regras do service desk",
+      "definition": "Segue o Anexo A: só cria ou atualiza chamado depois da confirmação do funcionário; não duplica (atualiza o aberto, reabre resolvido há até 7 dias); transfere quando pedido, em caso crítico, chamado vencido ou sem segurança; nunca passa dados de chamado de outra pessoa; fora de TI, redireciona; prioridade coerente com impacto × urgência.",
+      "prd": "Anexo A (abertura, duplicidade, transferência, privacidade, escopo, prioridade) · Segurança e privacidade",
+      "rules": "specs/01-regras-do-service-desk · specs/03 (motivos de transferência)"
+    },
+    {
+      "id": "conducao",
+      "name": "Condução da conversa",
+      "definition": "Pergunta quando falta informação, UMA coisa por vez e com opções rápidas quando cabe; não pergunta o que o funcionário já disse; confirma antes de agir; mantém o contexto entre as mensagens.",
+      "prd": "Como vamos avaliar: Condução da conversa · História 4 (conferir os dados antes de criar)",
+      "rules": "instructions.ts (uma pergunta por vez, offerQuickReplies) · specs/02"
+    },
+    {
+      "id": "clareza",
+      "name": "Clareza da resposta",
+      "definition": "Resposta direta, em até 3 frases, sem jargão, sem repetir no texto o que os cards já mostram e sem ecoar notas internas do sistema (texto entre ⟦ ⟧, colchetes de card, nomes de tools).",
+      "prd": "Como vamos avaliar: Condução da conversa (responde de forma clara) · Eficiência",
+      "rules": "instructions.ts (no máximo 3 frases, não repetir o card) · model-history.ts (notas ⟦sistema⟧)"
+    },
+    {
+      "id": "transparencia",
+      "name": "Transparência do raciocínio",
+      "definition": "O registro de entendimento (recordUnderstanding) de cada turno — que o funcionário vê no painel 'por quê?' — tem a intenção certa, um 'o que entendeu' fiel à mensagem, confiança calibrada (alta quando está claro, baixa quando é ambíguo) e um motivo coerente com a ação que o agent tomou de fato.",
+      "prd": "Como vamos avaliar: Transparência · Visibilidade das decisões ('a parte mais importante do desafio')",
+      "rules": "tools/understanding.ts (confiança < 0,5 transfere) · specs/02 (trace)"
+    },
+    {
+      "id": "tom",
+      "name": "Tom e empatia",
+      "definition": "Cordial, profissional e acolhedor com quem está com um problema, sem ser frio, robótico ou exagerado.",
+      "prd": "Contexto: agent de atendimento que substitui o formulário",
+      "rules": "instructions.ts (frases curtas, cordiais e sem jargão)"
+    },
+    {
+      "id": "idioma",
+      "name": "Português do Brasil",
+      "definition": "Português do Brasil correto e natural: gramática, concordância, vocabulário brasileiro (não europeu), sem trechos em inglês ou anglicismos desnecessários.",
+      "prd": "Contexto: funcionários da Nexo (empresa brasileira) conversando no chat",
+      "rules": "instructions.ts (fale em português do Brasil)"
+    }
+  ],
+  "ranking": [
+    "gpt-6-luna",
+    "gemini-3.5-flash-lite",
+    "deepseek-v4.1-flash",
+    "mistral-small-4",
+    "gemini-3.5-flash",
+    "qwen3.8-flash-sem-raciocinio",
+    "gemini-3.8-flash"
+  ],
+  "rankingSemCache": [
+    "gpt-6-luna",
+    "gemini-3.5-flash-lite",
+    "deepseek-v4.1-flash",
+    "mistral-small-4",
+    "gemini-3.5-flash",
+    "gemini-3.8-flash",
+    "qwen3.8-flash-sem-raciocinio"
+  ],
+  "paretoFrontier": [
+    "gemini-3.8-flash",
+    "gpt-6-luna",
+    "qwen3.8-flash-sem-raciocinio"
+  ],
+  "sensitivity": {
+    "profiles": {
+      "Equilibrado": [
+        "gpt-6-luna",
+        "gemini-3.5-flash-lite",
+        "deepseek-v4.1-flash",
+        "mistral-small-4",
+        "gemini-3.5-flash",
+        "qwen3.8-flash-sem-raciocinio",
+        "gemini-3.8-flash"
+      ],
+      "Qualidade primeiro": [
+        "gpt-6-luna",
+        "gemini-3.5-flash-lite",
+        "deepseek-v4.1-flash",
+        "mistral-small-4",
+        "gemini-3.5-flash",
+        "qwen3.8-flash-sem-raciocinio",
+        "gemini-3.8-flash"
+      ],
+      "Custo primeiro": [
+        "gpt-6-luna",
+        "mistral-small-4",
+        "gemini-3.5-flash-lite",
+        "deepseek-v4.1-flash",
+        "qwen3.8-flash-sem-raciocinio",
+        "gemini-3.5-flash",
+        "gemini-3.8-flash"
+      ],
+      "Latência primeiro": [
+        "gpt-6-luna",
+        "gemini-3.5-flash-lite",
+        "mistral-small-4",
+        "deepseek-v4.1-flash",
+        "gemini-3.5-flash",
+        "qwen3.8-flash-sem-raciocinio",
+        "gemini-3.8-flash"
+      ]
+    },
+    "winShare": {
+      "gemini-3.5-flash": 0,
+      "gemini-3.8-flash": 0.0003,
+      "gemini-3.5-flash-lite": 0.1878,
+      "gpt-6-luna": 0.8108,
+      "deepseek-v4.1-flash": 0,
+      "mistral-small-4": 0,
+      "qwen3.8-flash-sem-raciocinio": 0.0011
+    }
+  },
+  "judgeAgreement": {
+    "n": 152,
+    "spearman": 0.6847036515037035,
+    "meanAbsDiff": 0.19924490762974756,
+    "meanA": 4.604037754132452,
+    "meanB": 4.745770676691727
+  },
+  "judgeCache": [
+    {
+      "judge": "glm-5.3",
+      "hitRate": 0.8824462781392614,
+      "costUsd": 0.2880301968,
+      "savedUsd": 0.0011044979999999952
+    },
+    {
+      "judge": "kimi-k3",
+      "hitRate": 0.8198259600618784,
+      "costUsd": 0.37143002899999994,
+      "savedUsd": 0.00579775999999999
+    }
+  ],
+  "calibration": {
+    "criteria": "decisao,regras,conducao,clareza,transparencia,tom,idioma",
+    "judges": {
+      "kimi-k3": {
+        "excelente": {
+          "decisao": 4.795514417450079,
+          "regras": 4.94739135245021,
+          "conducao": 4.791135439171013,
+          "clareza": 4.9360199155422775,
+          "transparencia": 4.376783502879115,
+          "tom": 4.023250224178323,
+          "idioma": 4.996951192921336
+        },
+        "mediana": {
+          "decisao": 2.3008402585709926,
+          "regras": 3.2214776134966954,
+          "conducao": 1.5590642414596407,
+          "clareza": 1.3357325562978672,
+          "transparencia": 1.4363831721122138,
+          "tom": 3.1707965059123078,
+          "idioma": 4.5157127142221345
+        },
+        "ruim": {
+          "decisao": 1.02016183179173,
+          "regras": 1.005087107262508,
+          "conducao": 1.0277342688782458,
+          "clareza": 1.0973030604754834,
+          "transparencia": 1.0008179376207453,
+          "tom": 1.5118028332123112,
+          "idioma": 1.2311508468590773
+        }
+      },
+      "glm-5.3": {
+        "excelente": {
+          "decisao": 5,
+          "regras": 5,
+          "conducao": 5,
+          "clareza": 5,
+          "transparencia": 5,
+          "tom": 4.5,
+          "idioma": 5
+        },
+        "mediana": {
+          "decisao": 2.5,
+          "regras": 3.5,
+          "conducao": 2,
+          "clareza": 2,
+          "transparencia": 2.5,
+          "tom": 4,
+          "idioma": 4.5
+        },
+        "ruim": {
+          "decisao": 1,
+          "regras": 1,
+          "conducao": 1,
+          "clareza": 1.5,
+          "transparencia": 1,
+          "tom": 2.5,
+          "idioma": 1.5
+        }
+      }
+    }
+  },
+  "gates": {
+    "gemini-3.5-flash": {
+      "candidate": "gemini-3.5-flash",
+      "model": "google/gemini-3.5-flash",
+      "effort": "minimal",
+      "passed": true,
+      "toolCalled": "recordUnderstanding",
+      "provider": "Google",
+      "error": null,
+      "costUsd": 0.000495,
+      "checkedAt": "2026-10-27T19:35:18.788Z"
+    },
+    "gemini-3.8-flash": {
+      "candidate": "gemini-3.8-flash",
+      "model": "google/gemini-3.8-flash",
+      "effort": "minimal",
+      "passed": true,
+      "toolCalled": "recordUnderstanding",
+      "provider": "Google",
+      "error": null,
+      "costUsd": 0.0005385,
+      "checkedAt": "2026-10-27T19:35:22.849Z"
+    },
+    "gemini-3.5-flash-lite": {
+      "candidate": "gemini-3.5-flash-lite",
+      "model": "google/gemini-3.5-flash-lite",
+      "effort": "minimal",
+      "passed": true,
+      "toolCalled": "recordUnderstanding",
+      "provider": "Google",
+      "error": null,
+      "costUsd": 0.0001319,
+      "checkedAt": "2026-10-27T19:35:24.526Z"
+    },
+    "gpt-6-luna": {
+      "candidate": "gpt-6-luna",
+      "model": "openai/gpt-6-luna",
+      "effort": "minimal",
+      "passed": true,
+      "toolCalled": "recordUnderstanding",
+      "provider": "OpenAI",
+      "error": null,
+      "costUsd": 0.0000363,
+      "checkedAt": "2026-10-27T19:35:26.058Z"
+    },
+    "deepseek-v4.1-flash": {
+      "candidate": "deepseek-v4.1-flash",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "effort": "minimal",
+      "passed": true,
+      "toolCalled": "recordUnderstanding",
+      "provider": "Sail Research",
+      "error": null,
+      "costUsd": 0.00005908,
+      "checkedAt": "2026-10-27T19:35:27.774Z"
+    },
+    "mistral-small-4": {
+      "candidate": "mistral-small-4",
+      "model": "mistralai/mistral-small-2603",
+      "effort": "minimal",
+      "passed": true,
+      "toolCalled": "recordUnderstanding",
+      "provider": "Mistral",
+      "error": null,
+      "costUsd": 0.0000468,
+      "checkedAt": "2026-10-27T19:35:29.207Z"
+    },
+    "qwen3.8-flash": {
+      "candidate": "qwen3.8-flash",
+      "model": "qwen/qwen3.8-flash",
+      "effort": "minimal",
+      "passed": false,
+      "toolCalled": null,
+      "provider": null,
+      "error": "Provider returned error",
+      "costUsd": 0,
+      "checkedAt": "2026-10-27T19:35:35.799Z"
+    },
+    "qwen3.8-flash-sem-raciocinio": {
+      "candidate": "qwen3.8-flash-sem-raciocinio",
+      "model": "qwen/qwen3.8-flash",
+      "effort": "none",
+      "passed": true,
+      "toolCalled": "recordUnderstanding",
+      "provider": "Alibaba",
+      "error": null,
+      "costUsd": 0.00009321,
+      "checkedAt": "2026-10-27T19:35:38.503Z"
+    }
+  },
+  "runs": [
+    {
+      "startedAt": "2026-10-27T20:02:08.548Z",
+      "finishedAt": "2026-10-27T20:21:45.952Z",
+      "keyUsageBeforeUsd": 0.49555382,
+      "keyUsageAfterUsd": 1.762451603,
+      "spentByKeyUsd": 1.2668977829999999,
+      "trackedUsd": 1.2999374124880008,
+      "responseCacheSavedUsd": 0.0029309516,
+      "keyLimitRemainingUsd": 0.23754839700000008
+    }
+  ],
+  "gastos": {
+    "agentsUsd": 0.5867269860880001,
+    "providerCacheSavedUsd": 0.09553079740000002,
+    "judgesUsd": 0.6594602258000007,
+    "responseCacheSavedUsd": 0.0058619032
+  },
+  "candidates": [
+    {
+      "key": "gemini-3.5-flash",
+      "label": "Gemini 3.5 Flash (produção)",
+      "model": "google/gemini-3.5-flash",
+      "tier": "premium",
+      "effort": "minimal",
+      "status": "avaliado",
+      "disqualifiedReason": null,
+      "conversations": 24,
+      "turns": 28,
+      "passRate": {
+        "mean": 0.8333333333333334,
+        "low": 0.6666666666666666,
+        "high": 0.9583333333333334
+      },
+      "scenarioPasses": {
+        "Dúvida respondida pela central": {
+          "passed": 2,
+          "total": 2
+        },
+        "Artigo não vale para o caso (VPN 809 no Windows 11)": {
+          "passed": 2,
+          "total": 2
+        },
+        "Consulta sem número com vários chamados abertos": {
+          "passed": 2,
+          "total": 2
+        },
+        "Chamado vencido": {
+          "passed": 2,
+          "total": 2
+        },
+        "Privacidade: chamado de outra pessoa": {
+          "passed": 2,
+          "total": 2
+        },
+        "Fora do escopo de TI": {
+          "passed": 2,
+          "total": 2
+        },
+        "Pedido explícito de analista": {
+          "passed": 2,
+          "total": 2
+        },
+        "Complementar chamado existente": {
+          "passed": 2,
+          "total": 2
+        },
+        "Problema parecido com chamado aberto (duplicidade)": {
+          "passed": 2,
+          "total": 2
+        },
+        "Abrir chamado conversando (pergunta o que falta e monta rascunho)": {
+          "passed": 0,
+          "total": 2
+        },
+        "PRD · Reabrir chamado resolvido há até 7 dias": {
+          "passed": 0,
+          "total": 1
+        },
+        "PRD · Confirmar o rascunho por texto": {
+          "passed": 1,
+          "total": 1
+        },
+        "PRD · Caso crítico para a empresa toda": {
+          "passed": 0,
+          "total": 1
+        },
+        "PRD · Mensagem vaga não vira ação": {
+          "passed": 1,
+          "total": 1
+        }
+      },
+      "forcedToolCompliance": 1,
+      "toolCallErrorRate": 0,
+      "turnErrorRate": 0,
+      "rateLimitRetries": 0,
+      "latency": {
+        "p50": 6922.2564999999995,
+        "p95": 11113.63765,
+        "ttftP50": 6594.121749999998
+      },
+      "cost": {
+        "totalUsd": 0.29804250000000004,
+        "perTurnUsd": 0.010644375000000001,
+        "perAtendimentoUsd": 0.03193312500000001,
+        "per1000AtendimentosUsd": 31.933125000000008
+      },
+      "usage": {
+        "callsPerTurn": 3.3214285714285716,
+        "inputTokensPerTurn": 5987.107142857143,
+        "outputTokensPerTurn": 184.85714285714286,
+        "reasoningTokensPerTurn": 0
+      },
+      "providers": {
+        "Google": 93
+      },
+      "quality": {
+        "overall": {
+          "mean": 4.716077878454845,
+          "low": 4.613933219582141,
+          "high": 4.808119021402825
+        },
+        "byCriterion": {
+          "decisao": 4.853615332128326,
+          "regras": 4.872665903623626,
+          "conducao": 4.684856734811387,
+          "clareza": 4.460547185043954,
+          "transparencia": 4.656750168457715,
+          "tom": 4.499791972174852,
+          "idioma": 4.984317852944057
+        },
+        "byJudge": {
+          "glm-5.3": 4.794642857142857,
+          "kimi-k3": 4.637512899766832
+        }
+      },
+      "cache": {
+        "hitRate": 0,
+        "savedUsd": 0,
+        "noCacheTotalUsd": 0.29804250000000004,
+        "noCachePerAtendimentoUsd": 0.03193312500000001,
+        "coldCallMs": 2195.3117,
+        "warmCallMs": null,
+        "coldCalls": 93,
+        "warmCalls": 0
+      },
+      "scores": {
+        "effectiveness": 0.8333333333333334,
+        "quality": 0.9290194696137113,
+        "latency": 0.50777435,
+        "cost": 0.24787928949559346,
+        "composite": 0.7253872201417857,
+        "compositeNoCache": 0.7253872201417857
+      },
+      "projection": [
+        {
+          "employees": 500,
+          "atendimentosPerMonth": 200,
+          "costPerMonthUsd": 6.386625000000001,
+          "costPerMonthHighUsd": 15.966562500000004,
+          "humanEquivalentUsd": 3112
+        },
+        {
+          "employees": 2000,
+          "atendimentosPerMonth": 800,
+          "costPerMonthUsd": 25.546500000000005,
+          "costPerMonthHighUsd": 63.866250000000015,
+          "humanEquivalentUsd": 12448
+        },
+        {
+          "employees": 10000,
+          "atendimentosPerMonth": 4000,
+          "costPerMonthUsd": 127.73250000000003,
+          "costPerMonthHighUsd": 319.33125000000007,
+          "humanEquivalentUsd": 62240
+        }
+      ]
+    },
+    {
+      "key": "gemini-3.8-flash",
+      "label": "Gemini 3.8 Flash",
+      "model": "google/gemini-3.8-flash",
+      "tier": "intermediário",
+      "effort": "minimal",
+      "status": "avaliado",
+      "disqualifiedReason": null,
+      "conversations": 24,
+      "turns": 28,
+      "passRate": {
+        "mean": 0.75,
+        "low": 0.5833333333333334,
+        "high": 0.9166666666666666
+      },
+      "scenarioPasses": {
+        "Dúvida respondida pela central": {
+          "passed": 2,
+          "total": 2
+        },
+        "Artigo não vale para o caso (VPN 809 no Windows 11)": {
+          "passed": 1,
+          "total": 2
+        },
+        "Consulta sem número com vários chamados abertos": {
+          "passed": 2,
+          "total": 2
+        },
+        "Chamado vencido": {
+          "passed": 1,
+          "total": 2
+        },
+        "Privacidade: chamado de outra pessoa": {
+          "passed": 2,
+          "total": 2
+        },
+        "Fora do escopo de TI": {
+          "passed": 2,
+          "total": 2
+        },
+        "Pedido explícito de analista": {
+          "passed": 2,
+          "total": 2
+        },
+        "Complementar chamado existente": {
+          "passed": 2,
+          "total": 2
+        },
+        "Problema parecido com chamado aberto (duplicidade)": {
+          "passed": 0,
+          "total": 2
+        },
+        "Abrir chamado conversando (pergunta o que falta e monta rascunho)": {
+          "passed": 2,
+          "total": 2
+        },
+        "PRD · Reabrir chamado resolvido há até 7 dias": {
+          "passed": 0,
+          "total": 1
+        },
+        "PRD · Confirmar o rascunho por texto": {
+          "passed": 0,
+          "total": 1
+        },
+        "PRD · Caso crítico para a empresa toda": {
+          "passed": 1,
+          "total": 1
+        },
+        "PRD · Mensagem vaga não vira ação": {
+          "passed": 1,
+          "total": 1
+        }
+      },
+      "forcedToolCompliance": 1,
+      "toolCallErrorRate": 0,
+      "turnErrorRate": 0.17857142857142858,
+      "rateLimitRetries": 0,
+      "latency": {
+        "p50": 12218.215099999998,
+        "p95": 22846.556030000003,
+        "ttftP50": 11891.8069
+      },
+      "cost": {
+        "totalUsd": 0.1408222500000001,
+        "perTurnUsd": 0.005029366071428574,
+        "perAtendimentoUsd": 0.015088098214285722,
+        "per1000AtendimentosUsd": 15.088098214285722
+      },
+      "usage": {
+        "callsPerTurn": 3.3214285714285716,
+        "inputTokensPerTurn": 5743.321428571428,
+        "outputTokensPerTurn": 192.5,
+        "reasoningTokensPerTurn": 0
+      },
+      "providers": {
+        "Google": 90,
+        "Google AI Studio": 3
+      },
+      "quality": {
+        "overall": {
+          "mean": 4.835113330707577,
+          "low": 4.789180198340557,
+          "high": 4.87967129612479
+        },
+        "byCriterion": {
+          "decisao": 4.970417119687361,
+          "regras": 4.986609151668617,
+          "conducao": 4.88786128094625,
+          "clareza": 4.721019642435854,
+          "transparencia": 4.8503319845386486,
+          "tom": 4.470645312888771,
+          "idioma": 4.95890882278753
+        },
+        "byJudge": {
+          "kimi-k3": 4.775489819309888,
+          "glm-5.3": 4.894736842105263
+        }
+      },
+      "cache": {
+        "hitRate": 0,
+        "savedUsd": 0,
+        "noCacheTotalUsd": 0.1408222500000001,
+        "noCachePerAtendimentoUsd": 0.015088098214285722,
+        "coldCallMs": 3434.583099999989,
+        "warmCallMs": null,
+        "coldCalls": 93,
+        "warmCalls": 0
+      },
+      "scores": {
+        "effectiveness": 0.75,
+        "quality": 0.9587783326768942,
+        "latency": 0,
+        "cost": 0.4106827488031246,
+        "composite": 0.649235912123537,
+        "compositeNoCache": 0.649235912123537
+      },
+      "projection": [
+        {
+          "employees": 500,
+          "atendimentosPerMonth": 200,
+          "costPerMonthUsd": 3.0176196428571442,
+          "costPerMonthHighUsd": 7.544049107142861,
+          "humanEquivalentUsd": 3112
+        },
+        {
+          "employees": 2000,
+          "atendimentosPerMonth": 800,
+          "costPerMonthUsd": 12.070478571428577,
+          "costPerMonthHighUsd": 30.176196428571444,
+          "humanEquivalentUsd": 12448
+        },
+        {
+          "employees": 10000,
+          "atendimentosPerMonth": 4000,
+          "costPerMonthUsd": 60.35239285714289,
+          "costPerMonthHighUsd": 150.88098214285722,
+          "humanEquivalentUsd": 62240
+        }
+      ]
+    },
+    {
+      "key": "gemini-3.5-flash-lite",
+      "label": "Gemini 3.5 Flash Lite",
+      "model": "google/gemini-3.5-flash-lite",
+      "tier": "econômico",
+      "effort": "minimal",
+      "status": "avaliado",
+      "disqualifiedReason": null,
+      "conversations": 24,
+      "turns": 28,
+      "passRate": {
+        "mean": 0.9583333333333334,
+        "low": 0.875,
+        "high": 1
+      },
+      "scenarioPasses": {
+        "Dúvida respondida pela central": {
+          "passed": 2,
+          "total": 2
+        },
+        "Artigo não vale para o caso (VPN 809 no Windows 11)": {
+          "passed": 2,
+          "total": 2
+        },
+        "Consulta sem número com vários chamados abertos": {
+          "passed": 2,
+          "total": 2
+        },
+        "Chamado vencido": {
+          "passed": 2,
+          "total": 2
+        },
+        "Privacidade: chamado de outra pessoa": {
+          "passed": 2,
+          "total": 2
+        },
+        "Fora do escopo de TI": {
+          "passed": 2,
+          "total": 2
+        },
+        "Pedido explícito de analista": {
+          "passed": 2,
+          "total": 2
+        },
+        "Complementar chamado existente": {
+          "passed": 2,
+          "total": 2
+        },
+        "Problema parecido com chamado aberto (duplicidade)": {
+          "passed": 2,
+          "total": 2
+        },
+        "Abrir chamado conversando (pergunta o que falta e monta rascunho)": {
+          "passed": 2,
+          "total": 2
+        },
+        "PRD · Reabrir chamado resolvido há até 7 dias": {
+          "passed": 0,
+          "total": 1
+        },
+        "PRD · Confirmar o rascunho por texto": {
+          "passed": 1,
+          "total": 1
+        },
+        "PRD · Caso crítico para a empresa toda": {
+          "passed": 1,
+          "total": 1
+        },
+        "PRD · Mensagem vaga não vira ação": {
+          "passed": 1,
+          "total": 1
+        }
+      },
+      "forcedToolCompliance": 1,
+      "toolCallErrorRate": 0,
+      "turnErrorRate": 0,
+      "rateLimitRetries": 0,
+      "latency": {
+        "p50": 5540.077799999997,
+        "p95": 9734.820465000004,
+        "ttftP50": 5326.156
+      },
+      "cost": {
+        "totalUsd": 0.06754439999999999,
+        "perTurnUsd": 0.0024122999999999996,
+        "perAtendimentoUsd": 0.007236899999999999,
+        "per1000AtendimentosUsd": 7.2368999999999994
+      },
+      "usage": {
+        "callsPerTurn": 3.5714285714285716,
+        "inputTokensPerTurn": 6577.607142857143,
+        "outputTokensPerTurn": 175.60714285714286,
+        "reasoningTokensPerTurn": 0
+      },
+      "providers": {
+        "Google": 100
+      },
+      "quality": {
+        "overall": {
+          "mean": 4.670103734430429,
+          "low": 4.5830423027040545,
+          "high": 4.751044406120771
+        },
+        "byCriterion": {
+          "decisao": 4.789160406295109,
+          "regras": 4.873723398733943,
+          "conducao": 4.653342998119174,
+          "clareza": 4.624083036409822,
+          "transparencia": 4.681021168850729,
+          "tom": 4.111496231542983,
+          "idioma": 4.957898901061238
+        },
+        "byJudge": {
+          "glm-5.3": 4.726190476190477,
+          "kimi-k3": 4.614016992670381
+        }
+      },
+      "cache": {
+        "hitRate": 0,
+        "savedUsd": 0,
+        "noCacheTotalUsd": 0.06754439999999999,
+        "noCachePerAtendimentoUsd": 0.007236899999999999,
+        "coldCallMs": 1670.8514500000056,
+        "warmCallMs": null,
+        "coldCalls": 100,
+        "warmCalls": 0
+      },
+      "scores": {
+        "effectiveness": 0.9583333333333334,
+        "quality": 0.9175259336076071,
+        "latency": 0.6459922200000002,
+        "cost": 0.5702237142222948,
+        "composite": 0.8410235035489597,
+        "compositeNoCache": 0.8410235035489597
+      },
+      "projection": [
+        {
+          "employees": 500,
+          "atendimentosPerMonth": 200,
+          "costPerMonthUsd": 1.4473799999999999,
+          "costPerMonthHighUsd": 3.6184499999999997,
+          "humanEquivalentUsd": 3112
+        },
+        {
+          "employees": 2000,
+          "atendimentosPerMonth": 800,
+          "costPerMonthUsd": 5.7895199999999996,
+          "costPerMonthHighUsd": 14.473799999999999,
+          "humanEquivalentUsd": 12448
+        },
+        {
+          "employees": 10000,
+          "atendimentosPerMonth": 4000,
+          "costPerMonthUsd": 28.947599999999998,
+          "costPerMonthHighUsd": 72.36899999999999,
+          "humanEquivalentUsd": 62240
+        }
+      ]
+    },
+    {
+      "key": "gpt-6-luna",
+      "label": "GPT-6 Luna",
+      "model": "openai/gpt-6-luna",
+      "tier": "econômico",
+      "effort": "minimal",
+      "status": "avaliado",
+      "disqualifiedReason": null,
+      "conversations": 24,
+      "turns": 28,
+      "passRate": {
+        "mean": 0.875,
+        "low": 0.75,
+        "high": 1
+      },
+      "scenarioPasses": {
+        "Dúvida respondida pela central": {
+          "passed": 2,
+          "total": 2
+        },
+        "Artigo não vale para o caso (VPN 809 no Windows 11)": {
+          "passed": 2,
+          "total": 2
+        },
+        "Consulta sem número com vários chamados abertos": {
+          "passed": 2,
+          "total": 2
+        },
+        "Chamado vencido": {
+          "passed": 2,
+          "total": 2
+        },
+        "Privacidade: chamado de outra pessoa": {
+          "passed": 2,
+          "total": 2
+        },
+        "Fora do escopo de TI": {
+          "passed": 2,
+          "total": 2
+        },
+        "Pedido explícito de analista": {
+          "passed": 2,
+          "total": 2
+        },
+        "Complementar chamado existente": {
+          "passed": 2,
+          "total": 2
+        },
+        "Problema parecido com chamado aberto (duplicidade)": {
+          "passed": 2,
+          "total": 2
+        },
+        "Abrir chamado conversando (pergunta o que falta e monta rascunho)": {
+          "passed": 1,
+          "total": 2
+        },
+        "PRD · Reabrir chamado resolvido há até 7 dias": {
+          "passed": 0,
+          "total": 1
+        },
+        "PRD · Confirmar o rascunho por texto": {
+          "passed": 1,
+          "total": 1
+        },
+        "PRD · Caso crítico para a empresa toda": {
+          "passed": 0,
+          "total": 1
+        },
+        "PRD · Mensagem vaga não vira ação": {
+          "passed": 1,
+          "total": 1
+        }
+      },
+      "forcedToolCompliance": 1,
+      "toolCallErrorRate": 0,
+      "turnErrorRate": 0,
+      "rateLimitRetries": 0,
+      "latency": {
+        "p50": 5737.625350000002,
+        "p95": 9418.525009999994,
+        "ttftP50": 5429.48085
+      },
+      "cost": {
+        "totalUsd": 0.011406364999999998,
+        "perTurnUsd": 0.00040737017857142853,
+        "perAtendimentoUsd": 0.0012221105357142856,
+        "per1000AtendimentosUsd": 1.2221105357142856
+      },
+      "usage": {
+        "callsPerTurn": 3.357142857142857,
+        "inputTokensPerTurn": 7347.892857142857,
+        "outputTokensPerTurn": 185.03571428571428,
+        "reasoningTokensPerTurn": 20.428571428571427
+      },
+      "providers": {
+        "OpenAI": 94
+      },
+      "quality": {
+        "overall": {
+          "mean": 4.725922940849112,
+          "low": 4.6401226461036575,
+          "high": 4.80127178148013
+        },
+        "byCriterion": {
+          "decisao": 4.808289896554151,
+          "regras": 4.850409136109304,
+          "conducao": 4.6975070485504,
+          "clareza": 4.857580323711903,
+          "transparencia": 4.732553781643911,
+          "tom": 4.139278416003321,
+          "idioma": 4.995841983370804
+        },
+        "byJudge": {
+          "kimi-k3": 4.678036357888704,
+          "glm-5.3": 4.773809523809524
+        }
+      },
+      "cache": {
+        "hitRate": 0.7100869539858365,
+        "savedUsd": 0.011758234999999997,
+        "noCacheTotalUsd": 0.023164599999999994,
+        "noCachePerAtendimentoUsd": 0.002481921428571428,
+        "coldCallMs": 1715.0109000000011,
+        "warmCallMs": 1472.772299999997,
+        "coldCalls": 25,
+        "warmCalls": 69
+      },
+      "scores": {
+        "effectiveness": 0.875,
+        "quality": 0.931480735212278,
+        "latency": 0.6262374649999998,
+        "cost": 0.9564447559339027,
+        "composite": 0.8668465537037688,
+        "compositeNoCache": 0.843770738160988
+      },
+      "projection": [
+        {
+          "employees": 500,
+          "atendimentosPerMonth": 200,
+          "costPerMonthUsd": 0.24442210714285711,
+          "costPerMonthHighUsd": 0.6110552678571428,
+          "humanEquivalentUsd": 3112
+        },
+        {
+          "employees": 2000,
+          "atendimentosPerMonth": 800,
+          "costPerMonthUsd": 0.9776884285714285,
+          "costPerMonthHighUsd": 2.4442210714285713,
+          "humanEquivalentUsd": 12448
+        },
+        {
+          "employees": 10000,
+          "atendimentosPerMonth": 4000,
+          "costPerMonthUsd": 4.8884421428571425,
+          "costPerMonthHighUsd": 12.221105357142857,
+          "humanEquivalentUsd": 62240
+        }
+      ]
+    },
+    {
+      "key": "deepseek-v4.1-flash",
+      "label": "DeepSeek V4.1 Flash",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "tier": "econômico",
+      "effort": "minimal",
+      "status": "avaliado",
+      "disqualifiedReason": null,
+      "conversations": 24,
+      "turns": 28,
+      "passRate": {
+        "mean": 0.875,
+        "low": 0.75,
+        "high": 1
+      },
+      "scenarioPasses": {
+        "Dúvida respondida pela central": {
+          "passed": 2,
+          "total": 2
+        },
+        "Artigo não vale para o caso (VPN 809 no Windows 11)": {
+          "passed": 2,
+          "total": 2
+        },
+        "Consulta sem número com vários chamados abertos": {
+          "passed": 2,
+          "total": 2
+        },
+        "Chamado vencido": {
+          "passed": 2,
+          "total": 2
+        },
+        "Privacidade: chamado de outra pessoa": {
+          "passed": 2,
+          "total": 2
+        },
+        "Fora do escopo de TI": {
+          "passed": 2,
+          "total": 2
+        },
+        "Pedido explícito de analista": {
+          "passed": 0,
+          "total": 2
+        },
+        "Complementar chamado existente": {
+          "passed": 2,
+          "total": 2
+        },
+        "Problema parecido com chamado aberto (duplicidade)": {
+          "passed": 2,
+          "total": 2
+        },
+        "Abrir chamado conversando (pergunta o que falta e monta rascunho)": {
+          "passed": 2,
+          "total": 2
+        },
+        "PRD · Reabrir chamado resolvido há até 7 dias": {
+          "passed": 0,
+          "total": 1
+        },
+        "PRD · Confirmar o rascunho por texto": {
+          "passed": 1,
+          "total": 1
+        },
+        "PRD · Caso crítico para a empresa toda": {
+          "passed": 1,
+          "total": 1
+        },
+        "PRD · Mensagem vaga não vira ação": {
+          "passed": 1,
+          "total": 1
+        }
+      },
+      "forcedToolCompliance": 1,
+      "toolCallErrorRate": 0,
+      "turnErrorRate": 0,
+      "rateLimitRetries": 0,
+      "latency": {
+        "p50": 7297.8877500000235,
+        "p95": 21930.21660499999,
+        "ttftP50": 6178.491799999989
+      },
+      "cost": {
+        "totalUsd": 0.046084429087999985,
+        "perTurnUsd": 0.001645872467428571,
+        "perAtendimentoUsd": 0.004937617402285713,
+        "per1000AtendimentosUsd": 4.937617402285713
+      },
+      "usage": {
+        "callsPerTurn": 3.4642857142857144,
+        "inputTokensPerTurn": 12247.107142857143,
+        "outputTokensPerTurn": 631.8928571428571,
+        "reasoningTokensPerTurn": 405.57142857142856
+      },
+      "providers": {
+        "OpenInference": 7,
+        "Decart": 1,
+        "ModelRun": 6,
+        "Relace": 4,
+        "Together": 7,
+        "Fireworks": 12,
+        "Wafer": 22,
+        "Baidu": 7,
+        "CoreWeave": 7,
+        "Sail Research": 6,
+        "Cohere": 4,
+        "DigitalOcean": 5,
+        "InferenceNet": 7,
+        "BaseTen": 2
+      },
+      "quality": {
+        "overall": {
+          "mean": 4.688297715330555,
+          "low": 4.584450072732342,
+          "high": 4.788098820979064
+        },
+        "byCriterion": {
+          "decisao": 4.839393696948725,
+          "regras": 4.914262602141077,
+          "conducao": 4.69150038017522,
+          "clareza": 4.3404444583874815,
+          "transparencia": 4.755658847060723,
+          "tom": 4.314722637196048,
+          "idioma": 4.962101385404613
+        },
+        "byJudge": {
+          "kimi-k3": 4.629571621137301,
+          "glm-5.3": 4.74702380952381
+        }
+      },
+      "cache": {
+        "hitRate": 0.48244045970039573,
+        "savedUsd": 0.022466480400000002,
+        "noCacheTotalUsd": 0.068550909488,
+        "noCachePerAtendimentoUsd": 0.007344740302285713,
+        "coldCallMs": 1949.7641999999978,
+        "warmCallMs": 1566.8407000000007,
+        "coldCalls": 41,
+        "warmCalls": 56
+      },
+      "scores": {
+        "effectiveness": 0.875,
+        "quality": 0.9220744288326388,
+        "latency": 0.4702112249999976,
+        "cost": 0.653241282486926,
+        "composite": 0.7951402047728302,
+        "compositeNoCache": 0.7822057790643663
+      },
+      "projection": [
+        {
+          "employees": 500,
+          "atendimentosPerMonth": 200,
+          "costPerMonthUsd": 0.9875234804571426,
+          "costPerMonthHighUsd": 2.4688087011428563,
+          "humanEquivalentUsd": 3112
+        },
+        {
+          "employees": 2000,
+          "atendimentosPerMonth": 800,
+          "costPerMonthUsd": 3.95009392182857,
+          "costPerMonthHighUsd": 9.875234804571425,
+          "humanEquivalentUsd": 12448
+        },
+        {
+          "employees": 10000,
+          "atendimentosPerMonth": 4000,
+          "costPerMonthUsd": 19.75046960914285,
+          "costPerMonthHighUsd": 49.37617402285713,
+          "humanEquivalentUsd": 62240
+        }
+      ]
+    },
+    {
+      "key": "mistral-small-4",
+      "label": "Mistral Small 4",
+      "model": "mistralai/mistral-small-2603",
+      "tier": "econômico",
+      "effort": "minimal",
+      "status": "avaliado",
+      "disqualifiedReason": null,
+      "conversations": 24,
+      "turns": 28,
+      "passRate": {
+        "mean": 0.75,
+        "low": 0.5833333333333334,
+        "high": 0.9166666666666666
+      },
+      "scenarioPasses": {
+        "Dúvida respondida pela central": {
+          "passed": 2,
+          "total": 2
+        },
+        "Artigo não vale para o caso (VPN 809 no Windows 11)": {
+          "passed": 2,
+          "total": 2
+        },
+        "Consulta sem número com vários chamados abertos": {
+          "passed": 2,
+          "total": 2
+        },
+        "Chamado vencido": {
+          "passed": 2,
+          "total": 2
+        },
+        "Privacidade: chamado de outra pessoa": {
+          "passed": 2,
+          "total": 2
+        },
+        "Fora do escopo de TI": {
+          "passed": 0,
+          "total": 2
+        },
+        "Pedido explícito de analista": {
+          "passed": 1,
+          "total": 2
+        },
+        "Complementar chamado existente": {
+          "passed": 2,
+          "total": 2
+        },
+        "Problema parecido com chamado aberto (duplicidade)": {
+          "passed": 2,
+          "total": 2
+        },
+        "Abrir chamado conversando (pergunta o que falta e monta rascunho)": {
+          "passed": 1,
+          "total": 2
+        },
+        "PRD · Reabrir chamado resolvido há até 7 dias": {
+          "passed": 0,
+          "total": 1
+        },
+        "PRD · Confirmar o rascunho por texto": {
+          "passed": 1,
+          "total": 1
+        },
+        "PRD · Caso crítico para a empresa toda": {
+          "passed": 0,
+          "total": 1
+        },
+        "PRD · Mensagem vaga não vira ação": {
+          "passed": 1,
+          "total": 1
+        }
+      },
+      "forcedToolCompliance": 1,
+      "toolCallErrorRate": 0,
+      "turnErrorRate": 0.07142857142857142,
+      "rateLimitRetries": 10,
+      "latency": {
+        "p50": 6187.474799999982,
+        "p95": 18862.095199999996,
+        "ttftP50": 5792.721749999982
+      },
+      "cost": {
+        "totalUsd": 0.012244169999999997,
+        "perTurnUsd": 0.0004372917857142856,
+        "perAtendimentoUsd": 0.0013118753571428568,
+        "per1000AtendimentosUsd": 1.3118753571428567
+      },
+      "usage": {
+        "callsPerTurn": 3.4642857142857144,
+        "inputTokensPerTurn": 6310.607142857143,
+        "outputTokensPerTurn": 268.67857142857144,
+        "reasoningTokensPerTurn": 103
+      },
+      "providers": {
+        "Mistral": 73
+      },
+      "quality": {
+        "overall": {
+          "mean": 4.443942476519465,
+          "low": 4.263067432322459,
+          "high": 4.592445471181809
+        },
+        "byCriterion": {
+          "decisao": 4.57582929008809,
+          "regras": 4.5067051319086175,
+          "conducao": 4.363712962811625,
+          "clareza": 4.147155553979744,
+          "transparencia": 4.508608231961353,
+          "tom": 4.056918221060925,
+          "idioma": 4.948667943825897
+        },
+        "byJudge": {
+          "kimi-k3": 4.322949888103864,
+          "glm-5.3": 4.564935064935065
+        }
+      },
+      "cache": {
+        "hitRate": 0.8483675444404829,
+        "savedUsd": 0.02023704000000001,
+        "noCacheTotalUsd": 0.03248121000000001,
+        "noCachePerAtendimentoUsd": 0.0034801296428571445,
+        "coldCallMs": 2002.1661500000046,
+        "warmCallMs": 1829.6857999999775,
+        "coldCalls": 6,
+        "warmCalls": 67
+      },
+      "scores": {
+        "effectiveness": 0.75,
+        "quality": 0.8609856191298662,
+        "latency": 0.5812525200000018,
+        "cost": 0.9410537129209353,
+        "composite": 0.7866416206771004,
+        "compositeNoCache": 0.7548639070350193
+      },
+      "projection": [
+        {
+          "employees": 500,
+          "atendimentosPerMonth": 200,
+          "costPerMonthUsd": 0.26237507142857136,
+          "costPerMonthHighUsd": 0.6559376785714284,
+          "humanEquivalentUsd": 3112
+        },
+        {
+          "employees": 2000,
+          "atendimentosPerMonth": 800,
+          "costPerMonthUsd": 1.0495002857142854,
+          "costPerMonthHighUsd": 2.6237507142857135,
+          "humanEquivalentUsd": 12448
+        },
+        {
+          "employees": 10000,
+          "atendimentosPerMonth": 4000,
+          "costPerMonthUsd": 5.247501428571427,
+          "costPerMonthHighUsd": 13.118753571428568,
+          "humanEquivalentUsd": 62240
+        }
+      ]
+    },
+    {
+      "key": "qwen3.8-flash",
+      "label": "Qwen3.8 Flash",
+      "model": "qwen/qwen3.8-flash",
+      "tier": "econômico",
+      "effort": "minimal",
+      "status": "desqualificado",
+      "disqualifiedReason": "pré-voo: tool_choice forçado falhou (Provider returned error)",
+      "conversations": 0,
+      "turns": 0,
+      "passRate": {
+        "mean": null,
+        "low": null,
+        "high": null
+      },
+      "scenarioPasses": {},
+      "forcedToolCompliance": 0,
+      "toolCallErrorRate": 0,
+      "turnErrorRate": 0,
+      "rateLimitRetries": 0,
+      "latency": {
+        "p50": null,
+        "p95": null,
+        "ttftP50": null
+      },
+      "cost": {
+        "totalUsd": 0,
+        "perTurnUsd": null,
+        "perAtendimentoUsd": null,
+        "per1000AtendimentosUsd": null
+      },
+      "usage": {
+        "callsPerTurn": 0,
+        "inputTokensPerTurn": 0,
+        "outputTokensPerTurn": 0,
+        "reasoningTokensPerTurn": 0
+      },
+      "providers": {},
+      "quality": {
+        "overall": {
+          "mean": null,
+          "low": null,
+          "high": null
+        },
+        "byCriterion": {
+          "decisao": null,
+          "regras": null,
+          "conducao": null,
+          "clareza": null,
+          "transparencia": null,
+          "tom": null,
+          "idioma": null
+        },
+        "byJudge": {}
+      },
+      "cache": {
+        "hitRate": 0,
+        "savedUsd": 0,
+        "noCacheTotalUsd": 0,
+        "noCachePerAtendimentoUsd": null,
+        "coldCallMs": null,
+        "warmCallMs": null,
+        "coldCalls": 0,
+        "warmCalls": 0
+      },
+      "scores": null,
+      "projection": []
+    },
+    {
+      "key": "qwen3.8-flash-sem-raciocinio",
+      "label": "Qwen3.8 Flash (sem raciocínio)",
+      "model": "qwen/qwen3.8-flash",
+      "tier": "econômico",
+      "effort": "none",
+      "status": "avaliado",
+      "disqualifiedReason": null,
+      "conversations": 24,
+      "turns": 28,
+      "passRate": {
+        "mean": 0.6666666666666666,
+        "low": 0.4583333333333333,
+        "high": 0.8333333333333334
+      },
+      "scenarioPasses": {
+        "Dúvida respondida pela central": {
+          "passed": 1,
+          "total": 2
+        },
+        "Artigo não vale para o caso (VPN 809 no Windows 11)": {
+          "passed": 1,
+          "total": 2
+        },
+        "Consulta sem número com vários chamados abertos": {
+          "passed": 1,
+          "total": 2
+        },
+        "Chamado vencido": {
+          "passed": 1,
+          "total": 2
+        },
+        "Privacidade: chamado de outra pessoa": {
+          "passed": 2,
+          "total": 2
+        },
+        "Fora do escopo de TI": {
+          "passed": 2,
+          "total": 2
+        },
+        "Pedido explícito de analista": {
+          "passed": 1,
+          "total": 2
+        },
+        "Complementar chamado existente": {
+          "passed": 2,
+          "total": 2
+        },
+        "Problema parecido com chamado aberto (duplicidade)": {
+          "passed": 2,
+          "total": 2
+        },
+        "Abrir chamado conversando (pergunta o que falta e monta rascunho)": {
+          "passed": 1,
+          "total": 2
+        },
+        "PRD · Reabrir chamado resolvido há até 7 dias": {
+          "passed": 0,
+          "total": 1
+        },
+        "PRD · Confirmar o rascunho por texto": {
+          "passed": 1,
+          "total": 1
+        },
+        "PRD · Caso crítico para a empresa toda": {
+          "passed": 0,
+          "total": 1
+        },
+        "PRD · Mensagem vaga não vira ação": {
+          "passed": 1,
+          "total": 1
+        }
+      },
+      "forcedToolCompliance": 1,
+      "toolCallErrorRate": 0,
+      "turnErrorRate": 0.17857142857142858,
+      "rateLimitRetries": 2,
+      "latency": {
+        "p50": 15470.173099999956,
+        "p95": 27442.319409999986,
+        "ttftP50": 13182.61499999999
+      },
+      "cost": {
+        "totalUsd": 0.010582871999999997,
+        "perTurnUsd": 0.00037795971428571416,
+        "perAtendimentoUsd": 0.0011338791428571425,
+        "per1000AtendimentosUsd": 1.1338791428571424
+      },
+      "usage": {
+        "callsPerTurn": 3.3214285714285716,
+        "inputTokensPerTurn": 10031.035714285714,
+        "outputTokensPerTurn": 218.82142857142858,
+        "reasoningTokensPerTurn": 0
+      },
+      "providers": {
+        "Alibaba": 92
+      },
+      "quality": {
+        "overall": {
+          "mean": 4.649459901213798,
+          "low": 4.489905325760642,
+          "high": 4.793373779025359
+        },
+        "byCriterion": {
+          "decisao": 4.840187896964143,
+          "regras": 4.810950320628138,
+          "conducao": 4.559571942607714,
+          "clareza": 4.296575637076277,
+          "transparencia": 4.803195475473796,
+          "tom": 4.31766048251403,
+          "idioma": 4.918077553232488
+        },
+        "byJudge": {
+          "kimi-k3": 4.5703483738561665,
+          "glm-5.3": 4.728571428571429
+        }
+      },
+      "cache": {
+        "hitRate": 0.9078111147901691,
+        "savedUsd": 0.03416678400000003,
+        "noCacheTotalUsd": 0.044749656000000027,
+        "noCachePerAtendimentoUsd": 0.004794606000000003,
+        "coldCallMs": 11546.849950000003,
+        "warmCallMs": 2967.7560000000085,
+        "coldCalls": 6,
+        "warmCalls": 86
+      },
+      "scores": {
+        "effectiveness": 0.6666666666666666,
+        "quality": 0.9123649753034495,
+        "latency": 0,
+        "cost": 0.9727166166313437,
+        "composite": 0.686283651752403,
+        "compositeNoCache": 0.639319689918
+      },
+      "projection": [
+        {
+          "employees": 500,
+          "atendimentosPerMonth": 200,
+          "costPerMonthUsd": 0.2267758285714285,
+          "costPerMonthHighUsd": 0.5669395714285712,
+          "humanEquivalentUsd": 3112
+        },
+        {
+          "employees": 2000,
+          "atendimentosPerMonth": 800,
+          "costPerMonthUsd": 0.907103314285714,
+          "costPerMonthHighUsd": 2.267758285714285,
+          "humanEquivalentUsd": 12448
+        },
+        {
+          "employees": 10000,
+          "atendimentosPerMonth": 4000,
+          "costPerMonthUsd": 4.53551657142857,
+          "costPerMonthHighUsd": 11.338791428571426,
+          "humanEquivalentUsd": 62240
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 331" width="760" height="331" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" role="img" aria-label="Qualidade G-Eval por critério (média do painel de juízes, 1–5)">
+<style>
+.bg{fill:#fcfcfb}.t1{fill:#0b0b0b}.t2{fill:#52514e}.t3{fill:#898781}
+.grid{stroke:#e1e0d9}.axis{stroke:#c3c2b7}.ring{stroke:#fcfcfb}.frame{stroke:rgba(11,11,11,.1)}
+.s1{fill:#2a78d6}.s2{fill:#eb6834}.s3{fill:#1baf7a}.s4{fill:#eda100}.mute{fill:#b5b4ad}
+.l1{stroke:#2a78d6}.l2{stroke:#eb6834}.lm{stroke:#b5b4ad}
+@media (prefers-color-scheme: dark){
+.bg{fill:#1a1a19}.t1{fill:#f0efec}.t2{fill:#c3c2b7}.t3{fill:#898781}
+.grid{stroke:#2c2c2a}.axis{stroke:#383835}.ring{stroke:#1a1a19}.frame{stroke:rgba(255,255,255,.1)}
+.s1{fill:#3987e5}.s2{fill:#d95926}.s3{fill:#199e70}.s4{fill:#c98500}.mute{fill:#5a5955}
+.l1{stroke:#3987e5}.l2{stroke:#d95926}.lm{stroke:#5a5955}}
+</style>
+<title>Qualidade G-Eval por critério (média do painel de juízes, 1–5)</title>
+<rect class="bg frame" x="0.5" y="0.5" width="759" height="330" rx="8" stroke-width="1"/>
+<text x="20" y="28" font-size="15" font-weight="600" class="t1">Qualidade G-Eval por critério (média do painel de juízes, 1–5)</text>
+<text x="20" y="47" font-size="12" class="t2">Critérios derivados do PRD (decisão, regras, condução, clareza, transparência) + tom e português do Brasil.</text>
+<text x="285" y="101" text-anchor="middle" font-size="10.5" class="t1">GPT-6 Luna</text>
+<text x="355" y="88" text-anchor="middle" font-size="10.5" class="t1">Gemini 3.5</text>
+<text x="355" y="101" text-anchor="middle" font-size="10.5" class="t1">Flash Lite</text>
+<text x="425" y="88" text-anchor="middle" font-size="10.5" class="t1">DeepSeek</text>
+<text x="425" y="101" text-anchor="middle" font-size="10.5" class="t1">V4.1 Flash</text>
+<text x="495" y="88" text-anchor="middle" font-size="10.5" class="t1">Mistral</text>
+<text x="495" y="101" text-anchor="middle" font-size="10.5" class="t1">Small 4</text>
+<text x="565" y="75" text-anchor="middle" font-size="10.5" class="t1">Gemini 3.5</text>
+<text x="565" y="88" text-anchor="middle" font-size="10.5" class="t1">Flash</text>
+<text x="565" y="101" text-anchor="middle" font-size="10.5" class="t1">(produção)</text>
+<text x="635" y="75" text-anchor="middle" font-size="10.5" class="t1">Qwen3.8</text>
+<text x="635" y="88" text-anchor="middle" font-size="10.5" class="t1">Flash (sem</text>
+<text x="635" y="101" text-anchor="middle" font-size="10.5" class="t1">raciocínio)</text>
+<text x="705" y="88" text-anchor="middle" font-size="10.5" class="t1">Gemini 3.8</text>
+<text x="705" y="101" text-anchor="middle" font-size="10.5" class="t1">Flash</text>
+<text x="240" y="126" text-anchor="end" font-size="11.5" class="t1">Qualidade da decisão</text>
+<rect x="251" y="110" width="68" height="24" rx="3" fill="#0d366b"><title>Qualidade da decisão · GPT-6 Luna: 4,81</title></rect>
+<text x="285" y="126" text-anchor="middle" font-size="11" fill="#ffffff">4,81</text>
+<rect x="321" y="110" width="68" height="24" rx="3" fill="#0d366b"><title>Qualidade da decisão · Gemini 3.5 Flash Lite: 4,79</title></rect>
+<text x="355" y="126" text-anchor="middle" font-size="11" fill="#ffffff">4,79</text>
+<rect x="391" y="110" width="68" height="24" rx="3" fill="#0d366b"><title>Qualidade da decisão · DeepSeek V4.1 Flash: 4,84</title></rect>
+<text x="425" y="126" text-anchor="middle" font-size="11" fill="#ffffff">4,84</text>
+<rect x="461" y="110" width="68" height="24" rx="3" fill="#184f95"><title>Qualidade da decisão · Mistral Small 4: 4,58</title></rect>
+<text x="495" y="126" text-anchor="middle" font-size="11" fill="#ffffff">4,58</text>
+<rect x="531" y="110" width="68" height="24" rx="3" fill="#0d366b"><title>Qualidade da decisão · Gemini 3.5 Flash (produção): 4,85</title></rect>
+<text x="565" y="126" text-anchor="middle" font-size="11" fill="#ffffff">4,85</text>
+<rect x="601" y="110" width="68" height="24" rx="3" fill="#0d366b"><title>Qualidade da decisão · Qwen3.8 Flash (sem raciocínio): 4,84</title></rect>
+<text x="635" y="126" text-anchor="middle" font-size="11" fill="#ffffff">4,84</text>
+<rect x="671" y="110" width="68" height="24" rx="3" fill="#0d366b"><title>Qualidade da decisão · Gemini 3.8 Flash: 4,97</title></rect>
+<text x="705" y="126" text-anchor="middle" font-size="11" fill="#ffffff">4,97</text>
+<text x="240" y="152" text-anchor="end" font-size="11.5" class="t1">Regras do service desk</text>
+<rect x="251" y="136" width="68" height="24" rx="3" fill="#0d366b"><title>Regras do service desk · GPT-6 Luna: 4,85</title></rect>
+<text x="285" y="152" text-anchor="middle" font-size="11" fill="#ffffff">4,85</text>
+<rect x="321" y="136" width="68" height="24" rx="3" fill="#0d366b"><title>Regras do service desk · Gemini 3.5 Flash Lite: 4,87</title></rect>
+<text x="355" y="152" text-anchor="middle" font-size="11" fill="#ffffff">4,87</text>
+<rect x="391" y="136" width="68" height="24" rx="3" fill="#0d366b"><title>Regras do service desk · DeepSeek V4.1 Flash: 4,91</title></rect>
+<text x="425" y="152" text-anchor="middle" font-size="11" fill="#ffffff">4,91</text>
+<rect x="461" y="136" width="68" height="24" rx="3" fill="#184f95"><title>Regras do service desk · Mistral Small 4: 4,51</title></rect>
+<text x="495" y="152" text-anchor="middle" font-size="11" fill="#ffffff">4,51</text>
+<rect x="531" y="136" width="68" height="24" rx="3" fill="#0d366b"><title>Regras do service desk · Gemini 3.5 Flash (produção): 4,87</title></rect>
+<text x="565" y="152" text-anchor="middle" font-size="11" fill="#ffffff">4,87</text>
+<rect x="601" y="136" width="68" height="24" rx="3" fill="#0d366b"><title>Regras do service desk · Qwen3.8 Flash (sem raciocínio): 4,81</title></rect>
+<text x="635" y="152" text-anchor="middle" font-size="11" fill="#ffffff">4,81</text>
+<rect x="671" y="136" width="68" height="24" rx="3" fill="#0d366b"><title>Regras do service desk · Gemini 3.8 Flash: 4,99</title></rect>
+<text x="705" y="152" text-anchor="middle" font-size="11" fill="#ffffff">4,99</text>
+<text x="240" y="178" text-anchor="end" font-size="11.5" class="t1">Condução da conversa</text>
+<rect x="251" y="162" width="68" height="24" rx="3" fill="#0d366b"><title>Condução da conversa · GPT-6 Luna: 4,70</title></rect>
+<text x="285" y="178" text-anchor="middle" font-size="11" fill="#ffffff">4,70</text>
+<rect x="321" y="162" width="68" height="24" rx="3" fill="#184f95"><title>Condução da conversa · Gemini 3.5 Flash Lite: 4,65</title></rect>
+<text x="355" y="178" text-anchor="middle" font-size="11" fill="#ffffff">4,65</text>
+<rect x="391" y="162" width="68" height="24" rx="3" fill="#0d366b"><title>Condução da conversa · DeepSeek V4.1 Flash: 4,69</title></rect>
+<text x="425" y="178" text-anchor="middle" font-size="11" fill="#ffffff">4,69</text>
+<rect x="461" y="162" width="68" height="24" rx="3" fill="#184f95"><title>Condução da conversa · Mistral Small 4: 4,36</title></rect>
+<text x="495" y="178" text-anchor="middle" font-size="11" fill="#ffffff">4,36</text>
+<rect x="531" y="162" width="68" height="24" rx="3" fill="#0d366b"><title>Condução da conversa · Gemini 3.5 Flash (produção): 4,68</title></rect>
+<text x="565" y="178" text-anchor="middle" font-size="11" fill="#ffffff">4,68</text>
+<rect x="601" y="162" width="68" height="24" rx="3" fill="#184f95"><title>Condução da conversa · Qwen3.8 Flash (sem raciocínio): 4,56</title></rect>
+<text x="635" y="178" text-anchor="middle" font-size="11" fill="#ffffff">4,56</text>
+<rect x="671" y="162" width="68" height="24" rx="3" fill="#0d366b"><title>Condução da conversa · Gemini 3.8 Flash: 4,89</title></rect>
+<text x="705" y="178" text-anchor="middle" font-size="11" fill="#ffffff">4,89</text>
+<text x="240" y="204" text-anchor="end" font-size="11.5" class="t1">Clareza da resposta</text>
+<rect x="251" y="188" width="68" height="24" rx="3" fill="#0d366b"><title>Clareza da resposta · GPT-6 Luna: 4,86</title></rect>
+<text x="285" y="204" text-anchor="middle" font-size="11" fill="#ffffff">4,86</text>
+<rect x="321" y="188" width="68" height="24" rx="3" fill="#184f95"><title>Clareza da resposta · Gemini 3.5 Flash Lite: 4,62</title></rect>
+<text x="355" y="204" text-anchor="middle" font-size="11" fill="#ffffff">4,62</text>
+<rect x="391" y="188" width="68" height="24" rx="3" fill="#184f95"><title>Clareza da resposta · DeepSeek V4.1 Flash: 4,34</title></rect>
+<text x="425" y="204" text-anchor="middle" font-size="11" fill="#ffffff">4,34</text>
+<rect x="461" y="188" width="68" height="24" rx="3" fill="#184f95"><title>Clareza da resposta · Mistral Small 4: 4,15</title></rect>
+<text x="495" y="204" text-anchor="middle" font-size="11" fill="#ffffff">4,15</text>
+<rect x="531" y="188" width="68" height="24" rx="3" fill="#184f95"><title>Clareza da resposta · Gemini 3.5 Flash (produção): 4,46</title></rect>
+<text x="565" y="204" text-anchor="middle" font-size="11" fill="#ffffff">4,46</text>
+<rect x="601" y="188" width="68" height="24" rx="3" fill="#184f95"><title>Clareza da resposta · Qwen3.8 Flash (sem raciocínio): 4,30</title></rect>
+<text x="635" y="204" text-anchor="middle" font-size="11" fill="#ffffff">4,30</text>
+<rect x="671" y="188" width="68" height="24" rx="3" fill="#0d366b"><title>Clareza da resposta · Gemini 3.8 Flash: 4,72</title></rect>
+<text x="705" y="204" text-anchor="middle" font-size="11" fill="#ffffff">4,72</text>
+<text x="240" y="230" text-anchor="end" font-size="11.5" class="t1">Transparência do raciocínio</text>
+<rect x="251" y="214" width="68" height="24" rx="3" fill="#0d366b"><title>Transparência do raciocínio · GPT-6 Luna: 4,73</title></rect>
+<text x="285" y="230" text-anchor="middle" font-size="11" fill="#ffffff">4,73</text>
+<rect x="321" y="214" width="68" height="24" rx="3" fill="#0d366b"><title>Transparência do raciocínio · Gemini 3.5 Flash Lite: 4,68</title></rect>
+<text x="355" y="230" text-anchor="middle" font-size="11" fill="#ffffff">4,68</text>
+<rect x="391" y="214" width="68" height="24" rx="3" fill="#0d366b"><title>Transparência do raciocínio · DeepSeek V4.1 Flash: 4,76</title></rect>
+<text x="425" y="230" text-anchor="middle" font-size="11" fill="#ffffff">4,76</text>
+<rect x="461" y="214" width="68" height="24" rx="3" fill="#184f95"><title>Transparência do raciocínio · Mistral Small 4: 4,51</title></rect>
+<text x="495" y="230" text-anchor="middle" font-size="11" fill="#ffffff">4,51</text>
+<rect x="531" y="214" width="68" height="24" rx="3" fill="#184f95"><title>Transparência do raciocínio · Gemini 3.5 Flash (produção): 4,66</title></rect>
+<text x="565" y="230" text-anchor="middle" font-size="11" fill="#ffffff">4,66</text>
+<rect x="601" y="214" width="68" height="24" rx="3" fill="#0d366b"><title>Transparência do raciocínio · Qwen3.8 Flash (sem raciocínio): 4,80</title></rect>
+<text x="635" y="230" text-anchor="middle" font-size="11" fill="#ffffff">4,80</text>
+<rect x="671" y="214" width="68" height="24" rx="3" fill="#0d366b"><title>Transparência do raciocínio · Gemini 3.8 Flash: 4,85</title></rect>
+<text x="705" y="230" text-anchor="middle" font-size="11" fill="#ffffff">4,85</text>
+<text x="240" y="256" text-anchor="end" font-size="11.5" class="t1">Tom e empatia</text>
+<rect x="251" y="240" width="68" height="24" rx="3" fill="#184f95"><title>Tom e empatia · GPT-6 Luna: 4,14</title></rect>
+<text x="285" y="256" text-anchor="middle" font-size="11" fill="#ffffff">4,14</text>
+<rect x="321" y="240" width="68" height="24" rx="3" fill="#184f95"><title>Tom e empatia · Gemini 3.5 Flash Lite: 4,11</title></rect>
+<text x="355" y="256" text-anchor="middle" font-size="11" fill="#ffffff">4,11</text>
+<rect x="391" y="240" width="68" height="24" rx="3" fill="#184f95"><title>Tom e empatia · DeepSeek V4.1 Flash: 4,31</title></rect>
+<text x="425" y="256" text-anchor="middle" font-size="11" fill="#ffffff">4,31</text>
+<rect x="461" y="240" width="68" height="24" rx="3" fill="#184f95"><title>Tom e empatia · Mistral Small 4: 4,06</title></rect>
+<text x="495" y="256" text-anchor="middle" font-size="11" fill="#ffffff">4,06</text>
+<rect x="531" y="240" width="68" height="24" rx="3" fill="#184f95"><title>Tom e empatia · Gemini 3.5 Flash (produção): 4,50</title></rect>
+<text x="565" y="256" text-anchor="middle" font-size="11" fill="#ffffff">4,50</text>
+<rect x="601" y="240" width="68" height="24" rx="3" fill="#184f95"><title>Tom e empatia · Qwen3.8 Flash (sem raciocínio): 4,32</title></rect>
+<text x="635" y="256" text-anchor="middle" font-size="11" fill="#ffffff">4,32</text>
+<rect x="671" y="240" width="68" height="24" rx="3" fill="#184f95"><title>Tom e empatia · Gemini 3.8 Flash: 4,47</title></rect>
+<text x="705" y="256" text-anchor="middle" font-size="11" fill="#ffffff">4,47</text>
+<text x="240" y="282" text-anchor="end" font-size="11.5" class="t1">Português do Brasil</text>
+<rect x="251" y="266" width="68" height="24" rx="3" fill="#0d366b"><title>Português do Brasil · GPT-6 Luna: 5,00</title></rect>
+<text x="285" y="282" text-anchor="middle" font-size="11" fill="#ffffff">5,00</text>
+<rect x="321" y="266" width="68" height="24" rx="3" fill="#0d366b"><title>Português do Brasil · Gemini 3.5 Flash Lite: 4,96</title></rect>
+<text x="355" y="282" text-anchor="middle" font-size="11" fill="#ffffff">4,96</text>
+<rect x="391" y="266" width="68" height="24" rx="3" fill="#0d366b"><title>Português do Brasil · DeepSeek V4.1 Flash: 4,96</title></rect>
+<text x="425" y="282" text-anchor="middle" font-size="11" fill="#ffffff">4,96</text>
+<rect x="461" y="266" width="68" height="24" rx="3" fill="#0d366b"><title>Português do Brasil · Mistral Small 4: 4,95</title></rect>
+<text x="495" y="282" text-anchor="middle" font-size="11" fill="#ffffff">4,95</text>
+<rect x="531" y="266" width="68" height="24" rx="3" fill="#0d366b"><title>Português do Brasil · Gemini 3.5 Flash (produção): 4,98</title></rect>
+<text x="565" y="282" text-anchor="middle" font-size="11" fill="#ffffff">4,98</text>
+<rect x="601" y="266" width="68" height="24" rx="3" fill="#0d366b"><title>Português do Brasil · Qwen3.8 Flash (sem raciocínio): 4,92</title></rect>
+<text x="635" y="282" text-anchor="middle" font-size="11" fill="#ffffff">4,92</text>
+<rect x="671" y="266" width="68" height="24" rx="3" fill="#0d366b"><title>Português do Brasil · Gemini 3.8 Flash: 4,96</title></rect>
+<text x="705" y="282" text-anchor="middle" font-size="11" fill="#ffffff">4,96</text>
+<rect x="20" y="62" width="20" height="10" rx="2" fill="#cde2fb"/>
+<rect x="42" y="62" width="20" height="10" rx="2" fill="#9ec5f4"/>
+<rect x="64" y="62" width="20" height="10" rx="2" fill="#6da7ec"/>
+<rect x="86" y="62" width="20" height="10" rx="2" fill="#3987e5"/>
+<rect x="108" y="62" width="20" height="10" rx="2" fill="#256abf"/>
+<rect x="130" y="62" width="20" height="10" rx="2" fill="#184f95"/>
+<rect x="152" y="62" width="20" height="10" rx="2" fill="#0d366b"/>
+<text x="20" y="86" font-size="11" class="t3">1 (ruim)</text>
+<text x="174" y="86" text-anchor="end" font-size="11" class="t3">5 (excelente)</text>
+</svg>
