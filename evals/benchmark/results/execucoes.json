@@ -1,0 +1,12 @@
+[
+  {
+    "startedAt": "2026-10-27T20:02:08.548Z",
+    "finishedAt": "2026-10-27T20:21:45.952Z",
+    "keyUsageBeforeUsd": 0.49555382,
+    "keyUsageAfterUsd": 1.762451603,
+    "spentByKeyUsd": 1.2668977829999999,
+    "trackedUsd": 1.2999374124880008,
+    "responseCacheSavedUsd": 0.0029309516,
+    "keyLimitRemainingUsd": 0.23754839700000008
+  }
+]
