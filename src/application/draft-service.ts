@@ -27,7 +27,9 @@ export class DraftService {
     private readonly clock: Clock = systemClock,
   ) {}
 
+  /** Um rascunho novo substitui o pendente anterior da conversa: confirmar os dois criaria chamados repetidos. */
   async proposeNewTicket(conversationId: string, employeeId: string, fields: NewTicketFields): Promise<DraftSnapshot> {
+    await this.drafts.cancelPending(conversationId);
     const draft = await this.drafts.insert({
       conversationId,
       employeeId,
@@ -50,6 +52,7 @@ export class DraftService {
       throw new DomainError("reopen_window_expired", `O ${ticket.code} foi resolvido há mais de 7 dias. É preciso abrir um novo chamado.`);
     }
     const fields: TicketUpdateFields = { ticketCode: ticket.code, ticketTitle: ticket.title, comment: input.comment, reopen };
+    await this.drafts.cancelPending(conversationId);
     const draft = await this.drafts.insert({
       conversationId,
       employeeId,

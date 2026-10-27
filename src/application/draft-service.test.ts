@@ -40,6 +40,17 @@ describe("rascunho antes de criar", () => {
     expect(ticketRepo.tickets.size).toBe(0);
   });
 
+  it("um rascunho novo substitui o pendente anterior: confirmar os dois criaria dois chamados", async () => {
+    // Achado no teste em produção: "é o monitor da direita" gerou o D-12, e o D-11 continuou pendente.
+    const { ticketRepo, drafts, conversation } = await setup();
+    const first = await drafts.proposeNewTicket(conversation.id, "ana", fields);
+    const revised = await drafts.proposeNewTicket(conversation.id, "ana", { ...fields, title: "VPN da filial não conecta — erro 809" });
+    expect((await drafts.pending(conversation.id)).map((d) => d.id)).toEqual([revised.id]);
+    await expect(drafts.confirm(first.id, "ana")).rejects.toMatchObject({ code: "draft_not_pending" });
+    await drafts.confirm(revised.id, "ana");
+    expect(ticketRepo.tickets.size).toBe(1);
+  });
+
   it("confirmar cria o chamado com a prioridade calculada", async () => {
     const { ticketRepo, drafts, conversation } = await setup();
     const draft = await drafts.proposeNewTicket(conversation.id, "ana", fields);

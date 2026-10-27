@@ -21,6 +21,7 @@ with_agent ──handoff──▶ waiting_analyst ──assume──▶ with_ana
 
 ## Rascunho
 
+- Um rascunho novo (de chamado ou de atualização) substitui o pendente anterior da conversa, que aparece como "Descartado". Sem isso, ao corrigir um detalhe, o rascunho antigo continuava confirmável e dava para criar dois chamados do mesmo problema.
 - Enquanto o Nexo responde, os botões do rascunho (e o Ctrl+Enter) ficam travados, com o aviso "Aguarde o Nexo responder para confirmar". A resposta em andamento foi montada com os rascunhos de antes; confirmar no meio dela deixava a resposta desatualizada ("o rascunho ainda está pronto").
 
 ## Sessão
