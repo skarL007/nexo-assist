@@ -6,7 +6,9 @@ Cada resposta do agent mostra **o que ele entendeu, o que fez e por quê**: pass
 
 **Stack:** TypeScript estrito · Next.js 16 (App Router) · Mastra (agent) · Google Gemini 3.5 Flash · Drizzle + libSQL (SQLite local, Turso no deploy) · Redux Toolkit + RTK Query · Zod · shadcn/ui + Tailwind · Vitest · Playwright.
 
-<!-- DEMO -->
+[![Demonstração em vídeo do Nexo Assist (1:49)](docs/demo/poster.png)](docs/demo/nexo-assist-demo.mp4)
+
+**Demonstração (1:49):** login, dúvida resolvida pela central de ajuda, o painel "por quê?", abertura de chamado conversando e com confirmação, chamado vencido indo para um analista e o console do analista. É uma gravação real com o Gemini; as esperas pelo modelo aparecem aceleradas e sinalizadas no vídeo.
 
 ---
 
