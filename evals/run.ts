@@ -8,6 +8,7 @@
  * numa conversa nova. O resultado mostra o que passou, o que falhou e o custo.
  */
 import { execSync } from "node:child_process";
+import { checkScenario } from "./checks";
 
 process.env.DATABASE_URL = "file:eval.db";
 process.env.LEGACY_FAILURE_RATE = "0";
@@ -49,15 +50,7 @@ async function main() {
       }
     }
 
-    const { expect } = scenario;
-    const failures: string[] = [];
-    if (expect.intent && !expect.intent.includes(lastIntent as never)) failures.push(`intenção ${lastIntent}`);
-    if (expect.anyTool && !expect.anyTool.some((t) => toolsUsed.has(t))) failures.push(`esperava ${expect.anyTool.join(" ou ")}`);
-    for (const tool of expect.noTool ?? []) if (toolsUsed.has(tool)) failures.push(`não devia usar ${tool}`);
-    if (expect.handedOff && status === "with_agent") failures.push("não transferiu");
-    for (const term of expect.replyExcludes ?? []) {
-      if (replies.some((r) => r.toLowerCase().includes(term.toLowerCase()))) failures.push(`vazou "${term}"`);
-    }
+    const failures = checkScenario(scenario.expect, { lastIntent, toolsUsed, finalStatus: status, replies });
 
     if (failures.length === 0) passed++;
     console.log(`${failures.length ? "✗" : "✓"} ${scenario.name}`);
