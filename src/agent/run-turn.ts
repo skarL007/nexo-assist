@@ -19,7 +19,7 @@ import { conversationView } from "@/server/views";
 import { apiKeyVarFor, providerOptionsFor } from "./model-config";
 import { stripMarkdown, stripSystemNotes, toModelMessages } from "./model-history";
 import { nexoAgent } from "./nexo-agent";
-import { stepPolicy } from "./step-policy";
+import { needsContinuation, stepPolicy } from "./step-policy";
 import { turnBriefing } from "./turn-briefing";
 import { TURN_KEY, TurnRecorder, type TurnContext } from "./turn-context";
 
@@ -76,34 +76,78 @@ async function* replyWithAgent(turn: TurnContext, abortSignal?: AbortSignal): As
     services.drafts.pending(conversationId),
   ]);
 
+  const run: AgentRun = { reply: "", toolCalls: [], usage: null };
+  const messages = toModelMessages(history);
+  const system = turnBriefing(employee, startedAt, pendingDrafts);
+
+  yield* streamAgent(turn, messages, system, 0, run, abortSignal);
+  // Turno cortado só com recordUnderstanding repetido: continua uma vez a partir do passo 1.
+  if (needsContinuation({ reply: run.reply, handedOff: recorder.handedOff, toolCalls: run.toolCalls })) {
+    recorder.guardrail("O modelo repetiu o registro do entendimento sem agir: o turno continuou a partir das ações.");
+    yield* streamAgent(turn, messages, system, 1, run, abortSignal);
+  }
+
+  const trace: TurnTrace = {
+    decision: recorder.decision,
+    steps: recorder.steps,
+    toolCalls: run.toolCalls,
+    guardrails: recorder.guardrails,
+    model: env().LLM_MODEL,
+    usage: run.usage,
+    latencyMs: Date.now() - startedAt.getTime(),
+  };
+
+  await services.messages.add({
+    conversationId,
+    role: "agent",
+    text: stripMarkdown(stripSystemNotes(run.reply)) || fallbackReply(recorder),
+    cards: recorder.cards,
+    trace,
+  });
+}
+
+/** O que um turno acumula, mesmo quando o modelo roda duas vezes (ver needsContinuation). */
+interface AgentRun {
+  reply: string;
+  toolCalls: ToolCallLog[];
+  usage: TurnTrace["usage"];
+}
+
+/** Uma chamada ao agent a partir de `firstStep`: repassa os eventos e acumula em `run`. */
+async function* streamAgent(
+  turn: TurnContext,
+  messages: ReturnType<typeof toModelMessages>,
+  system: string,
+  firstStep: number,
+  run: AgentRun,
+  abortSignal?: AbortSignal,
+): AsyncGenerator<ChatStreamEvent> {
+  const { recorder } = turn;
   const requestContext = new RequestContext();
   requestContext.set(TURN_KEY, turn);
 
-  const stream = await nexoAgent().stream(toModelMessages(history), {
+  const stream = await nexoAgent().stream(messages, {
     requestContext,
-    system: turnBriefing(employee, startedAt, pendingDrafts),
-    maxSteps: MAX_STEPS,
+    system,
+    maxSteps: MAX_STEPS - firstStep,
     abortSignal,
     modelSettings: { temperature: 0.2, maxOutputTokens: MAX_OUTPUT_TOKENS },
     // O modelo "pensa" antes de responder; para atendimento, raciocínio mínimo basta e corta a latência.
-    providerOptions: providerOptionsFor(env().LLM_MODEL, env().OPENROUTER_REASONING_EFFORT, conversationId),
+    providerOptions: providerOptionsFor(env().LLM_MODEL, env().OPENROUTER_REASONING_EFFORT, turn.conversationId),
     // Passo 0: obriga o modelo a registrar o que entendeu. Depois de transferir, não age mais.
-    prepareStep: ({ stepNumber }) => stepPolicy(stepNumber, recorder.handedOff),
+    prepareStep: ({ stepNumber }) => stepPolicy(firstStep + stepNumber, recorder.handedOff),
   });
 
-  let reply = "";
-  const toolCalls: ToolCallLog[] = [];
   const startedCalls = new Map<string, { at: number; input: unknown }>();
-
   for await (const chunk of stream.fullStream) {
     if (chunk.type === "text-delta") {
-      reply += chunk.payload.text;
+      run.reply += chunk.payload.text;
       yield { type: "text", delta: chunk.payload.text };
     } else if (chunk.type === "tool-call") {
       startedCalls.set(chunk.payload.toolCallId, { at: Date.now(), input: chunk.payload.args });
     } else if (chunk.type === "tool-result") {
       const started = startedCalls.get(chunk.payload.toolCallId);
-      toolCalls.push({
+      run.toolCalls.push({
         tool: chunk.payload.toolName,
         input: started?.input ?? chunk.payload.args,
         output: chunk.payload.result,
@@ -116,23 +160,12 @@ async function* replyWithAgent(turn: TurnContext, abortSignal?: AbortSignal): As
   }
 
   const usage = await stream.usage.catch(() => null);
-  const trace: TurnTrace = {
-    decision: recorder.decision,
-    steps: recorder.steps,
-    toolCalls,
-    guardrails: recorder.guardrails,
-    model: env().LLM_MODEL,
-    usage: usage ? { inputTokens: usage.inputTokens ?? 0, outputTokens: usage.outputTokens ?? 0 } : null,
-    latencyMs: Date.now() - startedAt.getTime(),
-  };
-
-  await services.messages.add({
-    conversationId,
-    role: "agent",
-    text: stripMarkdown(stripSystemNotes(reply)) || fallbackReply(recorder),
-    cards: recorder.cards,
-    trace,
-  });
+  if (usage) {
+    run.usage = {
+      inputTokens: (run.usage?.inputTokens ?? 0) + (usage.inputTokens ?? 0),
+      outputTokens: (run.usage?.outputTokens ?? 0) + (usage.outputTokens ?? 0),
+    };
+  }
 }
 
 /** Limites por sessão e por pessoa (somando todas as conversas dela). */
