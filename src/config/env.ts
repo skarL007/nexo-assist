@@ -8,8 +8,10 @@ const DEV_SECRET = "dev-only-secret-change-me-dev-only-secret";
 
 const schema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-  OPENAI_API_KEY: z.string().optional(),
-  LLM_MODEL: z.string().default("openai/gpt-4.1-mini"),
+  /** Chave do Gemini (Google AI Studio). O Mastra lê esta variável sozinho. */
+  GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
+  /** Formato "provedor/modelo" do roteador de modelos do Mastra. */
+  LLM_MODEL: z.string().default("google/gemini-3.5-flash"),
   DATABASE_URL: z.string().default("file:local.db"),
   DATABASE_AUTH_TOKEN: z.string().optional(),
   AUTH_SECRET: z.string().min(32).default(DEV_SECRET),
@@ -25,7 +27,9 @@ let cached: Env | null = null;
 
 export function env(): Env {
   if (cached) return cached;
-  const parsed = schema.parse(process.env);
+  // Variável vazia no .env (ex.: "AUTH_SECRET=") conta como não definida.
+  const defined = Object.fromEntries(Object.entries(process.env).filter(([, value]) => value !== ""));
+  const parsed = schema.parse(defined);
   if (parsed.NODE_ENV === "production" && parsed.AUTH_SECRET === DEV_SECRET) {
     throw new Error("Defina AUTH_SECRET em produção.");
   }
