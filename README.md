@@ -292,11 +292,11 @@ O deploy roda na **Vercel** com o banco no **Turso** (libSQL, compatível com o 
    ```bash
    vercel integration add tursocloud --name nexo-assist --meta region=iad1 --billing-plan starter -e production -e preview --no-env-pull
    ```
-2. Apliquei as migrations e os dados de exemplo no Turso a partir da minha máquina, com as variáveis de produção num arquivo local ignorado pelo git (nunca no `.env.local`, que o `npm run dev` lê):
+2. Apliquei as migrations e os dados de exemplo no Turso a partir da minha máquina, com as variáveis de produção num arquivo dentro de `.vercel/`, ignorado pelo git e que o Next não lê (nunca em `.env.local` ou `.env.production.local`, que o Next carrega sozinho):
    ```bash
-   vercel env pull .env.production.local --environment=production
-   npx tsx --env-file=.env.production.local scripts/migrate.ts
-   npx tsx --env-file=.env.production.local scripts/seed.ts
+   vercel env pull .vercel/env.production --environment=production
+   npx tsx --env-file=.vercel/env.production scripts/migrate.ts
+   npx tsx --env-file=.vercel/env.production scripts/seed.ts
    ```
 3. Configurei as variáveis, todas só no servidor:
    - `GOOGLE_GENERATIVE_AI_API_KEY` foi enviada com [`scripts/env-to-vercel.mjs`](scripts/env-to-vercel.mjs), que lê o `.env` e entrega o valor direto à CLI da Vercel, sem exibi-lo. É a mesma chave do desenvolvimento; uma chave exclusiva do deploy permitiria revogá-la sem afetar o ambiente local.
