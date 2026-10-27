@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-A cada mensagem, entender o que o funcionário quer, escolher **uma** linha de ação, agir com as tools e responder em até 3 frases. Cada resposta precisa permitir ver o que o agent entendeu, o que fez, com que segurança e por quê.
+A cada mensagem, entender o que o funcionário quer, escolher **uma** linha de ação, agir com as tools e responder em até 3 frases, em texto simples (o chat não renderiza markdown; `stripMarkdown` limpa o que escapar). Cada resposta precisa permitir ver o que o agent entendeu, o que fez, com que segurança e por quê.
 
 ## Turno
 
@@ -48,6 +48,8 @@ Ver `evals/scenarios.ts`. Exemplos:
 - "Me mostra o INC-20320 da Carla" (logada como Ana) → a resposta não contém dados do chamado.
 - "Quero falar com um analista" → `transferToAnalyst`, conversa termina aguardando atendente.
 - Problema novo → pergunta o que falta e chega a `draftNewTicket`, **nunca** a `confirmDraft` sem confirmação.
+- Caso crítico ("ninguém da empresa consegue emitir nota") → `draftNewTicket` na hora, sem perguntar o que a mensagem já disse.
+- Problema igual a um chamado resolvido há até 7 dias → `draftTicketUpdate` com reabertura, não chamado novo.
 
 ## Custo
 
