@@ -47,10 +47,11 @@ Qualquer senha funciona para os usuários de exemplo (regra do desafio). Na tela
 Outros comandos:
 
 ```bash
-npm test              # 122 testes unitários (domínio, serviços, HTTP, benchmark) — sem LLM
+npm test              # 125 testes unitários (domínio, serviços, HTTP, benchmark) — sem LLM
 npm run test:e2e      # Playwright contra o build de produção — sem LLM
 npm run eval          # 12 cenários de decisão do agent com o modelo real
 npm run db:seed       # volta os dados ao estado inicial
+npm run access-link   # link temporário para o deploy (5 min; `-- 60` para 60 min)
 npm run typecheck && npm run lint
 ```
 
@@ -225,7 +226,7 @@ O prompt ([`agent/instructions.ts`](src/agent/instructions.ts)) cuida só da con
 
 | Camada | O que cobre | Comando |
 |---|---|---|
-| **Testes unitários** (Vitest, 122) | prazos com fim de semana, matriz de prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado, confirmação obrigatória, clique duplo, transferência em caso crítico, bloqueio de CSRF | `npm test` |
+| **Testes unitários** (Vitest, 125) | prazos com fim de semana, matriz de prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado, confirmação obrigatória, clique duplo, transferência em caso crítico, bloqueio de CSRF | `npm test` |
 | **E2E** (Playwright, 6) | login, permissões (funcionário não acessa o console nem a API do analista) e o ciclo da transferência de ponta a ponta, contra o build de produção | `npm run test:e2e` |
 | **Evals** (12 cenários, modelo real) | intenção, tools esperadas e proibidas, transferência, caso crítico, reabertura e vazamento de dados de outra pessoa | `npm run eval` |
 | **Trace em toda resposta** | qualquer decisão pode ser auditada na própria interface e no console do analista | — |
@@ -290,7 +291,7 @@ O deploy roda na **Vercel** com o banco no **Turso** (libSQL, compatível com o 
 
 ### Como fiz o deploy
 
-**App no ar:** https://nexo-assist-puce.vercel.app. O acesso é pelo link com token (`/?access=…`), enviado junto com o repositório. Sem ele, toda página e toda API respondem 401.
+**App no ar:** https://nexo-assist-puce.vercel.app. O acesso é por um link temporário (`/?access=…`), enviado junto com o repositório. Sem ele, ou depois que ele vence, toda página e toda API respondem 401.
 
 1. Criei o projeto na Vercel e instalei o **Turso pelo Marketplace da Vercel**. A integração cria o banco e as variáveis `TURSO_DATABASE_URL` e `TURSO_AUTH_TOKEN` no projeto, e o `env.ts` aceita esses nomes.
    ```bash
@@ -329,7 +330,7 @@ flowchart LR
 
 | Risco | Proteção |
 |---|---|
-| Qualquer pessoa usar o agent (e a minha cota) | **Porta de acesso por token** em [`proxy.ts`](src/proxy.ts): sem `?access=` válido, nenhuma página ou API responde. A comparação é em tempo constante ([`server/access-gate.ts`](src/server/access-gate.ts)) e o token vira um cookie httpOnly, saindo da URL. |
+| Qualquer pessoa usar o agent (e a minha cota) | **Porta de acesso com link temporário** em [`proxy.ts`](src/proxy.ts): sem `?access=` válido, nenhuma página ou API responde. O link leva `<validade>.<HMAC>`, assinado com o segredo `ACCESS_TOKEN`, que nunca sai do servidor ([`server/access-gate.ts`](src/server/access-gate.ts)). O token vira um cookie httpOnly que vence junto com o link e sai da URL. `npm run access-link -- <minutos>` gera um link novo. |
 | Vazamento de chave | Chaves só em variáveis de ambiente do servidor, validadas com Zod. Nada com prefixo `NEXT_PUBLIC_`. `.env` fora do git. |
 | Custo inesperado | 30 mensagens por sessão, 40 por hora e 120 por dia por pessoa, teto global diário (`DAILY_AGENT_TURN_LIMIT`), **teto total de 150 respostas do modelo** (`TOTAL_AGENT_TURN_LIMIT`: cerca de US$ 1,60, ou R$ 10, pelo custo de US$ 0,0106 por resposta medido no benchmark), 800 tokens de saída por passo, histórico truncado, e a chamada ao modelo é cancelada quando o funcionário fecha a aba. Recomendo também um limite de gasto no projeto do Google Cloud. |
 | Requisição forjada de outro site (CSRF) | Toda mutação exige mesma origem (`Sec-Fetch-Site`/`Origin`) e corpo JSON ([`server/http.ts`](src/server/http.ts)). |
