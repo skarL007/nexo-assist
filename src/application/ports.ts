@@ -58,6 +58,8 @@ export interface MessageRepository {
   countByRole(conversationId: string, role: MessageRole): Promise<number>;
   /** Mensagens de um papel no sistema todo desde `since` (teto global de custo). */
   countByRoleSince(role: MessageRole, since: Date): Promise<number>;
+  /** Respostas que chamaram o modelo (com uso de tokens no trace), no sistema todo: teto total de custo. */
+  countModelReplies(): Promise<number>;
   /** Mensagens do funcionário em todas as conversas dele desde `since` (limite por pessoa). */
   countByEmployeeSince(employeeId: string, since: Date): Promise<number>;
 }

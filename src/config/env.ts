@@ -24,6 +24,8 @@ const schema = z.object({
   LEGACY_FAILURE_RATE: z.coerce.number().min(0).max(1).default(0.15),
   /** Teto global de respostas do agent por dia — protege o custo no deploy. */
   DAILY_AGENT_TURN_LIMIT: z.coerce.number().int().positive().default(500),
+  /** Teto total de respostas do modelo (gasto fixo da demonstração). Vazio = sem teto. */
+  TOTAL_AGENT_TURN_LIMIT: z.coerce.number().int().positive().optional(),
 });
 
 export type Env = z.infer<typeof schema>;
