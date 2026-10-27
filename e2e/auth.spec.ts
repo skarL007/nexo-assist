@@ -34,3 +34,18 @@ test("sem login, a API do chat responde 401", async ({ request }) => {
   const response = await request.get("/api/chat");
   expect(response.status()).toBe(401);
 });
+
+test("botão de demonstração entra com um clique", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByRole("button", { name: "Ana · funcionária" }).click();
+  await expect(page).toHaveURL(/\/atendimento$/);
+});
+
+test("senha vazia e 'Esqueci minha senha' explicam que qualquer senha funciona", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel("E-mail corporativo").fill(ANA);
+  await page.getByRole("button", { name: "Entrar" }).click();
+  await expect(page.getByText("Informe uma senha (na demonstração, qualquer uma funciona)")).toBeVisible();
+  await page.getByRole("button", { name: "Esqueci minha senha" }).click();
+  await expect(page.getByText("Na demonstração, qualquer senha funciona. Na Nexo, este link abriria a troca da senha de rede.")).toBeVisible();
+});
