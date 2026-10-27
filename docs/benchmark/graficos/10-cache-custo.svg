@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 422" width="760" height="422" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" role="img" aria-label="Custo por 1.000 atendimentos: com cache × sem cache">
+<style>
+.bg{fill:#fcfcfb}.t1{fill:#0b0b0b}.t2{fill:#52514e}.t3{fill:#898781}
+.grid{stroke:#e1e0d9}.axis{stroke:#c3c2b7}.ring{stroke:#fcfcfb}.frame{stroke:rgba(11,11,11,.1)}
+.s1{fill:#2a78d6}.s2{fill:#eb6834}.s3{fill:#1baf7a}.s4{fill:#eda100}.mute{fill:#b5b4ad}
+.l1{stroke:#2a78d6}.l2{stroke:#eb6834}.lm{stroke:#b5b4ad}
+@media (prefers-color-scheme: dark){
+.bg{fill:#1a1a19}.t1{fill:#f0efec}.t2{fill:#c3c2b7}.t3{fill:#898781}
+.grid{stroke:#2c2c2a}.axis{stroke:#383835}.ring{stroke:#1a1a19}.frame{stroke:rgba(255,255,255,.1)}
+.s1{fill:#3987e5}.s2{fill:#d95926}.s3{fill:#199e70}.s4{fill:#c98500}.mute{fill:#5a5955}
+.l1{stroke:#3987e5}.l2{stroke:#d95926}.lm{stroke:#5a5955}}
+</style>
+<title>Custo por 1.000 atendimentos: com cache × sem cache</title>
+<rect class="bg frame" x="0.5" y="0.5" width="759" height="421" rx="8" stroke-width="1"/>
+<text x="20" y="28" font-size="15" font-weight="600" class="t1">Custo por 1.000 atendimentos: com cache × sem cache</text>
+<text x="20" y="47" font-size="12" class="t2">Sem cache = mesmos tokens pelo preço cheio do catálogo. Escala log.</text>
+<rect x="20" y="60" width="12" height="12" rx="2" class="s1"/>
+<text x="38" y="70" font-size="12" class="t1">com cache (pago)</text>
+<rect x="163.6" y="60" width="12" height="12" rx="2" class="s2"/>
+<text x="181.6" y="70" font-size="12" class="t1">sem cache (contrafactual)</text>
+<line x1="220" x2="220" y1="78" y2="378" class="grid" stroke-width="1"/>
+<text x="220" y="394" text-anchor="middle" font-size="11" class="t3">US$ 1,00</text>
+<line x1="445" x2="445" y1="78" y2="378" class="grid" stroke-width="1"/>
+<text x="445" y="394" text-anchor="middle" font-size="11" class="t3">US$ 10,00</text>
+<line x1="670" x2="670" y1="78" y2="378" class="grid" stroke-width="1"/>
+<text x="670" y="394" text-anchor="middle" font-size="11" class="t3">US$ 100</text>
+<text x="210" y="106" text-anchor="end" font-size="12" class="t1">Qwen3.8 Flash (sem raciocínio)</text>
+<path d="M220,88 H228.3 Q232.3,88 232.3,92 V96 Q232.3,100 228.3,100 H220 Z" class="s1"><title>Qwen3.8 Flash (sem raciocínio) · com cache (pago): US$ 1,13</title></path>
+<text x="237.3" y="98" font-size="10.5" class="t2">US$ 1,13</text>
+<path d="M220,102 H369.2 Q373.2,102 373.2,106 V110 Q373.2,114 369.2,114 H220 Z" class="s2"><title>Qwen3.8 Flash (sem raciocínio) · sem cache (contrafactual): US$ 4,79</title></path>
+<text x="378.2" y="112" font-size="10.5" class="t2">US$ 4,79</text>
+<text x="210" y="148" text-anchor="end" font-size="12" class="t1">GPT-6 Luna ★</text>
+<path d="M220,130 H235.6 Q239.6,130 239.6,134 V138 Q239.6,142 235.6,142 H220 Z" class="s1"><title>GPT-6 Luna ★ · com cache (pago): US$ 1,22</title></path>
+<text x="244.6" y="140" font-size="10.5" class="t2">US$ 1,22</text>
+<path d="M220,144 H304.8 Q308.8,144 308.8,148 V152 Q308.8,156 304.8,156 H220 Z" class="s2"><title>GPT-6 Luna ★ · sem cache (contrafactual): US$ 2,48</title></path>
+<text x="313.8" y="154" font-size="10.5" class="t2">US$ 2,48</text>
+<text x="210" y="190" text-anchor="end" font-size="12" class="t1">Mistral Small 4</text>
+<path d="M220,172 H242.5 Q246.5,172 246.5,176 V180 Q246.5,184 242.5,184 H220 Z" class="s1"><title>Mistral Small 4 · com cache (pago): US$ 1,31</title></path>
+<text x="251.5" y="182" font-size="10.5" class="t2">US$ 1,31</text>
+<path d="M220,186 H337.9 Q341.9,186 341.9,190 V194 Q341.9,198 337.9,198 H220 Z" class="s2"><title>Mistral Small 4 · sem cache (contrafactual): US$ 3,48</title></path>
+<text x="346.9" y="196" font-size="10.5" class="t2">US$ 3,48</text>
+<text x="210" y="232" text-anchor="end" font-size="12" class="t1">DeepSeek V4.1 Flash</text>
+<path d="M220,214 H372 Q376,214 376,218 V222 Q376,226 372,226 H220 Z" class="s1"><title>DeepSeek V4.1 Flash · com cache (pago): US$ 4,94</title></path>
+<text x="381" y="224" font-size="10.5" class="t2">US$ 4,94</text>
+<path d="M220,228 H410.8 Q414.8,228 414.8,232 V236 Q414.8,240 410.8,240 H220 Z" class="s2"><title>DeepSeek V4.1 Flash · sem cache (contrafactual): US$ 7,34</title></path>
+<text x="419.8" y="238" font-size="10.5" class="t2">US$ 7,34</text>
+<text x="210" y="274" text-anchor="end" font-size="12" class="t1">Gemini 3.5 Flash Lite</text>
+<path d="M220,256 H409.4 Q413.4,256 413.4,260 V264 Q413.4,268 409.4,268 H220 Z" class="s1"><title>Gemini 3.5 Flash Lite · com cache (pago): US$ 7,24</title></path>
+<text x="418.4" y="266" font-size="10.5" class="t2">US$ 7,24</text>
+<path d="M220,270 H409.4 Q413.4,270 413.4,274 V278 Q413.4,282 409.4,282 H220 Z" class="s2"><title>Gemini 3.5 Flash Lite · sem cache (contrafactual): US$ 7,24</title></path>
+<text x="418.4" y="280" font-size="10.5" class="t2">US$ 7,24</text>
+<text x="210" y="316" text-anchor="end" font-size="12" class="t1">Gemini 3.8 Flash</text>
+<path d="M220,298 H481.2 Q485.2,298 485.2,302 V306 Q485.2,310 481.2,310 H220 Z" class="s1"><title>Gemini 3.8 Flash · com cache (pago): US$ 15,09</title></path>
+<text x="490.2" y="308" font-size="10.5" class="t2">US$ 15,09</text>
+<path d="M220,312 H481.2 Q485.2,312 485.2,316 V320 Q485.2,324 481.2,324 H220 Z" class="s2"><title>Gemini 3.8 Flash · sem cache (contrafactual): US$ 15,09</title></path>
+<text x="490.2" y="322" font-size="10.5" class="t2">US$ 15,09</text>
+<text x="210" y="358" text-anchor="end" font-size="12" class="t1">Gemini 3.5 Flash (produção)</text>
+<path d="M220,340 H554.5 Q558.5,340 558.5,344 V348 Q558.5,352 554.5,352 H220 Z" class="s1"><title>Gemini 3.5 Flash (produção) · com cache (pago): US$ 31,93</title></path>
+<text x="563.5" y="350" font-size="10.5" class="t2">US$ 31,93</text>
+<path d="M220,354 H554.5 Q558.5,354 558.5,358 V362 Q558.5,366 554.5,366 H220 Z" class="s2"><title>Gemini 3.5 Flash (produção) · sem cache (contrafactual): US$ 31,93</title></path>
+<text x="563.5" y="364" font-size="10.5" class="t2">US$ 31,93</text>
+</svg>

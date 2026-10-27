@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 338" width="760" height="338" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" role="img" aria-label="Efetividade: conversas aprovadas nas checagens determinísticas">
+<style>
+.bg{fill:#fcfcfb}.t1{fill:#0b0b0b}.t2{fill:#52514e}.t3{fill:#898781}
+.grid{stroke:#e1e0d9}.axis{stroke:#c3c2b7}.ring{stroke:#fcfcfb}.frame{stroke:rgba(11,11,11,.1)}
+.s1{fill:#2a78d6}.s2{fill:#eb6834}.s3{fill:#1baf7a}.s4{fill:#eda100}.mute{fill:#b5b4ad}
+.l1{stroke:#2a78d6}.l2{stroke:#eb6834}.lm{stroke:#b5b4ad}
+@media (prefers-color-scheme: dark){
+.bg{fill:#1a1a19}.t1{fill:#f0efec}.t2{fill:#c3c2b7}.t3{fill:#898781}
+.grid{stroke:#2c2c2a}.axis{stroke:#383835}.ring{stroke:#1a1a19}.frame{stroke:rgba(255,255,255,.1)}
+.s1{fill:#3987e5}.s2{fill:#d95926}.s3{fill:#199e70}.s4{fill:#c98500}.mute{fill:#5a5955}
+.l1{stroke:#3987e5}.l2{stroke:#d95926}.lm{stroke:#5a5955}}
+</style>
+<title>Efetividade: conversas aprovadas nas checagens determinísticas</title>
+<rect class="bg frame" x="0.5" y="0.5" width="759" height="337" rx="8" stroke-width="1"/>
+<text x="20" y="28" font-size="15" font-weight="600" class="t1">Efetividade: conversas aprovadas nas checagens determinísticas</text>
+<text x="20" y="47" font-size="12" class="t2">Mesmas regras do npm run eval (intenção, tools esperadas/proibidas, transferência, privacidade). Faixa = IC 95% (bootstrap).</text>
+<circle cx="26" cy="66" r="5" class="s1"/>
+<text x="38" y="70" font-size="12" class="t1">taxa de aprovação</text>
+<line x1="170.2" x2="184.2" y1="66" y2="66" class="l1" stroke-width="2"/>
+<text x="188.2" y="70" font-size="12" class="t1">intervalo de confiança 95%</text>
+<line x1="220" x2="220" y1="78" y2="294" class="grid" stroke-width="1"/>
+<text x="220" y="310" text-anchor="middle" font-size="11" class="t3">0%</text>
+<line x1="298" x2="298" y1="78" y2="294" class="grid" stroke-width="1"/>
+<text x="298" y="310" text-anchor="middle" font-size="11" class="t3">20%</text>
+<line x1="376" x2="376" y1="78" y2="294" class="grid" stroke-width="1"/>
+<text x="376" y="310" text-anchor="middle" font-size="11" class="t3">40%</text>
+<line x1="454" x2="454" y1="78" y2="294" class="grid" stroke-width="1"/>
+<text x="454" y="310" text-anchor="middle" font-size="11" class="t3">60%</text>
+<line x1="532" x2="532" y1="78" y2="294" class="grid" stroke-width="1"/>
+<text x="532" y="310" text-anchor="middle" font-size="11" class="t3">80%</text>
+<line x1="610" x2="610" y1="78" y2="294" class="grid" stroke-width="1"/>
+<text x="610" y="310" text-anchor="middle" font-size="11" class="t3">100%</text>
+<text x="210" y="103" text-anchor="end" font-size="12" class="t1">Gemini 3.5 Flash Lite</text>
+<line x1="561.3" x2="610" y1="99" y2="99" class="l1" stroke-width="2" stroke-linecap="round"/>
+<circle cx="593.8" cy="99" r="6" class="s1 ring" stroke-width="2"><title>Gemini 3.5 Flash Lite: 96% (24 conv.)</title></circle>
+<text x="622" y="103" font-size="11.5" class="t2">96% (24 conv.)</text>
+<text x="210" y="133" text-anchor="end" font-size="12" class="t1" font-weight="600">GPT-6 Luna ★</text>
+<line x1="512.5" x2="610" y1="129" y2="129" class="l2" stroke-width="2" stroke-linecap="round"/>
+<circle cx="561.3" cy="129" r="6" class="s2 ring" stroke-width="2"><title>GPT-6 Luna ★: 88% (24 conv.)</title></circle>
+<text x="622" y="133" font-size="11.5" class="t2">88% (24 conv.)</text>
+<text x="210" y="163" text-anchor="end" font-size="12" class="t1">DeepSeek V4.1 Flash</text>
+<line x1="512.5" x2="610" y1="159" y2="159" class="l1" stroke-width="2" stroke-linecap="round"/>
+<circle cx="561.3" cy="159" r="6" class="s1 ring" stroke-width="2"><title>DeepSeek V4.1 Flash: 88% (24 conv.)</title></circle>
+<text x="622" y="163" font-size="11.5" class="t2">88% (24 conv.)</text>
+<text x="210" y="193" text-anchor="end" font-size="12" class="t1">Gemini 3.5 Flash (produção)</text>
+<line x1="480" x2="593.8" y1="189" y2="189" class="l1" stroke-width="2" stroke-linecap="round"/>
+<circle cx="545" cy="189" r="6" class="s1 ring" stroke-width="2"><title>Gemini 3.5 Flash (produção): 83% (24 conv.)</title></circle>
+<text x="622" y="193" font-size="11.5" class="t2">83% (24 conv.)</text>
+<text x="210" y="223" text-anchor="end" font-size="12" class="t1">Gemini 3.8 Flash</text>
+<line x1="447.5" x2="577.5" y1="219" y2="219" class="l1" stroke-width="2" stroke-linecap="round"/>
+<circle cx="512.5" cy="219" r="6" class="s1 ring" stroke-width="2"><title>Gemini 3.8 Flash: 75% (24 conv.)</title></circle>
+<text x="622" y="223" font-size="11.5" class="t2">75% (24 conv.)</text>
+<text x="210" y="253" text-anchor="end" font-size="12" class="t1">Mistral Small 4</text>
+<line x1="447.5" x2="577.5" y1="249" y2="249" class="l1" stroke-width="2" stroke-linecap="round"/>
+<circle cx="512.5" cy="249" r="6" class="s1 ring" stroke-width="2"><title>Mistral Small 4: 75% (24 conv.)</title></circle>
+<text x="622" y="253" font-size="11.5" class="t2">75% (24 conv.)</text>
+<text x="210" y="283" text-anchor="end" font-size="12" class="t1">Qwen3.8 Flash (sem raciocínio)</text>
+<line x1="398.8" x2="545" y1="279" y2="279" class="l1" stroke-width="2" stroke-linecap="round"/>
+<circle cx="480" cy="279" r="6" class="s1 ring" stroke-width="2"><title>Qwen3.8 Flash (sem raciocínio): 67% (24 conv.)</title></circle>
+<text x="622" y="283" font-size="11.5" class="t2">67% (24 conv.)</text>
+</svg>

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 264" width="760" height="264" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" role="img" aria-label="Quanto o cache economizou no benchmark inteiro">
+<style>
+.bg{fill:#fcfcfb}.t1{fill:#0b0b0b}.t2{fill:#52514e}.t3{fill:#898781}
+.grid{stroke:#e1e0d9}.axis{stroke:#c3c2b7}.ring{stroke:#fcfcfb}.frame{stroke:rgba(11,11,11,.1)}
+.s1{fill:#2a78d6}.s2{fill:#eb6834}.s3{fill:#1baf7a}.s4{fill:#eda100}.mute{fill:#b5b4ad}
+.l1{stroke:#2a78d6}.l2{stroke:#eb6834}.lm{stroke:#b5b4ad}
+@media (prefers-color-scheme: dark){
+.bg{fill:#1a1a19}.t1{fill:#f0efec}.t2{fill:#c3c2b7}.t3{fill:#898781}
+.grid{stroke:#2c2c2a}.axis{stroke:#383835}.ring{stroke:#1a1a19}.frame{stroke:rgba(255,255,255,.1)}
+.s1{fill:#3987e5}.s2{fill:#d95926}.s3{fill:#199e70}.s4{fill:#c98500}.mute{fill:#5a5955}
+.l1{stroke:#3987e5}.l2{stroke:#d95926}.lm{stroke:#5a5955}}
+</style>
+<title>Quanto o cache economizou no benchmark inteiro</title>
+<rect class="bg frame" x="0.5" y="0.5" width="759" height="263" rx="8" stroke-width="1"/>
+<text x="20" y="28" font-size="15" font-weight="600" class="t1">Quanto o cache economizou no benchmark inteiro</text>
+<text x="20" y="47" font-size="12" class="t2">Do custo que teríamos sem cache até o que foi pago de fato (candidatos + juízes).</text>
+<rect x="20" y="60" width="12" height="12" rx="2" class="s1"/>
+<text x="38" y="70" font-size="12" class="t1">custo</text>
+<rect x="91" y="60" width="12" height="12" rx="2" class="s3"/>
+<text x="109" y="70" font-size="12" class="t1">economia</text>
+<line x1="220" x2="220" y1="78" y2="220" class="grid" stroke-width="1"/>
+<text x="220" y="236" text-anchor="middle" font-size="11" class="t3">US$ 0,0000</text>
+<line x1="332.5" x2="332.5" y1="78" y2="220" class="grid" stroke-width="1"/>
+<text x="332.5" y="236" text-anchor="middle" font-size="11" class="t3">US$ 0,337</text>
+<line x1="445" x2="445" y1="78" y2="220" class="grid" stroke-width="1"/>
+<text x="445" y="236" text-anchor="middle" font-size="11" class="t3">US$ 0,674</text>
+<line x1="557.5" x2="557.5" y1="78" y2="220" class="grid" stroke-width="1"/>
+<text x="557.5" y="236" text-anchor="middle" font-size="11" class="t3">US$ 1,01</text>
+<line x1="670" x2="670" y1="78" y2="220" class="grid" stroke-width="1"/>
+<text x="670" y="236" text-anchor="middle" font-size="11" class="t3">US$ 1,35</text>
+<text x="210" y="105" text-anchor="end" font-size="12" class="t1">Sem cache (contrafactual)</text>
+<path d="M220,90 H666 Q670,90 670,94 V108 Q670,112 666,112 H220 Z" class="s1"><title>Sem cache (contrafactual): US$ 1,35</title></path>
+<text x="676" y="105" font-size="12" class="t1">US$ 1,35</text>
+<line x1="670" x2="670" y1="112" y2="124" class="axis" stroke-width="1"/>
+<text x="210" y="139" text-anchor="end" font-size="12" class="t1">Cache do provedor</text>
+<path d="M638.1,124 H666 Q670,124 670,128 V142 Q670,146 666,146 H638.1 Z" class="s3"><title>Cache do provedor: US$ 0,096</title></path>
+<text x="676" y="139" font-size="12" class="t1">−US$ 0,096</text>
+<line x1="638.1" x2="638.1" y1="146" y2="158" class="axis" stroke-width="1"/>
+<text x="210" y="173" text-anchor="end" font-size="12" class="t1">Cache local de respostas</text>
+<path d="M636.1,158 H637.1 Q638.1,158 638.1,159 V179 Q638.1,180 637.1,180 H636.1 Z" class="s3"><title>Cache local de respostas: US$ 0,0059</title></path>
+<text x="644.1" y="173" font-size="12" class="t1">−US$ 0,0059</text>
+<line x1="636.1" x2="636.1" y1="180" y2="192" class="axis" stroke-width="1"/>
+<text x="210" y="207" text-anchor="end" font-size="12" class="t1">Pago</text>
+<path d="M220,192 H632.1 Q636.1,192 636.1,196 V210 Q636.1,214 632.1,214 H220 Z" class="s1"><title>Pago: US$ 1,25</title></path>
+<text x="642.1" y="207" font-size="12" class="t1">US$ 1,25</text>
+</svg>

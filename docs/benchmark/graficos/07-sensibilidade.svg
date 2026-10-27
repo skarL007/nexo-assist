@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 338" width="760" height="338" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" role="img" aria-label="Robustez: quem fica em 1º quando os pesos mudam">
+<style>
+.bg{fill:#fcfcfb}.t1{fill:#0b0b0b}.t2{fill:#52514e}.t3{fill:#898781}
+.grid{stroke:#e1e0d9}.axis{stroke:#c3c2b7}.ring{stroke:#fcfcfb}.frame{stroke:rgba(11,11,11,.1)}
+.s1{fill:#2a78d6}.s2{fill:#eb6834}.s3{fill:#1baf7a}.s4{fill:#eda100}.mute{fill:#b5b4ad}
+.l1{stroke:#2a78d6}.l2{stroke:#eb6834}.lm{stroke:#b5b4ad}
+@media (prefers-color-scheme: dark){
+.bg{fill:#1a1a19}.t1{fill:#f0efec}.t2{fill:#c3c2b7}.t3{fill:#898781}
+.grid{stroke:#2c2c2a}.axis{stroke:#383835}.ring{stroke:#1a1a19}.frame{stroke:rgba(255,255,255,.1)}
+.s1{fill:#3987e5}.s2{fill:#d95926}.s3{fill:#199e70}.s4{fill:#c98500}.mute{fill:#5a5955}
+.l1{stroke:#3987e5}.l2{stroke:#d95926}.lm{stroke:#5a5955}}
+</style>
+<title>Robustez: quem fica em 1º quando os pesos mudam</title>
+<rect class="bg frame" x="0.5" y="0.5" width="759" height="337" rx="8" stroke-width="1"/>
+<text x="20" y="28" font-size="15" font-weight="600" class="t1">Robustez: quem fica em 1º quando os pesos mudam</text>
+<text x="20" y="47" font-size="12" class="t2">% de 10 mil vetores de pesos sorteados (efetividade, qualidade, latência, custo) em que cada modelo vence.</text>
+<line x1="220" x2="220" y1="78" y2="294" class="grid" stroke-width="1"/>
+<text x="220" y="310" text-anchor="middle" font-size="11" class="t3">0%</text>
+<line x1="332.5" x2="332.5" y1="78" y2="294" class="grid" stroke-width="1"/>
+<text x="332.5" y="310" text-anchor="middle" font-size="11" class="t3">25%</text>
+<line x1="445" x2="445" y1="78" y2="294" class="grid" stroke-width="1"/>
+<text x="445" y="310" text-anchor="middle" font-size="11" class="t3">50%</text>
+<line x1="557.5" x2="557.5" y1="78" y2="294" class="grid" stroke-width="1"/>
+<text x="557.5" y="310" text-anchor="middle" font-size="11" class="t3">75%</text>
+<line x1="670" x2="670" y1="78" y2="294" class="grid" stroke-width="1"/>
+<text x="670" y="310" text-anchor="middle" font-size="11" class="t3">100%</text>
+<rect x="20" y="60" width="12" height="12" rx="2" class="s2"/>
+<text x="38" y="70" font-size="12" class="t1">maior score com os pesos do relatório</text>
+<rect x="302.2" y="60" width="12" height="12" rx="2" class="s1"/>
+<text x="320.2" y="70" font-size="12" class="t1">demais modelos</text>
+<text x="210" y="103" text-anchor="end" font-size="12" class="t1" font-weight="600">GPT-6 Luna</text>
+<path d="M220,89 H580.9 Q584.9,89 584.9,93 V105 Q584.9,109 580.9,109 H220 Z" class="s2"><title>GPT-6 Luna: 81%</title></path>
+<text x="590.9" y="103" font-size="12" class="t1">81%</text>
+<text x="210" y="133" text-anchor="end" font-size="12" class="t1">Gemini 3.5 Flash Lite</text>
+<path d="M220,119 H300.5 Q304.5,119 304.5,123 V135 Q304.5,139 300.5,139 H220 Z" class="s1"><title>Gemini 3.5 Flash Lite: 19%</title></path>
+<text x="310.5" y="133" font-size="12" class="t1">19%</text>
+<text x="210" y="163" text-anchor="end" font-size="12" class="t1">Qwen3.8 Flash (sem raciocínio)</text>
+
+<text x="226.5" y="163" font-size="12" class="t1">0%</text>
+<text x="210" y="193" text-anchor="end" font-size="12" class="t1">Gemini 3.8 Flash</text>
+
+<text x="226.1" y="193" font-size="12" class="t1">0%</text>
+<text x="210" y="223" text-anchor="end" font-size="12" class="t1">Gemini 3.5 Flash (produção)</text>
+
+<text x="226" y="223" font-size="12" class="t1">0%</text>
+<text x="210" y="253" text-anchor="end" font-size="12" class="t1">DeepSeek V4.1 Flash</text>
+
+<text x="226" y="253" font-size="12" class="t1">0%</text>
+<text x="210" y="283" text-anchor="end" font-size="12" class="t1">Mistral Small 4</text>
+
+<text x="226" y="283" font-size="12" class="t1">0%</text>
+</svg>
