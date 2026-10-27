@@ -25,8 +25,8 @@ describe("G-Eval: nota ponderada pela probabilidade", () => {
   it("acha a nota de cada critério na sequência de tokens, mesmo com o id quebrado em pedaços", () => {
     const tokens = [
       { token: "<|sep|>", logprob: 0, top_logprobs: [] },
-      { token: "res", logprob: 0, top_logprobs: [] },
-      { token: "olucao", logprob: 0, top_logprobs: [] },
+      { token: "dec", logprob: 0, top_logprobs: [] },
+      { token: "isao", logprob: 0, top_logprobs: [] },
       { token: ":", logprob: 0, top_logprobs: [] },
       { token: " 4", logprob: lp(0.7), top_logprobs: [{ token: " 4", logprob: lp(0.7) }, { token: " 5", logprob: lp(0.3) }] },
       { token: "\n", logprob: 0, top_logprobs: [] },
@@ -35,19 +35,28 @@ describe("G-Eval: nota ponderada pela probabilidade", () => {
       { token: " 2", logprob: lp(0.99), top_logprobs: [] },
     ];
     const parsed = scoresFromLogprobs(tokens);
-    expect(parsed.scores.resolucao).toBeCloseTo(4.3);
-    expect(parsed.methods.resolucao).toBe("logprobs");
+    expect(parsed.scores.decisao).toBeCloseTo(4.3);
+    expect(parsed.methods.decisao).toBe("logprobs");
     expect(parsed.scores.clareza).toBe(2);
     expect(parsed.scores.conducao).toBeUndefined();
   });
 
   it("lê notas do texto para juízes sem logprobs", () => {
-    expect(scoresFromText("resolucao: 5\nconducao: **4**\nclareza=3\ntom: 9")).toEqual({ resolucao: 5, conducao: 4, clareza: 3 });
+    expect(scoresFromText("decisao: 5\nconducao: **4**\nclareza=3\ntom: 9")).toEqual({ decisao: 5, conducao: 4, clareza: 3 });
   });
 
-  it("o formulário pede todos os critérios e traz as regras do agent", () => {
-    const [, user] = judgePrompt("FUNCIONÁRIO: oi\nAGENT: Olá!", {});
-    for (const c of CRITERIA) expect(user.content).toContain(`${c.id}: <nota>`);
-    expect(user.content).toContain("Nexo Assist");
+  it("formulário: parte fixa (regras, critérios, formato) primeiro e a conversa por último, para o cache", () => {
+    const [system, user] = judgePrompt("FUNCIONÁRIO: oi\nAGENT: Olá!", {});
+    for (const c of CRITERIA) expect(system.content).toContain(`${c.id}: <nota>`);
+    expect(system.content).toContain("Nexo Assist");
+    expect(system.content).not.toContain("FUNCIONÁRIO: oi");
+    expect(user.content.endsWith("AGENT: Olá!")).toBe(true);
+    // O prefixo é idêntico para conversas diferentes.
+    expect(judgePrompt("outra conversa", {})[0]).toEqual(system);
+  });
+
+  it("todo critério aponta a fonte no PRD (rastreabilidade)", () => {
+    for (const c of CRITERIA) expect(c.prd.length).toBeGreaterThan(10);
+    expect(CRITERIA.map((c) => c.id)).toContain("transparencia");
   });
 });

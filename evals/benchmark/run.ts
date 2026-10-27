@@ -11,13 +11,12 @@
  */
 import { spawn, type ChildProcess } from "node:child_process";
 import { createInterface } from "node:readline";
-import { scenarios as allScenarios } from "../scenarios";
 import { estimateCost, SpendTracker, usd, type Price } from "./budget";
 import { ANCHORS, calibrationPasses, type AnchorLevel } from "./calibration";
 import { BUDGET, CANDIDATES, JUDGES, RUN, STEPS_AUTHOR, TOKENS_PER_TURN, type Candidate, type Judge } from "./config";
 import { forcedToolGate, type GateResult } from "./gate";
-import type { Steps } from "./geval";
-import { JOB_ENV, loadConversations, PROGRESS_PREFIX, progressSchema, type CandidateJob } from "./job";
+import { CRITERIA, type Steps } from "./geval";
+import { JOB_ENV, loadConversations, PROGRESS_PREFIX, progressSchema, scenariosForRep, type CandidateJob } from "./job";
 import { generateSteps, judgeTranscript } from "./judges";
 import { keyInfo, listEndpoints, listModels, type CatalogModel } from "./openrouter";
 import { appendJsonl, conversationKey, judgmentKey, judgmentSchema, PATHS, readJson, readJsonl, writeJson } from "./records";
@@ -49,11 +48,18 @@ async function main() {
   if (options.reportOnly) return buildReport();
 
   const candidates = CANDIDATES.filter((c) => !options.only || options.only.includes(c.key));
-  const scenarios = options.filter ? allScenarios.filter((s) => s.name.toLowerCase().includes(options.filter!.toLowerCase())) : allScenarios;
+  const reps = Array.from({ length: options.reps }, (_, i) => i + 1);
 
   // ── Pré-voo: catálogo e crédito da chave (grátis) ──
   const [catalog, key] = await Promise.all([listModels(), keyInfo()]);
   const byId = new Map(catalog.map((m) => [m.id, m]));
+  // Preços do dia (com os de cache) ficam salvos: o relatório calcula o custo "sem cache" sem chamar a API.
+  writeJson(PATHS.prices, {
+    fetchedAt: new Date().toISOString(),
+    models: Object.fromEntries(
+      [...CANDIDATES.map((c) => c.model), ...JUDGES.map((j) => j.model)].flatMap((id) => (byId.has(id) ? [[id, byId.get(id)!.pricing]] : [])),
+    ),
+  });
   const gates = readJson<Record<string, GateResult>>(PATHS.gate, {});
   const startedAt = new Date().toISOString();
   // A chave é exclusiva do benchmark: o que ela já gastou conta no teto.
@@ -79,8 +85,10 @@ async function main() {
     const model = byId.get(candidate.model);
     const done = new Set(loadConversations(candidate.key).map(conversationKey));
     let pendingTurns = 0;
-    for (let rep = 1; rep <= options.reps; rep++) {
-      for (const s of scenarios) if (!done.has(conversationKey({ candidate: candidate.key, scenario: s.name, rep }))) pendingTurns += s.turns.length;
+    for (const rep of reps) {
+      for (const s of scenariosForRep(rep, options.filter)) {
+        if (!done.has(conversationKey({ candidate: candidate.key, scenario: s.name, rep }))) pendingTurns += s.turns.length;
+      }
     }
     const blocked = !model
       ? "fora do catálogo"
@@ -94,7 +102,7 @@ async function main() {
   });
 
   const judgePrices = await Promise.all(JUDGES.map((judge) => judgePrice(judge, byId.get(judge.model))));
-  const conversationsToJudge = plan.filter((p) => !p.blocked).length * options.reps * scenarios.length;
+  const conversationsToJudge = plan.filter((p) => !p.blocked).length * reps.reduce((sum, rep) => sum + scenariosForRep(rep, options.filter).length, 0);
   const judgedAlready = readJsonl(PATHS.judgments, judgmentSchema).length;
   const judgeEstimate = JUDGES.reduce(
     (sum, judge, i) => sum + estimateCost(judgePrices[i], Math.max(0, conversationsToJudge - judgedAlready / JUDGES.length) * judge.samples, judge.tokens),
@@ -128,7 +136,7 @@ async function main() {
 
   // ── Juízes ──
   const qualified = candidates.filter((c) => gates[c.key]?.passed);
-  await runJudges(qualified, tracker);
+  const responseCacheSavedUsd = await runJudges(qualified, tracker);
 
   buildReport();
 
@@ -141,6 +149,7 @@ async function main() {
     keyUsageAfterUsd: after.usage,
     spentByKeyUsd: after.usage - key.usage,
     trackedUsd: tracker.spentUsd,
+    responseCacheSavedUsd,
     keyLimitRemainingUsd: after.limit_remaining,
   });
   writeJson(PATHS.runs, runs);
@@ -213,33 +222,44 @@ async function runCandidates(runnable: Array<{ candidate: Candidate; estimate: n
   await Promise.all(Array.from({ length: RUN.concurrency }, () => startNext()));
 }
 
-async function runJudges(qualified: Candidate[], tracker: SpendTracker) {
-  // Passos do G-Eval: gerados uma vez e congelados.
+/** Roda os juízes e devolve quanto o cache local de respostas evitou pagar. */
+async function runJudges(qualified: Candidate[], tracker: SpendTracker): Promise<number> {
+  let savedUsd = 0;
+  const criteriaIds = CRITERIA.map((c) => c.id).join(",");
+
+  // Passos do G-Eval: gerados uma vez e congelados (refeitos só se os critérios mudarem).
   let stepsFile = readJson<{ author: string; generatedAt: string; steps: Steps } | null>(PATHS.steps, null);
-  if (!stepsFile) {
+  if (!stepsFile || Object.keys(stepsFile.steps).join(",") !== criteriaIds) {
     const generated = await generateSteps();
     tracker.add(generated.costUsd);
+    savedUsd += generated.savedUsd;
     stepsFile = { author: STEPS_AUTHOR.model, generatedAt: new Date().toISOString(), steps: generated.steps };
     writeJson(PATHS.steps, stepsFile);
   }
   const steps = stepsFile.steps;
 
   // Calibração: cada juiz nas três conversas âncora.
-  const calibration = readJson<Record<string, Record<AnchorLevel, Record<string, number>>>>(PATHS.calibration, {});
-  for (const judge of JUDGES.filter((j) => !calibration[j.key])) {
+  type Calibration = { criteria: string; judges: Record<string, Record<AnchorLevel, Record<string, number>>> };
+  const saved = readJson<Calibration | null>(PATHS.calibration, null);
+  const calibration: Calibration = saved?.criteria === criteriaIds ? saved : { criteria: criteriaIds, judges: {} };
+  for (const judge of JUDGES.filter((j) => !calibration.judges[j.key])) {
     const levels = Object.keys(ANCHORS) as AnchorLevel[];
     const results = await Promise.all(levels.map((level) => judgeTranscript(judge, ANCHORS[level], steps)));
-    results.forEach((r) => tracker.add(r.costUsd));
-    calibration[judge.key] = Object.fromEntries(levels.map((level, i) => [level, results[i].scores])) as Record<AnchorLevel, Record<string, number>>;
+    results.forEach((r) => {
+      tracker.add(r.costUsd);
+      savedUsd += r.savedUsd;
+    });
+    calibration.judges[judge.key] = Object.fromEntries(levels.map((level, i) => [level, results[i].scores])) as Record<AnchorLevel, Record<string, number>>;
     const means = Object.fromEntries(levels.map((level, i) => [level, mean(Object.values(results[i].scores))])) as Record<AnchorLevel, number>;
     console.log(`${calibrationPasses(means) ? "✓" : "✗"} calibração ${judge.key}: ${levels.map((l) => `${l} ${means[l].toFixed(2)}`).join(" · ")}`);
   }
   writeJson(PATHS.calibration, calibration);
 
-  // Avaliação das conversas: o que já está no cache não é julgado de novo.
+  // Avaliação das conversas: o que já está no cache não é julgado de novo. Conversa com
+  // erro técnico (ex.: provedor fora do ar) já reprova na efetividade e não vai ao juiz.
   const done = new Set(readJsonl(PATHS.judgments, judgmentSchema).map(judgmentKey));
   const tasks = qualified.flatMap((candidate) =>
-    loadConversations(candidate.key).flatMap((conversation) =>
+    loadConversations(candidate.key).filter((c) => c.turns.every((t) => !t.error)).flatMap((conversation) =>
       JUDGES.filter((judge) => !done.has(judgmentKey({ judge: judge.key, ...conversation }))).map((judge) => ({ judge, conversation })),
     ),
   );
@@ -257,6 +277,7 @@ async function runJudges(qualified: Candidate[], tracker: SpendTracker) {
       const { judge, conversation } = tasks[index++];
       const result = await judgeTranscript(judge, formatTranscript(conversation), steps);
       tracker.add(result.costUsd);
+      savedUsd += result.savedUsd;
       appendJsonl(PATHS.judgments, {
         judge: judge.key,
         candidate: conversation.candidate,
@@ -268,6 +289,7 @@ async function runJudges(qualified: Candidate[], tracker: SpendTracker) {
     }
   };
   await Promise.all(Array.from({ length: 4 }, worker));
+  return savedUsd;
 }
 
 main().catch((error) => {

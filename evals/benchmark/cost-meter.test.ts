@@ -7,7 +7,7 @@ describe("leitura das respostas do OpenRouter", () => {
       ": OPENROUTER PROCESSING",
       'data: {"id":"gen-1","provider":"Google","choices":[{"delta":{"tool_calls":[{"index":0,"id":"c1","function":{"name":"recordUnderstanding","arguments":""}}]}}]}',
       'data: {"id":"gen-1","choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"{\\"intent\\":"}}]}}]}',
-      'data: {"id":"gen-1","choices":[{"delta":{},"finish_reason":"tool_calls"}],"usage":{"prompt_tokens":3100,"completion_tokens":45,"cost":0.0051,"completion_tokens_details":{"reasoning_tokens":12}}}',
+      'data: {"id":"gen-1","choices":[{"delta":{},"finish_reason":"tool_calls"}],"usage":{"prompt_tokens":3100,"completion_tokens":45,"cost":0.0051,"prompt_tokens_details":{"cached_tokens":2048,"cache_write_tokens":0},"completion_tokens_details":{"reasoning_tokens":12}}}',
       "data: [DONE]",
     ].join("\n");
 
@@ -15,6 +15,8 @@ describe("leitura das respostas do OpenRouter", () => {
       provider: "Google",
       costUsd: 0.0051,
       inputTokens: 3100,
+      cachedTokens: 2048,
+      cacheWriteTokens: 0,
       outputTokens: 45,
       reasoningTokens: 12,
       toolCalls: ["recordUnderstanding"],

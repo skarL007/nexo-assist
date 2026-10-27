@@ -12,6 +12,10 @@ export interface LlmCall {
   provider: string | null;
   costUsd: number;
   inputTokens: number;
+  /** Tokens de entrada lidos do cache do provedor (cobrados com desconto). */
+  cachedTokens: number;
+  /** Tokens gravados no cache nesta chamada (alguns provedores cobram a escrita). */
+  cacheWriteTokens: number;
   outputTokens: number;
   reasoningTokens: number;
   /** Tools que o modelo pediu nesta chamada (válidas ou não). */
@@ -30,6 +34,7 @@ interface Chunk {
     prompt_tokens?: number;
     completion_tokens?: number;
     cost?: number;
+    prompt_tokens_details?: { cached_tokens?: number | null; cache_write_tokens?: number | null } | null;
     completion_tokens_details?: { reasoning_tokens?: number | null } | null;
   };
   choices?: Array<{
@@ -45,6 +50,8 @@ export function parseOpenRouterBody(body: string): ParsedCall {
     provider: null,
     costUsd: 0,
     inputTokens: 0,
+    cachedTokens: 0,
+    cacheWriteTokens: 0,
     outputTokens: 0,
     reasoningTokens: 0,
     toolCalls: [],
@@ -67,6 +74,8 @@ export function parseOpenRouterBody(body: string): ParsedCall {
     if (chunk.usage) {
       result.costUsd = chunk.usage.cost ?? 0;
       result.inputTokens = chunk.usage.prompt_tokens ?? 0;
+      result.cachedTokens = chunk.usage.prompt_tokens_details?.cached_tokens ?? 0;
+      result.cacheWriteTokens = chunk.usage.prompt_tokens_details?.cache_write_tokens ?? 0;
       result.outputTokens = chunk.usage.completion_tokens ?? 0;
       result.reasoningTokens = chunk.usage.completion_tokens_details?.reasoning_tokens ?? 0;
     }
@@ -93,8 +102,11 @@ export interface CostMeter {
   take(): Promise<LlmCall[]>;
 }
 
-/** Instala o medidor no `fetch` global. Só olha URLs do OpenRouter; o resto passa direto. */
-export function installCostMeter(): CostMeter {
+/**
+ * Instala o medidor no `fetch` global. Só olha URLs do OpenRouter; o resto passa direto.
+ * `onRequest` recebe o corpo enviado (usado para conferir a ordem do prompt).
+ */
+export function installCostMeter(onRequest?: (body: string) => void): CostMeter {
   const original = globalThis.fetch;
   let calls: LlmCall[] = [];
   const pending = new Set<Promise<void>>();
@@ -102,6 +114,7 @@ export function installCostMeter(): CostMeter {
   globalThis.fetch = async (input, init) => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
     if (!url.startsWith("https://openrouter.ai/api/")) return original(input, init);
+    if (onRequest && typeof init?.body === "string") onRequest(init.body);
 
     const startedAt = performance.now();
     const response = await original(input, init);

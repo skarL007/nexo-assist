@@ -4,14 +4,16 @@
  * A análise escrita fica em docs/benchmark/RELATORIO.md.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
-import { scenarios } from "../scenarios";
+import { scenarios as coreScenarios } from "../scenarios";
 import { ANCHORS as CALIBRATION_ANCHORS, calibrationPasses, type AnchorLevel } from "./calibration";
 import { compositeChart, paretoChart } from "./charts";
 import { ANCHORS, BUSINESS, CANDIDATES, JUDGES, WEIGHT_PROFILES, WEIGHTS } from "./config";
 import type { GateResult } from "./gate";
 import { CRITERIA } from "./geval";
 import { loadConversations } from "./job";
+import type { Pricing } from "./openrouter";
 import { judgmentSchema, PATHS, readJson, readJsonl } from "./records";
+import { prdScenarios } from "./scenarios-prd";
 import { judgeAgreement, paretoFrontier, projectMonthlyCost, summarizeCandidate, weightSensitivity, type CandidateSummary } from "./scoring";
 import { mean } from "./stats";
 
@@ -30,8 +32,9 @@ const table = (header: string[], rows: string[][]) =>
 export function buildReport() {
   const judgments = readJsonl(PATHS.judgments, judgmentSchema);
   const gates = readJson<Record<string, GateResult>>(PATHS.gate, {});
-  const calibration = readJson<Record<string, Record<AnchorLevel, Record<string, number>>>>(PATHS.calibration, {});
+  const calibration = readJson<{ judges: Record<string, Record<AnchorLevel, Record<string, number>>> }>(PATHS.calibration, { judges: {} });
   const runs = readJson<Array<Record<string, unknown>>>(PATHS.runs, []);
+  const prices = readJson<{ models: Record<string, Pricing> }>(PATHS.prices, { models: {} }).models;
 
   const summaries = CANDIDATES.map((candidate) =>
     summarizeCandidate(
@@ -40,6 +43,7 @@ export function buildReport() {
       judgments.filter((j) => j.candidate === candidate.key),
       gates[candidate.key],
       WEIGHTS,
+      prices[candidate.model],
     ),
   );
   const evaluated = summaries.filter((s): s is CandidateSummary & { scores: NonNullable<CandidateSummary["scores"]> } => s.scores !== null);
@@ -140,7 +144,7 @@ export function buildReport() {
     "",
     table(
       ["Cenário", ...summaries.filter((s) => s.conversations).map((s) => s.label)],
-      scenarios.map((scenario) => [
+      [...coreScenarios, ...prdScenarios].map((scenario) => [
         scenario.name,
         ...summaries.filter((s) => s.conversations).map((s) => {
           const entry = s.scenarioPasses[scenario.name];
@@ -223,9 +227,9 @@ export function buildReport() {
     "",
     table(
       ["Juiz", "Método", ...Object.keys(CALIBRATION_ANCHORS), "Ordem certa?"],
-      JUDGES.filter((j) => calibration[j.key]).map((j) => {
+      JUDGES.filter((j) => calibration.judges[j.key]).map((j) => {
         const means = Object.fromEntries(
-          (Object.keys(CALIBRATION_ANCHORS) as AnchorLevel[]).map((level) => [level, mean(Object.values(calibration[j.key][level]))]),
+          (Object.keys(CALIBRATION_ANCHORS) as AnchorLevel[]).map((level) => [level, mean(Object.values(calibration.judges[j.key][level]))]),
         ) as Record<AnchorLevel, number>;
         return [
           j.label,

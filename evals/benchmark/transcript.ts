@@ -30,6 +30,12 @@ export function formatTranscript(conversation: ConversationRecord): string {
   const lines = [`Funcionário logado: ${conversation.employeeName}.`, ""];
   for (const turn of conversation.turns) {
     lines.push(`FUNCIONÁRIO: ${turn.text}`);
+    const d = turn.decision;
+    lines.push(
+      d
+        ? `  (registro de entendimento, visível no painel "por quê?": intenção ${d.intent} · confiança ${d.confidence.toFixed(2)} · entendeu: "${d.understanding}" · motivo: "${d.reasoning}")`
+        : "  (o agent NÃO registrou o entendimento neste turno)",
+    );
     const actions = turn.toolCalls.filter((c) => c.tool !== "recordUnderstanding");
     if (actions.length) {
       lines.push("  (ações do agent, invisíveis para o funcionário)");
