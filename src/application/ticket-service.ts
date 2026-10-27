@@ -9,7 +9,7 @@
 import { DomainError } from "@/domain/errors";
 import type { NewTicketFields, TicketSnapshot } from "@/domain/message";
 import { ticketSla } from "@/domain/priority";
-import { canReopen, isOpen, sameProblem, type Category, type Ticket } from "@/domain/ticket";
+import { canReopen, isOpen, sameProblem, type Ticket } from "@/domain/ticket";
 import { withRetry } from "@/lib/retry";
 import { systemClock, type Clock, type TicketRepository } from "./ports";
 
@@ -51,10 +51,10 @@ export class TicketService {
   }
 
   /** Abertos, ou resolvidos há até 7 dias (podem ser reabertos), que parecem o mesmo problema. */
-  async findPossibleDuplicates(employeeId: string, category: Category, title: string): Promise<Ticket[]> {
+  async findPossibleDuplicates(employeeId: string, candidate: Pick<Ticket, "type" | "category" | "title">): Promise<Ticket[]> {
     const now = this.clock.now();
     const mine = await this.listMine(employeeId);
-    return mine.filter((t) => sameProblem(t, category, title) && (isOpen(t) || canReopen(t, now)));
+    return mine.filter((t) => sameProblem(t, candidate) && (isOpen(t) || canReopen(t, now)));
   }
 
   async create(employeeId: string, fields: NewTicketFields): Promise<Ticket> {
