@@ -114,9 +114,6 @@ export class InMemoryMessageRepository implements MessageRepository {
   async countByRoleSince(role: MessageRole) {
     return this.items.filter((m) => m.role === role).length;
   }
-  async countModelReplies() {
-    return this.items.filter((m) => m.role === "agent" && m.trace?.usage).length;
-  }
   async countByEmployeeSince() {
     return this.items.filter((m) => m.role === "employee").length;
   }

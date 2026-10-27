@@ -3,7 +3,8 @@
  * (`/?access=TOKEN`). O token é `<validade>.<assinatura>`: a validade em segundos
  * e um HMAC dela com o segredo ACCESS_TOKEN, que nunca sai do servidor.
  * O token vira um cookie httpOnly com a mesma validade, e o link fica limpo.
- * Sem ACCESS_TOKEN configurado (ex.: desenvolvimento local), a porta fica aberta.
+ * Sem ACCESS_TOKEN configurado, a porta fica aberta no desenvolvimento local e
+ * fechada no deploy: esquecer a variável não pode deixar o modelo pago público.
  *
  * Lógica pura (sem Next) para poder ser testada; quem aplica é `src/proxy.ts`.
  * Os links são gerados por `npm run access-link` (scripts/access-link.ts).
@@ -48,9 +49,11 @@ export function decideAccess(input: {
   tokenFromUrl: string | null;
   tokenFromCookie: string | undefined;
   now: Date;
+  /** Rodando na Vercel (process.env.VERCEL). */
+  deployed?: boolean;
 }): AccessDecision {
-  const { secret, tokenFromUrl, tokenFromCookie, now } = input;
-  if (!secret) return { kind: "open" };
+  const { secret, tokenFromUrl, tokenFromCookie, now, deployed = false } = input;
+  if (!secret) return deployed ? { kind: "deny" } : { kind: "open" };
   if (tokenFromUrl !== null) {
     const expiresAt = validUntil(secret, tokenFromUrl, now);
     return expiresAt ? { kind: "grant", expiresAt } : { kind: "deny" };

@@ -74,6 +74,12 @@ export const messages = sqliteTable("messages", {
   createdAt: timestamp("created_at").notNull(),
 }, (t) => [index("messages_conversation_idx").on(t.conversationId, t.createdAt), index("messages_role_created_idx").on(t.role, t.createdAt)]);
 
+/** Contadores globais com teto (ex.: respostas do modelo no total). Reservados de forma atômica. */
+export const usageCounters = sqliteTable("usage_counters", {
+  key: text("key").primaryKey(),
+  value: integer("value").notNull(),
+});
+
 export const drafts = sqliteTable("drafts", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   conversationId: text("conversation_id").notNull().references(() => conversations.id),

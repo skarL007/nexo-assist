@@ -13,6 +13,7 @@ export function proxy(request: NextRequest) {
     tokenFromUrl: token,
     tokenFromCookie: request.cookies.get(ACCESS_COOKIE)?.value,
     now,
+    deployed: !!process.env.VERCEL,
   });
 
   switch (decision.kind) {
@@ -45,5 +46,6 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   // Tudo, menos arquivos estáticos e a própria página de acesso restrito.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|acesso).*)"],
+  // Ancorado: "/acessoX" ou "/favicon.icoX" continuam passando pela porta.
+  matcher: ["/((?!_next/static/|_next/image|favicon\.ico$|acesso(?:/|$)).*)"],
 };

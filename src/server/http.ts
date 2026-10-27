@@ -25,7 +25,8 @@ const STATUS_BY_DOMAIN_ERROR: Record<DomainErrorCode, number> = {
 
 /** Só aceita JSON de verdade: um formulário de outro site não consegue montar este pedido. */
 export async function parseBody<T extends z.ZodType>(request: Request, schema: T): Promise<z.infer<T>> {
-  if (!request.headers.get("content-type")?.includes("application/json")) {
+  const mime = request.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase();
+  if (mime !== "application/json") {
     throw new HttpError(415, "Envie os dados em JSON.");
   }
   const result = schema.safeParse(await request.json().catch(() => null));
@@ -44,14 +45,24 @@ export function isCrossSiteMutation(request: Request): boolean {
   if (fetchSite) return fetchSite !== "same-origin" && fetchSite !== "none";
   const origin = request.headers.get("origin");
   if (!origin) return false;
-  return new URL(origin).host !== request.headers.get("host");
+  try {
+    return new URL(origin).host !== request.headers.get("host");
+  } catch {
+    return true; // "null" ou lixo: não dá para provar que é o próprio site
+  }
 }
 
-/** Registra o erro sem o corpo da requisição ao LLM (que leva nome, e-mail e conversa). */
+/**
+ * Registra o erro sem dados pessoais. Erro do banco (DrizzleQueryError) traz na
+ * mensagem a consulta com os parâmetros (texto do chat, e-mail); por isso, quando
+ * há uma causa, vai só a causa (ex.: "SQLITE_BUSY: database is locked").
+ * O corpo da requisição ao LLM também nunca é registrado.
+ */
 export function logError(error: unknown) {
   if (error instanceof Error) {
     const status = (error as { statusCode?: number }).statusCode;
-    console.error(`[${error.name}]${status ? ` ${status}` : ""} ${error.message}`);
+    const detail = error.cause instanceof Error ? `causa: ${error.cause.message}` : error.message;
+    console.error(`[${error.name}]${status ? ` ${status}` : ""} ${detail}`);
   } else {
     console.error("[erro desconhecido]", String(error));
   }

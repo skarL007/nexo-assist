@@ -47,7 +47,7 @@ Qualquer senha funciona para os usuários de exemplo (regra do desafio). Na tela
 Outros comandos:
 
 ```bash
-npm test              # 129 testes unitários (domínio, serviços, HTTP, benchmark) — sem LLM
+npm test              # 135 testes unitários (domínio, serviços, HTTP, benchmark) — sem LLM
 npm run test:e2e      # Playwright contra o build de produção — sem LLM
 npm run eval          # 12 cenários de decisão do agent com o modelo real
 npm run db:seed       # volta os dados ao estado inicial
@@ -226,7 +226,7 @@ O prompt ([`agent/instructions.ts`](src/agent/instructions.ts)) cuida só da con
 
 | Camada | O que cobre | Comando |
 |---|---|---|
-| **Testes unitários** (Vitest, 129) | prazos com fim de semana, matriz de prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado, confirmação obrigatória, clique duplo, transferência em caso crítico, bloqueio de CSRF | `npm test` |
+| **Testes unitários** (Vitest, 135) | prazos com fim de semana, matriz de prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado, confirmação obrigatória, clique duplo, transferência em caso crítico, bloqueio de CSRF | `npm test` |
 | **E2E** (Playwright, 11) | login (inclusive o botão de demonstração que entra com um clique), permissões (funcionário não acessa o console nem a API do analista) e o ciclo da transferência de ponta a ponta, contra o build de produção | `npm run test:e2e` |
 | **Evals** (12 cenários, modelo real) | intenção, tools esperadas e proibidas, transferência, caso crítico, reabertura e vazamento de dados de outra pessoa | `npm run eval` |
 | **Trace em toda resposta** | qualquer decisão pode ser auditada na própria interface e no console do analista | — |
@@ -319,7 +319,7 @@ O deploy roda na **Vercel** com o banco no **Turso** (libSQL, compatível com o 
 flowchart LR
   V["Visitante"] --> G{"proxy.ts<br/>token de acesso confere?"}
   G -- não --> D["401 · Acesso restrito"]
-  G -- sim --> C["Cookie httpOnly por 30 dias<br/>token sai da URL"]
+  G -- sim --> C["Cookie httpOnly com a validade do link<br/>token sai da URL"]
   C --> L["Login<br/>JWT HS256 em cookie, 8 h"]
   L --> X{"Mesma origem?<br/>Corpo em JSON?"}
   X -- não --> B["403 / 415"]
@@ -330,15 +330,18 @@ flowchart LR
 
 | Risco | Proteção |
 |---|---|
-| Qualquer pessoa usar o agent (e a minha cota) | **Porta de acesso com link temporário** em [`proxy.ts`](src/proxy.ts): sem `?access=` válido, nenhuma página ou API responde. O link leva `<validade>.<HMAC>`, assinado com o segredo `ACCESS_TOKEN`, que nunca sai do servidor ([`server/access-gate.ts`](src/server/access-gate.ts)). O token vira um cookie httpOnly que vence junto com o link e sai da URL. `npm run access-link -- <minutos>` gera um link novo. |
+| Qualquer pessoa usar o agent (e a minha cota) | **Porta de acesso com link temporário** em [`proxy.ts`](src/proxy.ts): sem `?access=` válido, nenhuma página ou API responde. O link leva `<validade>.<HMAC>`, assinado com o segredo `ACCESS_TOKEN`, que nunca sai do servidor ([`server/access-gate.ts`](src/server/access-gate.ts)). O token vira um cookie httpOnly que vence junto com o link e sai da URL. `npm run access-link -- <minutos>` gera um link novo. Se o `ACCESS_TOKEN` faltar na Vercel, a porta fecha em vez de abrir. |
 | Vazamento de chave | Chaves só em variáveis de ambiente do servidor, validadas com Zod. Nada com prefixo `NEXT_PUBLIC_`. `.env` fora do git. |
-| Custo inesperado | 30 mensagens por sessão, 40 por hora e 120 por dia por pessoa, teto global diário (`DAILY_AGENT_TURN_LIMIT`), **teto total de 100 respostas do modelo** (`TOTAL_AGENT_TURN_LIMIT`: cerca de US$ 1,06, ou R$ 6, pelo custo de US$ 0,0106 por resposta medido no benchmark), 800 tokens de saída por passo, histórico truncado, e a chamada ao modelo é cancelada quando o funcionário fecha a aba. Recomendo também um limite de gasto no projeto do Google Cloud. |
+| Custo inesperado | 30 mensagens por sessão, 40 por hora e 120 por dia por pessoa, teto global diário (`DAILY_AGENT_TURN_LIMIT`), **teto total de 100 turnos do modelo** (`TOTAL_AGENT_TURN_LIMIT`: cerca de US$ 1,06, ou R$ 6, pelo custo de US$ 0,0106 por resposta medido no benchmark), reservado no banco num único comando antes de chamar o modelo (pedidos simultâneos não passam do teto, e turno que falha também conta), 800 tokens de saída por passo, histórico truncado, e a chamada ao modelo é cancelada quando o funcionário fecha a aba. Recomendo também um limite de gasto no projeto do Google Cloud. |
 | Requisição forjada de outro site (CSRF) | Toda mutação exige mesma origem (`Sec-Fetch-Site`/`Origin`) e corpo JSON ([`server/http.ts`](src/server/http.ts)). |
 | Ação em nome de outra pessoa | A identidade vem só do JWT da sessão (algoritmo fixo HS256). O modelo nunca recebe nem informa id de funcionário. |
-| Corridas (clique duplo, analista e agent ao mesmo tempo) | Confirmação de rascunho atômica no banco e update de conversa condicionado ao estado esperado. |
+| Corridas (clique duplo, analista e agent ao mesmo tempo, rajada de mensagens) | Confirmação de rascunho atômica no banco e update de conversa condicionado ao estado esperado. Os limites por pessoa são conferidos de novo depois de gravar a mensagem. |
+| Dados pessoais nos logs | Erro do banco é registrado só pela causa (ex.: `SQLITE_BUSY`), sem a consulta e seus parâmetros (texto do chat, e-mail). O corpo enviado ao LLM nunca é registrado. |
 | Clickjacking e afins | CSP, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy` e sem `X-Powered-By` ([`next.config.ts`](next.config.ts)). |
 
 Antes do deploy fiz uma auditoria de segurança do código inteiro; as correções estão no commit `fix(security): correções da auditoria de segurança`.
+
+Depois do deploy, uma segunda revisão independente (código + 37 verificações de fora, contra produção: porta de acesso, CSRF, JWT adulterado, permissões, cabeçalhos, segredos no JS) achou sete pontos de severidade baixa a média. Corrigi seis no commit `fix(security): teto atômico, limites pós-gravação, logs sem dados e porta que fecha`: teto total que pedidos paralelos furavam, limites por pessoa com a mesma corrida, log de erro do banco com dados pessoais (e a detecção de número de chamado repetido, que nunca disparava), porta aberta se faltasse o segredo, `Content-Type` comparado por trecho e `Origin: null` dando erro 500, e o matcher do proxy sem âncora. O sétimo ficou como trade-off (abaixo).
 
 ---
 
@@ -346,12 +349,13 @@ Antes do deploy fiz uma auditoria de segurança do código inteiro; as correçõ
 
 - **Polling em vez de WebSocket/SSE** para as mensagens do analista: simples e compatível com serverless. O custo é uma latência de até 4 s.
 - **Busca por palavras-chave** na central: com 9 artigos é grátis e explicável (o trace mostra os termos que bateram). Com centenas de artigos, eu trocaria por embeddings sem mudar quem chama.
-- **Duplicidade por categoria**, com a decisão final para o modelo: barato e transparente, mas pode sugerir um chamado não relacionado da mesma categoria (o funcionário escolhe "não é nenhum desses").
+- **Duplicidade por regra simples** (mesmo tipo, mesma categoria e palavra em comum no título), com a decisão final para o modelo: barato e transparente. Pode deixar passar um duplicado escrito com outras palavras; com mais tempo, seria similaridade de texto.
 - **Histórico próprio em vez da memória do Mastra:** o console do analista lê e escreve na mesma conversa, então mantive uma única tabela `messages` como fonte da verdade.
 - **Limites contados no próprio banco** em vez de Redis: um serviço a menos, consistente entre instâncias serverless, ao custo de duas consultas indexadas por mensagem.
 - **Porta de acesso por link com token** em vez de contas para avaliadores: zero atrito para quem avalia e suficiente para proteger a cota. Para produção, seria SSO.
 - **CSP sem nonce** (`'unsafe-inline'` em scripts): mantém as páginas estáticas e o deploy simples. Com nonce, a CSP fica mais rígida, mas toda página passa a ser dinâmica.
 - **Login sem senha real**, como pede o desafio: a sessão é um JWT assinado em cookie httpOnly, então a troca para SSO corporativo fica isolada em [`server/session.ts`](src/server/session.ts).
+- **Sair não revoga o JWT no servidor**: o botão apaga o cookie, mas um token copiado antes continua válido até vencer (8 horas, ou 7 dias com "Manter conectado"). Revogar exigiria uma lista no banco consultada a cada pedido, e na demonstração os avaliadores entram todos como a mesma Ana: revogar por pessoa derrubaria os outros. Com SSO, a sessão passa a ser do provedor.
 
 ## O que eu faria com mais tempo
 
