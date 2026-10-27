@@ -29,6 +29,9 @@ export function env(): Env {
   if (cached) return cached;
   // Variável vazia no .env (ex.: "AUTH_SECRET=") conta como não definida.
   const defined = Object.fromEntries(Object.entries(process.env).filter(([, value]) => value !== ""));
+  // A integração do Turso no Marketplace da Vercel cria as variáveis com o prefixo TURSO_.
+  defined.DATABASE_URL ??= defined.TURSO_DATABASE_URL;
+  defined.DATABASE_AUTH_TOKEN ??= defined.TURSO_AUTH_TOKEN;
   const parsed = schema.parse(defined);
   if (parsed.NODE_ENV === "production" && parsed.AUTH_SECRET === DEV_SECRET) {
     throw new Error("Defina AUTH_SECRET em produção.");
