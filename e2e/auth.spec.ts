@@ -49,3 +49,26 @@ test("senha vazia e 'Esqueci minha senha' explicam que qualquer senha funciona",
   await page.getByRole("button", { name: "Esqueci minha senha" }).click();
   await expect(page.getByText("Na demonstração, qualquer senha funciona. Na Nexo, este link abriria a troca da senha de rede.")).toBeVisible();
 });
+
+test("'Manter conectado' decide se a sessão sobrevive ao navegador fechar", async ({ page, context }) => {
+  const sessionCookie = async () => (await context.cookies()).find((c) => c.name === "nexo_session");
+
+  await page.goto("/login");
+  await page.getByRole("button", { name: "Ana · funcionária" }).click();
+  await expect(page).toHaveURL(/\/atendimento$/);
+  expect((await sessionCookie())?.expires).toBe(-1); // cookie de sessão: some ao fechar o navegador
+
+  await context.clearCookies();
+  await page.goto("/login");
+  await page.getByLabel("Manter conectado neste computador").check();
+  await page.getByRole("button", { name: "Ana · funcionária" }).click();
+  await expect(page).toHaveURL(/\/atendimento$/);
+  const sixDays = Date.now() / 1000 + 6 * 24 * 60 * 60;
+  expect((await sessionCookie())?.expires).toBeGreaterThan(sixDays);
+});
+
+test("'Meu perfil' mostra o e-mail gerenciado pela TI", async ({ page }) => {
+  await login(page, ANA);
+  await page.goto("/perfil");
+  await expect(page.getByText("Gerenciado pela TI")).toBeVisible();
+});

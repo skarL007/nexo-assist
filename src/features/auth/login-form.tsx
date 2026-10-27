@@ -4,6 +4,7 @@ import { Eye, EyeOff, Loader2, Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { loginSchema } from "@/contracts/chat";
@@ -19,6 +20,7 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -30,7 +32,7 @@ export function LoginForm() {
 
   async function signIn(email: string, password: string) {
     // Mesma validação (Zod) que o servidor usa.
-    const parsed = loginSchema.safeParse({ email, password });
+    const parsed = loginSchema.safeParse({ email, password, remember });
     if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? "Dados inválidos");
 
     setLoading(true);
@@ -98,6 +100,11 @@ export function LoginForm() {
           </button>
         </div>
       </div>
+
+      <label className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Checkbox checked={remember} onCheckedChange={(value) => setRemember(value === true)} />
+        Manter conectado neste computador
+      </label>
 
       {notice && !error && <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">{notice}</p>}
 

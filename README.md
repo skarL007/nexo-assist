@@ -227,7 +227,7 @@ O prompt ([`agent/instructions.ts`](src/agent/instructions.ts)) cuida só da con
 | Camada | O que cobre | Comando |
 |---|---|---|
 | **Testes unitários** (Vitest, 129) | prazos com fim de semana, matriz de prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado, confirmação obrigatória, clique duplo, transferência em caso crítico, bloqueio de CSRF | `npm test` |
-| **E2E** (Playwright, 9) | login (inclusive o botão de demonstração que entra com um clique), permissões (funcionário não acessa o console nem a API do analista) e o ciclo da transferência de ponta a ponta, contra o build de produção | `npm run test:e2e` |
+| **E2E** (Playwright, 11) | login (inclusive o botão de demonstração que entra com um clique), permissões (funcionário não acessa o console nem a API do analista) e o ciclo da transferência de ponta a ponta, contra o build de produção | `npm run test:e2e` |
 | **Evals** (12 cenários, modelo real) | intenção, tools esperadas e proibidas, transferência, caso crítico, reabertura e vazamento de dados de outra pessoa | `npm run eval` |
 | **Trace em toda resposta** | qualquer decisão pode ser auditada na própria interface e no console do analista | — |
 
@@ -309,7 +309,7 @@ O deploy roda na **Vercel** com o banco no **Turso** (libSQL, compatível com o 
      ```bash
      node -e "process.stdout.write(require('crypto').randomBytes(36).toString('base64url'))" | vercel env add AUTH_SECRET production --sensitive
      ```
-   - Completam a lista `LLM_MODEL`, `DAILY_AGENT_TURN_LIMIT` e `TOTAL_AGENT_TURN_LIMIT=150`.
+   - Completam a lista `LLM_MODEL`, `DAILY_AGENT_TURN_LIMIT` e `TOTAL_AGENT_TURN_LIMIT=100`.
 4. Publiquei pela CLI (`vercel deploy --prod`) a partir de um `git archive` do último commit, para nunca subir arquivo que não está versionado. O [`.vercelignore`](.vercelignore) também barra `.env` e bancos locais.
 5. As funções rodam em `iad1` (Washington), na mesma região do banco. A "Vercel Authentication" protege só os previews; a produção fica atrás do nosso token.
 
@@ -332,7 +332,7 @@ flowchart LR
 |---|---|
 | Qualquer pessoa usar o agent (e a minha cota) | **Porta de acesso com link temporário** em [`proxy.ts`](src/proxy.ts): sem `?access=` válido, nenhuma página ou API responde. O link leva `<validade>.<HMAC>`, assinado com o segredo `ACCESS_TOKEN`, que nunca sai do servidor ([`server/access-gate.ts`](src/server/access-gate.ts)). O token vira um cookie httpOnly que vence junto com o link e sai da URL. `npm run access-link -- <minutos>` gera um link novo. |
 | Vazamento de chave | Chaves só em variáveis de ambiente do servidor, validadas com Zod. Nada com prefixo `NEXT_PUBLIC_`. `.env` fora do git. |
-| Custo inesperado | 30 mensagens por sessão, 40 por hora e 120 por dia por pessoa, teto global diário (`DAILY_AGENT_TURN_LIMIT`), **teto total de 150 respostas do modelo** (`TOTAL_AGENT_TURN_LIMIT`: cerca de US$ 1,60, ou R$ 10, pelo custo de US$ 0,0106 por resposta medido no benchmark), 800 tokens de saída por passo, histórico truncado, e a chamada ao modelo é cancelada quando o funcionário fecha a aba. Recomendo também um limite de gasto no projeto do Google Cloud. |
+| Custo inesperado | 30 mensagens por sessão, 40 por hora e 120 por dia por pessoa, teto global diário (`DAILY_AGENT_TURN_LIMIT`), **teto total de 100 respostas do modelo** (`TOTAL_AGENT_TURN_LIMIT`: cerca de US$ 1,06, ou R$ 6, pelo custo de US$ 0,0106 por resposta medido no benchmark), 800 tokens de saída por passo, histórico truncado, e a chamada ao modelo é cancelada quando o funcionário fecha a aba. Recomendo também um limite de gasto no projeto do Google Cloud. |
 | Requisição forjada de outro site (CSRF) | Toda mutação exige mesma origem (`Sec-Fetch-Site`/`Origin`) e corpo JSON ([`server/http.ts`](src/server/http.ts)). |
 | Ação em nome de outra pessoa | A identidade vem só do JWT da sessão (algoritmo fixo HS256). O modelo nunca recebe nem informa id de funcionário. |
 | Corridas (clique duplo, analista e agent ao mesmo tempo) | Confirmação de rascunho atômica no banco e update de conversa condicionado ao estado esperado. |

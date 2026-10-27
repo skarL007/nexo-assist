@@ -12,16 +12,19 @@ import { createServices } from "@/infrastructure/container";
 import { HttpError } from "./http";
 
 const COOKIE = "nexo_session";
-const MAX_AGE_SECONDS = 8 * 60 * 60;
+const SESSION_SECONDS = 8 * 60 * 60;
+const REMEMBER_SECONDS = 7 * 24 * 60 * 60;
 
 const secret = () => new TextEncoder().encode(env().AUTH_SECRET);
 
-export async function startSession(employee: Employee) {
+/** Sem "Manter conectado", o cookie some quando o navegador fecha e o token vence em 8 horas. */
+export async function startSession(employee: Employee, remember = false) {
+  const lifetime = remember ? REMEMBER_SECONDS : SESSION_SECONDS;
   const token = await new SignJWT({ role: employee.role })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(employee.id)
     .setIssuedAt()
-    .setExpirationTime(`${MAX_AGE_SECONDS}s`)
+    .setExpirationTime(`${lifetime}s`)
     .sign(secret());
 
   (await cookies()).set(COOKIE, token, {
@@ -29,7 +32,7 @@ export async function startSession(employee: Employee) {
     sameSite: "lax",
     secure: env().NODE_ENV === "production",
     path: "/",
-    maxAge: MAX_AGE_SECONDS,
+    ...(remember ? { maxAge: lifetime } : {}),
   });
 }
 
