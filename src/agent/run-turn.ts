@@ -16,6 +16,7 @@ import { DomainError } from "@/domain/errors";
 import type { DraftSnapshot, ToolCallLog, TurnTrace } from "@/domain/message";
 import { createServices, type Services } from "@/infrastructure/container";
 import { conversationView } from "@/server/views";
+import { apiKeyVarFor, providerOptionsFor } from "./model-config";
 import { stripSystemNotes, toModelMessages } from "./model-history";
 import { nexoAgent } from "./nexo-agent";
 import { formatDateTime } from "./tools/shared";
@@ -24,7 +25,6 @@ import { TURN_KEY, TurnRecorder, type TurnContext } from "./turn-context";
 /** Quantas mensagens anteriores vão para o modelo (custo × contexto). */
 const HISTORY_LIMIT = 20;
 const MAX_STEPS = 6;
-const THINKING_LEVEL = "minimal";
 /** Teto de tokens de saída por passo: respostas curtas por regra, não só por pedido no prompt. */
 const MAX_OUTPUT_TOKENS = 800;
 const HOUR_MS = 60 * 60 * 1000;
@@ -51,7 +51,8 @@ export async function* runAgentTurn(employee: Employee, text: string, abortSigna
 
   // Teto global conferido DEPOIS de gravar: pedidos simultâneos enxergam uns aos outros.
   await assertWithinDailyBudget(services);
-  if (!env().GOOGLE_GENERATIVE_AI_API_KEY) throw new Error("GOOGLE_GENERATIVE_AI_API_KEY não configurada.");
+  const keyVar = apiKeyVarFor(env().LLM_MODEL);
+  if (keyVar && !env()[keyVar]) throw new Error(`${keyVar} não configurada.`);
 
   try {
     yield* replyWithAgent({ employee, conversationId: conversation.id, startedAt, services, recorder }, abortSignal);
@@ -83,8 +84,8 @@ async function* replyWithAgent(turn: TurnContext, abortSignal?: AbortSignal): As
     maxSteps: MAX_STEPS,
     abortSignal,
     modelSettings: { temperature: 0.2, maxOutputTokens: MAX_OUTPUT_TOKENS },
-    // Gemini "pensa" antes de responder; para atendimento, raciocínio mínimo basta e corta a latência.
-    providerOptions: { google: { thinkingConfig: { thinkingLevel: THINKING_LEVEL } } },
+    // O modelo "pensa" antes de responder; para atendimento, raciocínio mínimo basta e corta a latência.
+    providerOptions: providerOptionsFor(env().LLM_MODEL, env().OPENROUTER_REASONING_EFFORT),
     // Passo 0: obriga o modelo a registrar o que entendeu. Depois de transferir, não age mais.
     prepareStep: ({ stepNumber }) => {
       if (stepNumber === 0) return { toolChoice: { type: "tool", toolName: "recordUnderstanding" } };
