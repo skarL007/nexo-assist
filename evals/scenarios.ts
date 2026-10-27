@@ -91,6 +91,14 @@ export const scenarios: Scenario[] = [
   },
   {
     // Achado do benchmark: só listar abertos escondia o INC-20150 (resolvido há 4 dias).
+    // Anexo A: prioridade crítica = parado para a empresa, e caso crítico vai para um analista.
+    // A mensagem já responde impacto e urgência: perguntar de novo atrasa o caso mais urgente.
+    name: "Caso crítico para a empresa toda",
+    employee: "bruno.tavares@nexo.com.br",
+    turns: ["O sistema de faturamento caiu e ninguém da empresa consegue emitir nota fiscal agora."],
+    expect: { anyTool: ["draftNewTicket", "transferToAnalyst"], noTool: ["confirmDraft"] },
+  },
+  {
     name: "Reabrir chamado resolvido há até 7 dias",
     employee: ANA,
     turns: ["A minha senha do SAP bloqueou de novo.", "Sim, é esse mesmo."],
