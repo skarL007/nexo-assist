@@ -1,4 +1,4 @@
-import { KeyRound, Mail } from "lucide-react";
+import { KeyRound, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/features/shell/page-header";
 import { formatRelative } from "@/lib/format";
@@ -23,9 +23,14 @@ export default async function ProfilePage() {
               ["E-mail corporativo", employee.email],
               ["Área", employee.department],
             ].map(([label, value]) => (
-              <div key={label} className="grid grid-cols-[10rem_1fr] px-5 py-4 text-sm">
+              <div key={label} className="grid grid-cols-[10rem_1fr_auto] items-center px-5 py-4 text-sm">
                 <dt className="text-muted-foreground">{label}</dt>
                 <dd className="font-medium">{value}</dd>
+                {label === "E-mail corporativo" && (
+                  <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Lock className="size-3.5" /> Gerenciado pela TI
+                  </span>
+                )}
               </div>
             ))}
           </dl>

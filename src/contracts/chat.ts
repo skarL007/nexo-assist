@@ -42,6 +42,8 @@ export const loginSchema = z.object({
     .email("Informe um e-mail válido")
     .refine((email) => email.endsWith("@nexo.com.br"), "Use seu e-mail corporativo @nexo.com.br"),
   password: z.string().min(1, "Informe uma senha (na demonstração, qualquer uma funciona)"),
+  /** "Manter conectado neste computador": sessão de 7 dias em vez de terminar com o navegador. */
+  remember: z.boolean().default(false),
 });
 
 // ── Console do analista ──

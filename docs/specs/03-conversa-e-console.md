@@ -18,6 +18,8 @@ with_agent ──handoff──▶ waiting_analyst ──assume──▶ with_ana
 - Entram só as pessoas dos dados de exemplo, com qualquer senha não vazia (Tela 1 do PDF). Não há cadastro.
 - Os botões de demonstração ("Ana · funcionária", "Rafael · analista") entram com um clique.
 - Senha vazia mostra "Informe uma senha (na demonstração, qualquer uma funciona)". "Esqueci minha senha" explica o mesmo.
+- "Manter conectado neste computador" (Tela 1 do protótipo): marcado, a sessão dura 7 dias; desmarcado, o cookie some quando o navegador fecha (e a sessão vence em 8 horas de qualquer jeito).
+- "Meu perfil" mostra o e-mail com o selo "Gerenciado pela TI", como no protótipo.
 
 ## Rascunho
 
