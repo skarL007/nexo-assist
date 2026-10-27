@@ -47,7 +47,7 @@ Qualquer senha funciona para os usuários de exemplo (regra do desafio). Na tela
 Outros comandos:
 
 ```bash
-npm test              # 114 testes unitários (domínio, serviços, HTTP, benchmark) — sem LLM
+npm test              # 115 testes unitários (domínio, serviços, HTTP, benchmark) — sem LLM
 npm run test:e2e      # Playwright contra o build de produção — sem LLM
 npm run eval          # 12 cenários de decisão do agent com o modelo real
 npm run db:seed       # volta os dados ao estado inicial
@@ -225,7 +225,7 @@ O prompt ([`agent/instructions.ts`](src/agent/instructions.ts)) cuida só da con
 
 | Camada | O que cobre | Comando |
 |---|---|---|
-| **Testes unitários** (Vitest, 114) | prazos com fim de semana, matriz de prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado, confirmação obrigatória, clique duplo, transferência em caso crítico, bloqueio de CSRF | `npm test` |
+| **Testes unitários** (Vitest, 115) | prazos com fim de semana, matriz de prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado, confirmação obrigatória, clique duplo, transferência em caso crítico, bloqueio de CSRF | `npm test` |
 | **E2E** (Playwright, 6) | login, permissões (funcionário não acessa o console nem a API do analista) e o ciclo da transferência de ponta a ponta, contra o build de produção | `npm run test:e2e` |
 | **Evals** (12 cenários, modelo real) | intenção, tools esperadas e proibidas, transferência, caso crítico, reabertura e vazamento de dados de outra pessoa | `npm run eval` |
 | **Trace em toda resposta** | qualquer decisão pode ser auditada na própria interface e no console do analista | — |
