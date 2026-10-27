@@ -41,7 +41,7 @@ export const loginSchema = z.object({
     .toLowerCase()
     .email("Informe um e-mail válido")
     .refine((email) => email.endsWith("@nexo.com.br"), "Use seu e-mail corporativo @nexo.com.br"),
-  password: z.string().min(1, "Informe a senha"),
+  password: z.string().min(1, "Informe uma senha (na demonstração, qualquer uma funciona)"),
 });
 
 // ── Console do analista ──

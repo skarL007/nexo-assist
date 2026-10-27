@@ -20,10 +20,15 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function submit(event: React.FormEvent) {
+  function submit(event: React.FormEvent) {
     event.preventDefault();
+    void signIn(email, password);
+  }
+
+  async function signIn(email: string, password: string) {
     // Mesma validação (Zod) que o servidor usa.
     const parsed = loginSchema.safeParse({ email, password });
     if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? "Dados inválidos");
@@ -63,7 +68,16 @@ export function LoginForm() {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="password">Senha</Label>
-          <span className="text-xs text-primary">Esqueci minha senha</span>
+          <button
+            type="button"
+            className="text-xs text-primary hover:underline"
+            onClick={() => {
+              setError(null);
+              setNotice("Na demonstração, qualquer senha funciona. Na Nexo, este link abriria a troca da senha de rede.");
+            }}
+          >
+            Esqueci minha senha
+          </button>
         </div>
         <div className="relative">
           <Input
@@ -85,6 +99,8 @@ export function LoginForm() {
         </div>
       </div>
 
+      {notice && !error && <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">{notice}</p>}
+
       {error && (
         <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">
           {error}
@@ -96,16 +112,18 @@ export function LoginForm() {
       </Button>
 
       <div className="space-y-2 rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
-        <p>Ambiente de demonstração: qualquer senha funciona.</p>
+        <p>Ambiente de demonstração: qualquer senha funciona. Entre direto como:</p>
         <div className="flex flex-wrap gap-2">
           {DEMO_ACCOUNTS.map((account) => (
             <button
               key={account.email}
               type="button"
-              className="rounded-md bg-muted px-2 py-1 font-medium text-foreground hover:bg-accent"
+              className="rounded-md bg-muted px-2 py-1 font-medium text-foreground hover:bg-accent disabled:opacity-60"
+              disabled={loading}
               onClick={() => {
                 setEmail(account.email);
                 setPassword("demo");
+                void signIn(account.email, "demo");
               }}
             >
               {account.label}

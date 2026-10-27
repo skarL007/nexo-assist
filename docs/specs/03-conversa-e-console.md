@@ -13,6 +13,12 @@ with_agent ──handoff──▶ waiting_analyst ──assume──▶ with_ana
 - Toda transição gera uma mensagem de sistema (a divisória no histórico).
 - A transferência leva **motivo** (pedido do funcionário, caso crítico, chamado vencido, baixa confiança), **resumo** e, se houver, o chamado relacionado.
 
+## Login
+
+- Entram só as pessoas dos dados de exemplo, com qualquer senha não vazia (Tela 1 do PDF). Não há cadastro.
+- Os botões de demonstração ("Ana · funcionária", "Rafael · analista") entram com um clique.
+- Senha vazia mostra "Informe uma senha (na demonstração, qualquer uma funciona)". "Esqueci minha senha" explica o mesmo.
+
 ## Sessão
 
 - Uma conversa aberta por funcionário. Ao voltar, ele continua nela (história 6).
