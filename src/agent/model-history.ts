@@ -18,6 +18,14 @@ export function stripSystemNotes(text: string): string {
   return text.replace(SYSTEM_NOTE, "").replace(LEGACY_NOTE, "").trim();
 }
 
+// O chat mostra texto puro: markdown do modelo apareceria como "**INC-20150**".
+const EMPHASIS = /\*\*(\S(?:[^*]*\S)?)\*\*|__(\S(?:[^_]*\S)?)__/g;
+const HEADING = /^#{1,6}\s+/gm;
+
+export function stripMarkdown(text: string): string {
+  return text.replace(EMPHASIS, (_, bold, underline) => bold ?? underline).replace(HEADING, "");
+}
+
 export function toModelMessages(history: ChatMessage[]) {
   return history.map((message) => {
     const text = stripSystemNotes(message.text).slice(0, HISTORY_MESSAGE_MAX_CHARS);

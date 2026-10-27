@@ -17,7 +17,7 @@ import type { ToolCallLog, TurnTrace } from "@/domain/message";
 import { createServices, type Services } from "@/infrastructure/container";
 import { conversationView } from "@/server/views";
 import { apiKeyVarFor, providerOptionsFor } from "./model-config";
-import { stripSystemNotes, toModelMessages } from "./model-history";
+import { stripMarkdown, stripSystemNotes, toModelMessages } from "./model-history";
 import { nexoAgent } from "./nexo-agent";
 import { turnBriefing } from "./turn-briefing";
 import { TURN_KEY, TurnRecorder, type TurnContext } from "./turn-context";
@@ -132,7 +132,7 @@ async function* replyWithAgent(turn: TurnContext, abortSignal?: AbortSignal): As
   await services.messages.add({
     conversationId,
     role: "agent",
-    text: stripSystemNotes(reply) || fallbackReply(recorder),
+    text: stripMarkdown(stripSystemNotes(reply)) || fallbackReply(recorder),
     cards: recorder.cards,
     trace,
   });

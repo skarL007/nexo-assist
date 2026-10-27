@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ChatMessage } from "@/domain/message";
-import { stripSystemNotes, toModelMessages } from "./model-history";
+import { stripMarkdown, stripSystemNotes, toModelMessages } from "./model-history";
 
 const message = (overrides: Partial<ChatMessage>): ChatMessage => ({
   id: "m1",
@@ -54,5 +54,20 @@ describe("stripSystemNotes", () => {
 
   it("preserva colchetes que fazem parte da resposta", () => {
     expect(stripSystemNotes("Abra o menu [Configurações] e reinicie.")).toBe("Abra o menu [Configurações] e reinicie.");
+  });
+});
+
+describe("stripMarkdown", () => {
+  it("tira o negrito e o itálico que o chat mostraria como asteriscos", () => {
+    expect(stripMarkdown("Preparei a reabertura do **INC-20150** com o seu relato.")).toBe("Preparei a reabertura do INC-20150 com o seu relato.");
+    expect(stripMarkdown("Isso é __urgente__.")).toBe("Isso é urgente.");
+  });
+
+  it("tira marcadores de título no começo da linha", () => {
+    expect(stripMarkdown("## Próximos passos\nReinicie o notebook.")).toBe("Próximos passos\nReinicie o notebook.");
+  });
+
+  it("preserva asterisco solto e multiplicação", () => {
+    expect(stripMarkdown("Senha com * no fim e 2 * 3 = 6.")).toBe("Senha com * no fim e 2 * 3 = 6.");
   });
 });
