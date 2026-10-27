@@ -1,0 +1,14 @@
+# Nunca enviar segredos nem bancos locais para a Vercel.
+.env*
+!.env.example
+*.db
+*.db-*
+.vercel
+
+# Não fazem parte do app publicado.
+docs
+e2e
+evals
+test-results
+playwright-report
+.claude
