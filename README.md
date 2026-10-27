@@ -256,18 +256,27 @@ O deploy roda na **Vercel** com o banco no **Turso** (libSQL, compatível com o 
 
 ### Como fiz o deploy
 
-1. Criei o banco no Turso e um token de acesso a ele:
+**App no ar:** https://nexo-assist-puce.vercel.app. O acesso é pelo link com token (`/?access=…`), enviado junto com o repositório. Sem ele, toda página e toda API respondem 401.
+
+1. Criei o projeto na Vercel e instalei o **Turso pelo Marketplace da Vercel**. A integração cria o banco e as variáveis `TURSO_DATABASE_URL` e `TURSO_AUTH_TOKEN` no projeto, e o `env.ts` aceita esses nomes.
    ```bash
-   turso db create nexo-assist
-   turso db show nexo-assist --url
-   turso db tokens create nexo-assist
+   vercel integration add tursocloud --name nexo-assist --meta region=iad1 --billing-plan starter -e production -e preview --no-env-pull
    ```
-2. Apliquei as migrations e os dados de exemplo apontando para o Turso:
+2. Apliquei as migrations e os dados de exemplo no Turso a partir da minha máquina, com as variáveis de produção num arquivo local ignorado pelo git (nunca no `.env.local`, que o `npm run dev` lê):
    ```bash
-   DATABASE_URL=libsql://... DATABASE_AUTH_TOKEN=... npm run db:setup
+   vercel env pull .env.production.local --environment=production
+   npx tsx --env-file=.env.production.local scripts/migrate.ts
+   npx tsx --env-file=.env.production.local scripts/seed.ts
    ```
-3. Importei o repositório na Vercel e configurei as variáveis (todas só no servidor): `GOOGLE_GENERATIVE_AI_API_KEY`, `LLM_MODEL`, `DATABASE_URL`, `DATABASE_AUTH_TOKEN`, `AUTH_SECRET` (32+ caracteres aleatórios), `ACCESS_TOKEN` e `DAILY_AGENT_TURN_LIMIT`.
-4. Compartilho o link já com o token: `https://<deploy>/?access=<ACCESS_TOKEN>`.
+3. Configurei as variáveis, todas só no servidor:
+   - `GOOGLE_GENERATIVE_AI_API_KEY` é uma chave **exclusiva do deploy**, que pode ser revogada sem afetar o desenvolvimento.
+   - `AUTH_SECRET` e `ACCESS_TOKEN` foram gerados e enviados pela CLI por pipe, sem passar pela tela:
+     ```bash
+     node -e "process.stdout.write(require('crypto').randomBytes(36).toString('base64url'))" | vercel env add AUTH_SECRET production --sensitive
+     ```
+   - Completam a lista `LLM_MODEL` e `DAILY_AGENT_TURN_LIMIT`.
+4. Publiquei pela CLI (`vercel deploy --prod`) a partir de um `git archive` do último commit, para nunca subir arquivo que não está versionado. O [`.vercelignore`](.vercelignore) também barra `.env` e bancos locais.
+5. As funções rodam em `iad1` (Washington), na mesma região do banco. A "Vercel Authentication" protege só os previews; a produção fica atrás do nosso token.
 
 ### Como protegi as chaves e limitei o uso
 
