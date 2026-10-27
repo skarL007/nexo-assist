@@ -31,6 +31,15 @@ describe("duplicidade e reabertura", () => {
     expect(await service.findPossibleDuplicates("ana", "network")).toHaveLength(0);
   });
 
+  it("lista como reabríveis só os resolvidos há até 7 dias", async () => {
+    const { service } = setup([
+      makeTicket({ code: "INC-1", status: "resolved", resolvedAt: new Date("2026-10-23T13:00:00Z") }),
+      makeTicket({ code: "INC-2", status: "resolved", resolvedAt: new Date("2026-10-10T13:00:00Z") }),
+      makeTicket({ code: "INC-3", status: "open" }),
+    ]);
+    expect((await service.listReopenable("ana")).map((t) => t.code)).toEqual(["INC-1"]);
+  });
+
   it("reabre um chamado resolvido há 4 dias", async () => {
     const resolvedAt = new Date("2026-10-23T13:00:00Z");
     const { service } = setup([makeTicket({ status: "resolved", resolvedAt })]);

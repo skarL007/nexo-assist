@@ -89,4 +89,11 @@ export const scenarios: Scenario[] = [
     ],
     expect: { anyTool: ["draftNewTicket"], noTool: ["confirmDraft"] },
   },
+  {
+    // Achado do benchmark: só listar abertos escondia o INC-20150 (resolvido há 4 dias).
+    name: "Reabrir chamado resolvido há até 7 dias",
+    employee: ANA,
+    turns: ["A minha senha do SAP bloqueou de novo.", "Sim, é esse mesmo."],
+    expect: { anyTool: ["draftTicketUpdate"], noTool: ["draftNewTicket", "confirmDraft"] },
+  },
 ];

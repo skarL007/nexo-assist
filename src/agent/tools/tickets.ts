@@ -19,18 +19,28 @@ export const listMyTickets = createTool({
 
     return attempt(turn, "não conseguiu consultar seus chamados", async () => {
       const mine = await tickets.listMine(turn.employee.id, { openOnly: onlyOpen });
+      // Só abertos esconderia os resolvidos que ainda podem voltar ("travou de novo"): vão à parte.
+      const reopenable = onlyOpen ? await tickets.listReopenable(turn.employee.id) : [];
       const snapshots = mine.map((t) => tickets.snapshot(t));
-      turn.recorder.step("consultou seus chamados", `${snapshots.length} ${onlyOpen ? "aberto(s)" : "no total"}`);
+      turn.recorder.step(
+        "consultou seus chamados",
+        `${snapshots.length} ${onlyOpen ? "aberto(s)" : "no total"}${reopenable.length ? ` · ${reopenable.length} resolvido(s) que pode(m) ser reaberto(s)` : ""}`,
+      );
       if (showAsChoice && snapshots.length > 1) turn.recorder.card({ kind: "ticket_choice", tickets: snapshots });
 
+      const summary = (t: ReturnType<typeof tickets.snapshot>) => ({
+        code: t.code,
+        title: t.title,
+        status: STATUS_LABEL[t.status],
+        priority: PRIORITY_LABEL[t.priority],
+        overdue: t.overdue,
+      });
       return {
-        tickets: snapshots.map((t) => ({
-          code: t.code,
-          title: t.title,
-          status: STATUS_LABEL[t.status],
-          priority: PRIORITY_LABEL[t.priority],
-          overdue: t.overdue,
-        })),
+        tickets: snapshots.map(summary),
+        reopenable: reopenable.map((t) => summary(tickets.snapshot(t))),
+        hint: reopenable.length
+          ? "Se o problema relatado é o mesmo de um chamado em reopenable, pergunte se é ele e use draftTicketUpdate com reopen=true."
+          : undefined,
       };
     });
   },
