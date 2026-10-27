@@ -30,16 +30,19 @@ export function apiKeyVarFor(model: string): ApiKeyVar | null {
 
 type ProviderOptions =
   | { google: { thinkingConfig: { thinkingLevel: "minimal" } } }
-  | { openrouter: { reasoning: { effort: ReasoningEffort } } };
+  | { openrouter: { reasoning: { effort: ReasoningEffort }; session_id: string } };
 
-/** Opções do provedor para cada chamada ao modelo. */
-export function providerOptionsFor(model: string, openRouterEffort: ReasoningEffort): ProviderOptions | undefined {
+/**
+ * Opções do provedor para cada chamada ao modelo. No OpenRouter, `session_id`
+ * (a conversa) mantém os turnos no mesmo provedor, onde o cache do prompt está quente.
+ */
+export function providerOptionsFor(model: string, openRouterEffort: ReasoningEffort, sessionId: string): ProviderOptions | undefined {
   switch (providerOf(model)) {
     case "google":
       // Atendimento precisa de resposta rápida, não de raciocínio longo.
       return { google: { thinkingConfig: { thinkingLevel: "minimal" } } };
     case "openrouter":
-      return { openrouter: { reasoning: { effort: openRouterEffort } } };
+      return { openrouter: { reasoning: { effort: openRouterEffort }, session_id: sessionId } };
     default:
       return undefined;
   }
