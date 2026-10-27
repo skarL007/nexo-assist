@@ -7,7 +7,7 @@ import { ANCHORS, BUSINESS, MIN_FORCED_TOOL_COMPLIANCE, type Candidate, type Wei
 import type { GateResult } from "./gate";
 import { CRITERIA } from "./geval";
 import type { Pricing } from "./openrouter";
-import type { ConversationRecord, Judgment } from "./records";
+import type { ConversationRecord, Judgment, TurnRecord } from "./records";
 import { bootstrapMean, mean, percentile, randomWeights, seededRandom, spearman, type Interval } from "./stats";
 
 export interface DimensionScores {
@@ -106,6 +106,15 @@ export function panelScores(judgments: Judgment[]): Record<string, number> {
   return result;
 }
 
+/**
+ * 1ª tool do turno: a do trace. Se o provedor caiu no meio do turno, o trace não fecha; vale então
+ * a tool que o modelo pediu na 1ª chamada que respondeu (queda de provedor não é desobediência do modelo).
+ */
+function stepZeroTool(turn: TurnRecord): string | null {
+  if (!turn.error) return turn.firstTool;
+  return turn.llmCalls.find((call) => call.status === 200 && !call.error)?.toolCalls[0] ?? null;
+}
+
 export function summarizeCandidate(
   candidate: Candidate,
   conversations: ConversationRecord[],
@@ -115,13 +124,14 @@ export function summarizeCandidate(
   pricing?: Pricing,
 ): CandidateSummary {
   const turns = conversations.flatMap((c) => c.turns);
-  const answered = turns.filter((t) => t.llmCalls.some((call) => call.status === 200));
+  const answered = turns.filter((t) => t.llmCalls.some((call) => call.status === 200 && !call.error));
   const okTurns = turns.filter((t) => !t.error);
   const calls = turns.flatMap((t) => t.llmCalls);
 
-  const compliance = answered.length ? answered.filter((t) => t.firstTool === "recordUnderstanding").length / answered.length : 0;
-  const requested = calls.reduce((sum, c) => sum + c.toolCalls.length, 0);
-  const executed = turns.reduce((sum, t) => sum + t.toolCalls.length, 0);
+  const compliance = answered.length ? answered.filter((t) => stepZeroTool(t) === "recordUnderstanding").length / answered.length : 0;
+  // Só turnos que terminaram: num turno em que o provedor caiu, as tools pedidas não chegam a executar.
+  const requested = okTurns.flatMap((t) => t.llmCalls).reduce((sum, c) => sum + c.toolCalls.length, 0);
+  const executed = okTurns.reduce((sum, t) => sum + t.toolCalls.length, 0);
   const totalUsd = calls.reduce((sum, c) => sum + c.costUsd, 0) + conversations.reduce((sum, c) => sum + c.discardedCostUsd, 0);
   const perTurnUsd = turns.length ? totalUsd / turns.length : NaN;
   const perAtendimentoUsd = perTurnUsd * BUSINESS.turnsPerAtendimento;

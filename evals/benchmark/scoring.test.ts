@@ -103,6 +103,23 @@ describe("resumo de um candidato", () => {
     expect(summary.status).toBe("desqualificado");
   });
 
+  it("provedor que cai depois do passo 0 não conta como desobediência nem como tool inválida", () => {
+    const aborted = turn({
+      toolCalls: [],
+      firstTool: null,
+      error: "The operation was aborted",
+      llmCalls: [
+        { ...call, costUsd: 0.001, inputTokens: 1_000, cachedTokens: 0, toolCalls: ["recordUnderstanding"], finishReason: "tool_calls", latencyMs: 1_200 },
+        { ...call, costUsd: 0, inputTokens: 0, cachedTokens: 0, toolCalls: [], finishReason: null, latencyMs: 13_000, error: "The operation was aborted" },
+      ],
+    });
+    const summary = summarizeCandidate(candidate, [conversation("a", 1, ["erro técnico em turno"], [aborted]), conversation("b", 1)], [], passing, WEIGHTS);
+    expect(summary.forcedToolCompliance).toBe(1);
+    expect(summary.toolCallErrorRate).toBe(0);
+    expect(summary.turnErrorRate).toBe(0.5);
+    expect(summary.status).toBe("avaliado");
+  });
+
   it("reprovado no pré-voo fica desqualificado, sem score", () => {
     const summary = summarizeCandidate(candidate, [], [], { ...passing, passed: false, error: "Provider returned error" }, WEIGHTS);
     expect(summary.status).toBe("desqualificado");
