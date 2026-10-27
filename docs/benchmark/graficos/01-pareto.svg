@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 470" width="760" height="470" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" role="img" aria-label="Qualidade × custo: quem entrega mais por dólar">
+<style>
+.bg{fill:#fcfcfb}.t1{fill:#0b0b0b}.t2{fill:#52514e}.t3{fill:#898781}
+.grid{stroke:#e1e0d9}.axis{stroke:#c3c2b7}.ring{stroke:#fcfcfb}.frame{stroke:rgba(11,11,11,.1)}
+.s1{fill:#2a78d6}.s2{fill:#eb6834}.s3{fill:#1baf7a}.s4{fill:#eda100}.mute{fill:#b5b4ad}
+.l1{stroke:#2a78d6}.l2{stroke:#eb6834}.lm{stroke:#b5b4ad}
+@media (prefers-color-scheme: dark){
+.bg{fill:#1a1a19}.t1{fill:#f0efec}.t2{fill:#c3c2b7}.t3{fill:#898781}
+.grid{stroke:#2c2c2a}.axis{stroke:#383835}.ring{stroke:#1a1a19}.frame{stroke:rgba(255,255,255,.1)}
+.s1{fill:#3987e5}.s2{fill:#d95926}.s3{fill:#199e70}.s4{fill:#c98500}.mute{fill:#5a5955}
+.l1{stroke:#3987e5}.l2{stroke:#d95926}.lm{stroke:#5a5955}}
+</style>
+<title>Qualidade × custo: quem entrega mais por dólar</title>
+<rect class="bg frame" x="0.5" y="0.5" width="759" height="469" rx="8" stroke-width="1"/>
+<text x="20" y="28" font-size="15" font-weight="600" class="t1">Qualidade × custo: quem entrega mais por dólar</text>
+<text x="20" y="47" font-size="12" class="t2">Fronteira de Pareto: nenhum outro modelo é mais barato e melhor ao mesmo tempo. ★ = maior score composto.</text>
+<circle cx="26" cy="66" r="5" class="s2"/>
+<text x="38" y="70" font-size="12" class="t1">recomendado</text>
+<circle cx="136.6" cy="66" r="5" class="s1"/>
+<text x="148.6" y="70" font-size="12" class="t1">na fronteira de Pareto</text>
+<circle cx="319.79999999999995" cy="66" r="5" class="mute"/>
+<text x="331.79999999999995" y="70" font-size="12" class="t1">dominado</text>
+<line x1="64" x2="64" y1="92" y2="414" class="grid" stroke-width="1"/>
+<text x="64" y="430" text-anchor="middle" font-size="11" class="t3">US$ 1,00</text>
+<line x1="327" x2="327" y1="92" y2="414" class="grid" stroke-width="1"/>
+<text x="327" y="430" text-anchor="middle" font-size="11" class="t3">US$ 10,00</text>
+<line x1="590" x2="590" y1="92" y2="414" class="grid" stroke-width="1"/>
+<text x="590" y="430" text-anchor="middle" font-size="11" class="t3">US$ 100</text>
+<line x1="64" x2="590" y1="414" y2="414" class="grid" stroke-width="1"/>
+<text x="56" y="418" text-anchor="end" font-size="11" class="t3">3,75</text>
+<line x1="64" x2="590" y1="349.6" y2="349.6" class="grid" stroke-width="1"/>
+<text x="56" y="353.6" text-anchor="end" font-size="11" class="t3">4,00</text>
+<line x1="64" x2="590" y1="285.2" y2="285.2" class="grid" stroke-width="1"/>
+<text x="56" y="289.2" text-anchor="end" font-size="11" class="t3">4,25</text>
+<line x1="64" x2="590" y1="220.8" y2="220.8" class="grid" stroke-width="1"/>
+<text x="56" y="224.8" text-anchor="end" font-size="11" class="t3">4,50</text>
+<line x1="64" x2="590" y1="156.4" y2="156.4" class="grid" stroke-width="1"/>
+<text x="56" y="160.4" text-anchor="end" font-size="11" class="t3">4,75</text>
+<line x1="64" x2="590" y1="92" y2="92" class="grid" stroke-width="1"/>
+<text x="56" y="96" text-anchor="end" font-size="11" class="t3">5,00</text>
+<text x="327" y="456" text-anchor="middle" font-size="12" class="t2">Custo por 1.000 atendimentos (US$, escala log) — mais à esquerda é mais barato</text>
+<text x="18" y="253" text-anchor="middle" font-size="12" class="t2" transform="rotate(-90 18 253)">Qualidade G-Eval (1–5)</text>
+<path d="M78.4,182.3 L86.9,162.6 L374,134.5" fill="none" class="l1" stroke-width="2" stroke-linejoin="round" opacity="0.5"/>
+<circle cx="86.9" cy="162.6" r="8" class="s2 ring" stroke-width="2"><title>GPT-6 Luna: qualidade 4.73 · US$ 1,22</title></circle>
+<text x="98.9" y="166.6" text-anchor="start" font-size="11.5" class="t1" font-weight="600">GPT-6 Luna</text>
+<circle cx="374" cy="134.5" r="6" class="s1 ring" stroke-width="2"><title>Gemini 3.8 Flash: qualidade 4.84 · US$ 15,09</title></circle>
+<text x="386" y="138.5" text-anchor="start" font-size="11.5" class="t1">Gemini 3.8 Flash</text>
+<circle cx="78.4" cy="182.3" r="6" class="s1 ring" stroke-width="2"><title>Qwen3.8 Flash (sem raciocínio): qualidade 4.65 · US$ 1,13</title></circle>
+<text x="90.4" y="200.3" text-anchor="start" font-size="11.5" class="t1">Qwen3.8 Flash (sem raciocínio)</text>
+<circle cx="459.6" cy="165.1" r="6" class="mute ring" stroke-width="2"><title>Gemini 3.5 Flash (produção): qualidade 4.72 · US$ 31,93</title></circle>
+<text x="471.6" y="169.1" text-anchor="start" font-size="11.5" class="t1">Gemini 3.5 Flash (produção)</text>
+<circle cx="246.4" cy="172.3" r="6" class="mute ring" stroke-width="2"><title>DeepSeek V4.1 Flash: qualidade 4.69 · US$ 4,94</title></circle>
+<text x="258.4" y="162.3" text-anchor="start" font-size="11.5" class="t1">DeepSeek V4.1 Flash</text>
+<circle cx="290.1" cy="177" r="6" class="mute ring" stroke-width="2"><title>Gemini 3.5 Flash Lite: qualidade 4.67 · US$ 7,24</title></circle>
+<text x="302.1" y="181" text-anchor="start" font-size="11.5" class="t1">Gemini 3.5 Flash Lite</text>
+<circle cx="95" cy="235.2" r="6" class="mute ring" stroke-width="2"><title>Mistral Small 4: qualidade 4.44 · US$ 1,31</title></circle>
+<text x="107" y="239.2" text-anchor="start" font-size="11.5" class="t1">Mistral Small 4</text>
+</svg>

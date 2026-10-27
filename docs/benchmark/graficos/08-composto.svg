@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 384" width="760" height="384" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" role="img" aria-label="Score composto (pesos 40/30/15/15: efetividade/qualidade/latência/custo)">
+<style>
+.bg{fill:#fcfcfb}.t1{fill:#0b0b0b}.t2{fill:#52514e}.t3{fill:#898781}
+.grid{stroke:#e1e0d9}.axis{stroke:#c3c2b7}.ring{stroke:#fcfcfb}.frame{stroke:rgba(11,11,11,.1)}
+.s1{fill:#2a78d6}.s2{fill:#eb6834}.s3{fill:#1baf7a}.s4{fill:#eda100}.mute{fill:#b5b4ad}
+.l1{stroke:#2a78d6}.l2{stroke:#eb6834}.lm{stroke:#b5b4ad}
+@media (prefers-color-scheme: dark){
+.bg{fill:#1a1a19}.t1{fill:#f0efec}.t2{fill:#c3c2b7}.t3{fill:#898781}
+.grid{stroke:#2c2c2a}.axis{stroke:#383835}.ring{stroke:#1a1a19}.frame{stroke:rgba(255,255,255,.1)}
+.s1{fill:#3987e5}.s2{fill:#d95926}.s3{fill:#199e70}.s4{fill:#c98500}.mute{fill:#5a5955}
+.l1{stroke:#3987e5}.l2{stroke:#d95926}.lm{stroke:#5a5955}}
+</style>
+<title>Score composto (pesos 40/30/15/15: efetividade/qualidade/latência/custo)</title>
+<rect class="bg frame" x="0.5" y="0.5" width="759" height="383" rx="8" stroke-width="1"/>
+<text x="20" y="28" font-size="15" font-weight="600" class="t1">Score composto (pesos 40/30/15/15: efetividade/qualidade/latência/custo)</text>
+<text x="20" y="47" font-size="12" class="t2">Cada segmento é a contribuição ponderada da dimensão; o total está no fim da barra.</text>
+<rect x="20" y="60" width="12" height="12" rx="2" class="s1"/>
+<text x="38" y="70" font-size="12" class="t1">Efetividade</text>
+<rect x="130.6" y="60" width="12" height="12" rx="2" class="s2"/>
+<text x="148.6" y="70" font-size="12" class="t1">Qualidade</text>
+<rect x="228" y="60" width="12" height="12" rx="2" class="s3"/>
+<text x="246" y="70" font-size="12" class="t1">Latência</text>
+<rect x="318.8" y="60" width="12" height="12" rx="2" class="s4"/>
+<text x="336.8" y="70" font-size="12" class="t1">Custo</text>
+<line x1="220" x2="220" y1="78" y2="340" class="grid" stroke-width="1"/>
+<text x="220" y="356" text-anchor="middle" font-size="11" class="t3">0,00</text>
+<line x1="332.5" x2="332.5" y1="78" y2="340" class="grid" stroke-width="1"/>
+<text x="332.5" y="356" text-anchor="middle" font-size="11" class="t3">0,25</text>
+<line x1="445" x2="445" y1="78" y2="340" class="grid" stroke-width="1"/>
+<text x="445" y="356" text-anchor="middle" font-size="11" class="t3">0,50</text>
+<line x1="557.5" x2="557.5" y1="78" y2="340" class="grid" stroke-width="1"/>
+<text x="557.5" y="356" text-anchor="middle" font-size="11" class="t3">0,75</text>
+<line x1="670" x2="670" y1="78" y2="340" class="grid" stroke-width="1"/>
+<text x="670" y="356" text-anchor="middle" font-size="11" class="t3">1,00</text>
+<text x="210" y="104" text-anchor="end" font-size="12" class="t1" font-weight="600">GPT-6 Luna ★</text>
+<rect x="220" y="89" width="155.5" height="20" class="s1"><title>GPT-6 Luna ★ · Efetividade: 0.350</title></rect>
+<rect x="377.5" y="89" width="123.7" height="20" class="s2"><title>GPT-6 Luna ★ · Qualidade: 0.279</title></rect>
+<rect x="503.2" y="89" width="40.3" height="20" class="s3"><title>GPT-6 Luna ★ · Latência: 0.094</title></rect>
+<path d="M545.5,89 H604.1 Q608.1,89 608.1,93 V105 Q608.1,109 604.1,109 H545.5 Z" class="s4"><title>GPT-6 Luna ★ · Custo: 0.143</title></path>
+<text x="614.1" y="104" font-size="12" font-weight="600" class="t1">0,867</text>
+<text x="210" y="136" text-anchor="end" font-size="12" class="t1">Gemini 3.5 Flash Lite</text>
+<rect x="220" y="121" width="170.5" height="20" class="s1"><title>Gemini 3.5 Flash Lite · Efetividade: 0.383</title></rect>
+<rect x="392.5" y="121" width="121.9" height="20" class="s2"><title>Gemini 3.5 Flash Lite · Qualidade: 0.275</title></rect>
+<rect x="516.4" y="121" width="41.6" height="20" class="s3"><title>Gemini 3.5 Flash Lite · Latência: 0.097</title></rect>
+<path d="M560,121 H592.5 Q596.5,121 596.5,125 V137 Q596.5,141 592.5,141 H560 Z" class="s4"><title>Gemini 3.5 Flash Lite · Custo: 0.086</title></path>
+<text x="602.5" y="136" font-size="12" font-weight="600" class="t1">0,841</text>
+<text x="210" y="168" text-anchor="end" font-size="12" class="t1">DeepSeek V4.1 Flash</text>
+<rect x="220" y="153" width="155.5" height="20" class="s1"><title>DeepSeek V4.1 Flash · Efetividade: 0.350</title></rect>
+<rect x="377.5" y="153" width="122.5" height="20" class="s2"><title>DeepSeek V4.1 Flash · Qualidade: 0.277</title></rect>
+<rect x="502" y="153" width="29.7" height="20" class="s3"><title>DeepSeek V4.1 Flash · Latência: 0.071</title></rect>
+<path d="M533.7,153 H571.8 Q575.8,153 575.8,157 V169 Q575.8,173 571.8,173 H533.7 Z" class="s4"><title>DeepSeek V4.1 Flash · Custo: 0.098</title></path>
+<text x="581.8" y="168" font-size="12" font-weight="600" class="t1">0,795</text>
+<text x="210" y="200" text-anchor="end" font-size="12" class="t1">Mistral Small 4</text>
+<rect x="220" y="185" width="133" height="20" class="s1"><title>Mistral Small 4 · Efetividade: 0.300</title></rect>
+<rect x="355" y="185" width="114.2" height="20" class="s2"><title>Mistral Small 4 · Qualidade: 0.258</title></rect>
+<rect x="471.2" y="185" width="37.2" height="20" class="s3"><title>Mistral Small 4 · Latência: 0.087</title></rect>
+<path d="M510.5,185 H568 Q572,185 572,189 V201 Q572,205 568,205 H510.5 Z" class="s4"><title>Mistral Small 4 · Custo: 0.141</title></path>
+<text x="578" y="200" font-size="12" font-weight="600" class="t1">0,787</text>
+<text x="210" y="232" text-anchor="end" font-size="12" class="t1">Gemini 3.5 Flash (produção)</text>
+<rect x="220" y="217" width="148" height="20" class="s1"><title>Gemini 3.5 Flash (produção) · Efetividade: 0.333</title></rect>
+<rect x="370" y="217" width="123.4" height="20" class="s2"><title>Gemini 3.5 Flash (produção) · Qualidade: 0.279</title></rect>
+<rect x="495.4" y="217" width="32.3" height="20" class="s3"><title>Gemini 3.5 Flash (produção) · Latência: 0.076</title></rect>
+<path d="M529.7,217 H540.4 Q544.4,217 544.4,221 V233 Q544.4,237 540.4,237 H529.7 Z" class="s4"><title>Gemini 3.5 Flash (produção) · Custo: 0.037</title></path>
+<text x="550.4" y="232" font-size="12" font-weight="600" class="t1">0,725</text>
+<text x="210" y="264" text-anchor="end" font-size="12" class="t1">Qwen3.8 Flash (sem raciocínio)</text>
+<rect x="220" y="249" width="118" height="20" class="s1"><title>Qwen3.8 Flash (sem raciocínio) · Efetividade: 0.267</title></rect>
+<rect x="340" y="249" width="121.2" height="20" class="s2"><title>Qwen3.8 Flash (sem raciocínio) · Qualidade: 0.274</title></rect>
+<rect x="463.2" y="249" width="0" height="20" class="s3"><title>Qwen3.8 Flash (sem raciocínio) · Latência: 0.000</title></rect>
+<path d="M465.2,249 H524.8 Q528.8,249 528.8,253 V265 Q528.8,269 524.8,269 H465.2 Z" class="s4"><title>Qwen3.8 Flash (sem raciocínio) · Custo: 0.146</title></path>
+<text x="534.8" y="264" font-size="12" font-weight="600" class="t1">0,686</text>
+<text x="210" y="296" text-anchor="end" font-size="12" class="t1">Gemini 3.8 Flash</text>
+<rect x="220" y="281" width="133" height="20" class="s1"><title>Gemini 3.8 Flash · Efetividade: 0.300</title></rect>
+<rect x="355" y="281" width="127.4" height="20" class="s2"><title>Gemini 3.8 Flash · Qualidade: 0.288</title></rect>
+<rect x="484.4" y="281" width="0" height="20" class="s3"><title>Gemini 3.8 Flash · Latência: 0.000</title></rect>
+<path d="M486.4,281 H508.2 Q512.2,281 512.2,285 V297 Q512.2,301 508.2,301 H486.4 Z" class="s4"><title>Gemini 3.8 Flash · Custo: 0.062</title></path>
+<text x="518.2" y="296" font-size="12" font-weight="600" class="t1">0,649</text>
+<text x="210" y="328" text-anchor="end" font-size="12" class="t1">Qwen3.8 Flash</text>
+<text x="224" y="328" font-size="11.5" class="t2">desqualificado — pré-voo: tool_choice forçado falhou (Provider returned error)</text>
+</svg>

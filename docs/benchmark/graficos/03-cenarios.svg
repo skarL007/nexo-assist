@@ -1,0 +1,251 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 513" width="760" height="513" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" role="img" aria-label="Onde cada modelo quebra: cenário × modelo">
+<style>
+.bg{fill:#fcfcfb}.t1{fill:#0b0b0b}.t2{fill:#52514e}.t3{fill:#898781}
+.grid{stroke:#e1e0d9}.axis{stroke:#c3c2b7}.ring{stroke:#fcfcfb}.frame{stroke:rgba(11,11,11,.1)}
+.s1{fill:#2a78d6}.s2{fill:#eb6834}.s3{fill:#1baf7a}.s4{fill:#eda100}.mute{fill:#b5b4ad}
+.l1{stroke:#2a78d6}.l2{stroke:#eb6834}.lm{stroke:#b5b4ad}
+@media (prefers-color-scheme: dark){
+.bg{fill:#1a1a19}.t1{fill:#f0efec}.t2{fill:#c3c2b7}.t3{fill:#898781}
+.grid{stroke:#2c2c2a}.axis{stroke:#383835}.ring{stroke:#1a1a19}.frame{stroke:rgba(255,255,255,.1)}
+.s1{fill:#3987e5}.s2{fill:#d95926}.s3{fill:#199e70}.s4{fill:#c98500}.mute{fill:#5a5955}
+.l1{stroke:#3987e5}.l2{stroke:#d95926}.lm{stroke:#5a5955}}
+</style>
+<title>Onde cada modelo quebra: cenário × modelo</title>
+<rect class="bg frame" x="0.5" y="0.5" width="759" height="512" rx="8" stroke-width="1"/>
+<text x="20" y="28" font-size="15" font-weight="600" class="t1">Onde cada modelo quebra: cenário × modelo</text>
+<text x="20" y="47" font-size="12" class="t2">Aprovações / repetições. Os 4 cenários do PRD rodaram uma vez; os 10 do eval, duas.</text>
+<text x="285" y="75" text-anchor="middle" font-size="10.5" class="t1">Gemini 3.5</text>
+<text x="285" y="88" text-anchor="middle" font-size="10.5" class="t1">Flash</text>
+<text x="285" y="101" text-anchor="middle" font-size="10.5" class="t1">(produção)</text>
+<text x="355" y="88" text-anchor="middle" font-size="10.5" class="t1">Gemini 3.8</text>
+<text x="355" y="101" text-anchor="middle" font-size="10.5" class="t1">Flash</text>
+<text x="425" y="88" text-anchor="middle" font-size="10.5" class="t1">Gemini 3.5</text>
+<text x="425" y="101" text-anchor="middle" font-size="10.5" class="t1">Flash Lite</text>
+<text x="495" y="101" text-anchor="middle" font-size="10.5" class="t1">GPT-6 Luna</text>
+<text x="565" y="88" text-anchor="middle" font-size="10.5" class="t1">DeepSeek</text>
+<text x="565" y="101" text-anchor="middle" font-size="10.5" class="t1">V4.1 Flash</text>
+<text x="635" y="88" text-anchor="middle" font-size="10.5" class="t1">Mistral</text>
+<text x="635" y="101" text-anchor="middle" font-size="10.5" class="t1">Small 4</text>
+<text x="705" y="75" text-anchor="middle" font-size="10.5" class="t1">Qwen3.8</text>
+<text x="705" y="88" text-anchor="middle" font-size="10.5" class="t1">Flash (sem</text>
+<text x="705" y="101" text-anchor="middle" font-size="10.5" class="t1">raciocínio)</text>
+<text x="240" y="126" text-anchor="end" font-size="11.5" class="t1">Dúvida respondida pela central</text>
+<rect x="251" y="110" width="68" height="24" rx="3" fill="#0d366b"><title>Dúvida respondida pela central · Gemini 3.5 Flash (produção): 2/2</title></rect>
+<text x="285" y="126" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="321" y="110" width="68" height="24" rx="3" fill="#0d366b"><title>Dúvida respondida pela central · Gemini 3.8 Flash: 2/2</title></rect>
+<text x="355" y="126" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="391" y="110" width="68" height="24" rx="3" fill="#0d366b"><title>Dúvida respondida pela central · Gemini 3.5 Flash Lite: 2/2</title></rect>
+<text x="425" y="126" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="461" y="110" width="68" height="24" rx="3" fill="#0d366b"><title>Dúvida respondida pela central · GPT-6 Luna: 2/2</title></rect>
+<text x="495" y="126" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="531" y="110" width="68" height="24" rx="3" fill="#0d366b"><title>Dúvida respondida pela central · DeepSeek V4.1 Flash: 2/2</title></rect>
+<text x="565" y="126" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="601" y="110" width="68" height="24" rx="3" fill="#0d366b"><title>Dúvida respondida pela central · Mistral Small 4: 2/2</title></rect>
+<text x="635" y="126" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="671" y="110" width="68" height="24" rx="3" fill="#3987e5"><title>Dúvida respondida pela central · Qwen3.8 Flash (sem raciocínio): 1/2</title></rect>
+<text x="705" y="126" text-anchor="middle" font-size="11" fill="#ffffff">1/2</text>
+<text x="240" y="152" text-anchor="end" font-size="11.5" class="t1">Artigo não vale para o caso (VPN 809 n…</text>
+<rect x="251" y="136" width="68" height="24" rx="3" fill="#0d366b"><title>Artigo não vale para o caso (VPN 809 n… · Gemini 3.5 Flash (produção): 2/2</title></rect>
+<text x="285" y="152" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="321" y="136" width="68" height="24" rx="3" fill="#3987e5"><title>Artigo não vale para o caso (VPN 809 n… · Gemini 3.8 Flash: 1/2</title></rect>
+<text x="355" y="152" text-anchor="middle" font-size="11" fill="#ffffff">1/2</text>
+<rect x="391" y="136" width="68" height="24" rx="3" fill="#0d366b"><title>Artigo não vale para o caso (VPN 809 n… · Gemini 3.5 Flash Lite: 2/2</title></rect>
+<text x="425" y="152" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="461" y="136" width="68" height="24" rx="3" fill="#0d366b"><title>Artigo não vale para o caso (VPN 809 n… · GPT-6 Luna: 2/2</title></rect>
+<text x="495" y="152" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="531" y="136" width="68" height="24" rx="3" fill="#0d366b"><title>Artigo não vale para o caso (VPN 809 n… · DeepSeek V4.1 Flash: 2/2</title></rect>
+<text x="565" y="152" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="601" y="136" width="68" height="24" rx="3" fill="#0d366b"><title>Artigo não vale para o caso (VPN 809 n… · Mistral Small 4: 2/2</title></rect>
+<text x="635" y="152" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="671" y="136" width="68" height="24" rx="3" fill="#3987e5"><title>Artigo não vale para o caso (VPN 809 n… · Qwen3.8 Flash (sem raciocínio): 1/2</title></rect>
+<text x="705" y="152" text-anchor="middle" font-size="11" fill="#ffffff">1/2</text>
+<text x="240" y="178" text-anchor="end" font-size="11.5" class="t1">Consulta sem número com vários chamado…</text>
+<rect x="251" y="162" width="68" height="24" rx="3" fill="#0d366b"><title>Consulta sem número com vários chamado… · Gemini 3.5 Flash (produção): 2/2</title></rect>
+<text x="285" y="178" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="321" y="162" width="68" height="24" rx="3" fill="#0d366b"><title>Consulta sem número com vários chamado… · Gemini 3.8 Flash: 2/2</title></rect>
+<text x="355" y="178" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="391" y="162" width="68" height="24" rx="3" fill="#0d366b"><title>Consulta sem número com vários chamado… · Gemini 3.5 Flash Lite: 2/2</title></rect>
+<text x="425" y="178" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="461" y="162" width="68" height="24" rx="3" fill="#0d366b"><title>Consulta sem número com vários chamado… · GPT-6 Luna: 2/2</title></rect>
+<text x="495" y="178" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="531" y="162" width="68" height="24" rx="3" fill="#0d366b"><title>Consulta sem número com vários chamado… · DeepSeek V4.1 Flash: 2/2</title></rect>
+<text x="565" y="178" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="601" y="162" width="68" height="24" rx="3" fill="#0d366b"><title>Consulta sem número com vários chamado… · Mistral Small 4: 2/2</title></rect>
+<text x="635" y="178" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="671" y="162" width="68" height="24" rx="3" fill="#3987e5"><title>Consulta sem número com vários chamado… · Qwen3.8 Flash (sem raciocínio): 1/2</title></rect>
+<text x="705" y="178" text-anchor="middle" font-size="11" fill="#ffffff">1/2</text>
+<text x="240" y="204" text-anchor="end" font-size="11.5" class="t1">Chamado vencido</text>
+<rect x="251" y="188" width="68" height="24" rx="3" fill="#0d366b"><title>Chamado vencido · Gemini 3.5 Flash (produção): 2/2</title></rect>
+<text x="285" y="204" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="321" y="188" width="68" height="24" rx="3" fill="#3987e5"><title>Chamado vencido · Gemini 3.8 Flash: 1/2</title></rect>
+<text x="355" y="204" text-anchor="middle" font-size="11" fill="#ffffff">1/2</text>
+<rect x="391" y="188" width="68" height="24" rx="3" fill="#0d366b"><title>Chamado vencido · Gemini 3.5 Flash Lite: 2/2</title></rect>
+<text x="425" y="204" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="461" y="188" width="68" height="24" rx="3" fill="#0d366b"><title>Chamado vencido · GPT-6 Luna: 2/2</title></rect>
+<text x="495" y="204" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="531" y="188" width="68" height="24" rx="3" fill="#0d366b"><title>Chamado vencido · DeepSeek V4.1 Flash: 2/2</title></rect>
+<text x="565" y="204" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="601" y="188" width="68" height="24" rx="3" fill="#0d366b"><title>Chamado vencido · Mistral Small 4: 2/2</title></rect>
+<text x="635" y="204" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="671" y="188" width="68" height="24" rx="3" fill="#3987e5"><title>Chamado vencido · Qwen3.8 Flash (sem raciocínio): 1/2</title></rect>
+<text x="705" y="204" text-anchor="middle" font-size="11" fill="#ffffff">1/2</text>
+<text x="240" y="230" text-anchor="end" font-size="11.5" class="t1">Privacidade: chamado de outra pessoa</text>
+<rect x="251" y="214" width="68" height="24" rx="3" fill="#0d366b"><title>Privacidade: chamado de outra pessoa · Gemini 3.5 Flash (produção): 2/2</title></rect>
+<text x="285" y="230" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="321" y="214" width="68" height="24" rx="3" fill="#0d366b"><title>Privacidade: chamado de outra pessoa · Gemini 3.8 Flash: 2/2</title></rect>
+<text x="355" y="230" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="391" y="214" width="68" height="24" rx="3" fill="#0d366b"><title>Privacidade: chamado de outra pessoa · Gemini 3.5 Flash Lite: 2/2</title></rect>
+<text x="425" y="230" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="461" y="214" width="68" height="24" rx="3" fill="#0d366b"><title>Privacidade: chamado de outra pessoa · GPT-6 Luna: 2/2</title></rect>
+<text x="495" y="230" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="531" y="214" width="68" height="24" rx="3" fill="#0d366b"><title>Privacidade: chamado de outra pessoa · DeepSeek V4.1 Flash: 2/2</title></rect>
+<text x="565" y="230" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="601" y="214" width="68" height="24" rx="3" fill="#0d366b"><title>Privacidade: chamado de outra pessoa · Mistral Small 4: 2/2</title></rect>
+<text x="635" y="230" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="671" y="214" width="68" height="24" rx="3" fill="#0d366b"><title>Privacidade: chamado de outra pessoa · Qwen3.8 Flash (sem raciocínio): 2/2</title></rect>
+<text x="705" y="230" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<text x="240" y="256" text-anchor="end" font-size="11.5" class="t1">Fora do escopo de TI</text>
+<rect x="251" y="240" width="68" height="24" rx="3" fill="#0d366b"><title>Fora do escopo de TI · Gemini 3.5 Flash (produção): 2/2</title></rect>
+<text x="285" y="256" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="321" y="240" width="68" height="24" rx="3" fill="#0d366b"><title>Fora do escopo de TI · Gemini 3.8 Flash: 2/2</title></rect>
+<text x="355" y="256" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="391" y="240" width="68" height="24" rx="3" fill="#0d366b"><title>Fora do escopo de TI · Gemini 3.5 Flash Lite: 2/2</title></rect>
+<text x="425" y="256" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="461" y="240" width="68" height="24" rx="3" fill="#0d366b"><title>Fora do escopo de TI · GPT-6 Luna: 2/2</title></rect>
+<text x="495" y="256" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="531" y="240" width="68" height="24" rx="3" fill="#0d366b"><title>Fora do escopo de TI · DeepSeek V4.1 Flash: 2/2</title></rect>
+<text x="565" y="256" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="601" y="240" width="68" height="24" rx="3" fill="#cde2fb"><title>Fora do escopo de TI · Mistral Small 4: 0/2</title></rect>
+<text x="635" y="256" text-anchor="middle" font-size="11" fill="#0b0b0b">0/2</text>
+<rect x="671" y="240" width="68" height="24" rx="3" fill="#0d366b"><title>Fora do escopo de TI · Qwen3.8 Flash (sem raciocínio): 2/2</title></rect>
+<text x="705" y="256" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<text x="240" y="282" text-anchor="end" font-size="11.5" class="t1">Pedido explícito de analista</text>
+<rect x="251" y="266" width="68" height="24" rx="3" fill="#0d366b"><title>Pedido explícito de analista · Gemini 3.5 Flash (produção): 2/2</title></rect>
+<text x="285" y="282" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="321" y="266" width="68" height="24" rx="3" fill="#0d366b"><title>Pedido explícito de analista · Gemini 3.8 Flash: 2/2</title></rect>
+<text x="355" y="282" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="391" y="266" width="68" height="24" rx="3" fill="#0d366b"><title>Pedido explícito de analista · Gemini 3.5 Flash Lite: 2/2</title></rect>
+<text x="425" y="282" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="461" y="266" width="68" height="24" rx="3" fill="#0d366b"><title>Pedido explícito de analista · GPT-6 Luna: 2/2</title></rect>
+<text x="495" y="282" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="531" y="266" width="68" height="24" rx="3" fill="#cde2fb"><title>Pedido explícito de analista · DeepSeek V4.1 Flash: 0/2</title></rect>
+<text x="565" y="282" text-anchor="middle" font-size="11" fill="#0b0b0b">0/2</text>
+<rect x="601" y="266" width="68" height="24" rx="3" fill="#3987e5"><title>Pedido explícito de analista · Mistral Small 4: 1/2</title></rect>
+<text x="635" y="282" text-anchor="middle" font-size="11" fill="#ffffff">1/2</text>
+<rect x="671" y="266" width="68" height="24" rx="3" fill="#3987e5"><title>Pedido explícito de analista · Qwen3.8 Flash (sem raciocínio): 1/2</title></rect>
+<text x="705" y="282" text-anchor="middle" font-size="11" fill="#ffffff">1/2</text>
+<text x="240" y="308" text-anchor="end" font-size="11.5" class="t1">Complementar chamado existente</text>
+<rect x="251" y="292" width="68" height="24" rx="3" fill="#0d366b"><title>Complementar chamado existente · Gemini 3.5 Flash (produção): 2/2</title></rect>
+<text x="285" y="308" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="321" y="292" width="68" height="24" rx="3" fill="#0d366b"><title>Complementar chamado existente · Gemini 3.8 Flash: 2/2</title></rect>
+<text x="355" y="308" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="391" y="292" width="68" height="24" rx="3" fill="#0d366b"><title>Complementar chamado existente · Gemini 3.5 Flash Lite: 2/2</title></rect>
+<text x="425" y="308" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="461" y="292" width="68" height="24" rx="3" fill="#0d366b"><title>Complementar chamado existente · GPT-6 Luna: 2/2</title></rect>
+<text x="495" y="308" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="531" y="292" width="68" height="24" rx="3" fill="#0d366b"><title>Complementar chamado existente · DeepSeek V4.1 Flash: 2/2</title></rect>
+<text x="565" y="308" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="601" y="292" width="68" height="24" rx="3" fill="#0d366b"><title>Complementar chamado existente · Mistral Small 4: 2/2</title></rect>
+<text x="635" y="308" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="671" y="292" width="68" height="24" rx="3" fill="#0d366b"><title>Complementar chamado existente · Qwen3.8 Flash (sem raciocínio): 2/2</title></rect>
+<text x="705" y="308" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<text x="240" y="334" text-anchor="end" font-size="11.5" class="t1">Problema parecido com chamado aberto (…</text>
+<rect x="251" y="318" width="68" height="24" rx="3" fill="#0d366b"><title>Problema parecido com chamado aberto (… · Gemini 3.5 Flash (produção): 2/2</title></rect>
+<text x="285" y="334" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="321" y="318" width="68" height="24" rx="3" fill="#cde2fb"><title>Problema parecido com chamado aberto (… · Gemini 3.8 Flash: 0/2</title></rect>
+<text x="355" y="334" text-anchor="middle" font-size="11" fill="#0b0b0b">0/2</text>
+<rect x="391" y="318" width="68" height="24" rx="3" fill="#0d366b"><title>Problema parecido com chamado aberto (… · Gemini 3.5 Flash Lite: 2/2</title></rect>
+<text x="425" y="334" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="461" y="318" width="68" height="24" rx="3" fill="#0d366b"><title>Problema parecido com chamado aberto (… · GPT-6 Luna: 2/2</title></rect>
+<text x="495" y="334" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="531" y="318" width="68" height="24" rx="3" fill="#0d366b"><title>Problema parecido com chamado aberto (… · DeepSeek V4.1 Flash: 2/2</title></rect>
+<text x="565" y="334" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="601" y="318" width="68" height="24" rx="3" fill="#0d366b"><title>Problema parecido com chamado aberto (… · Mistral Small 4: 2/2</title></rect>
+<text x="635" y="334" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="671" y="318" width="68" height="24" rx="3" fill="#0d366b"><title>Problema parecido com chamado aberto (… · Qwen3.8 Flash (sem raciocínio): 2/2</title></rect>
+<text x="705" y="334" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<text x="240" y="360" text-anchor="end" font-size="11.5" class="t1">Abrir chamado conversando (pergunta o …</text>
+<rect x="251" y="344" width="68" height="24" rx="3" fill="#cde2fb"><title>Abrir chamado conversando (pergunta o … · Gemini 3.5 Flash (produção): 0/2</title></rect>
+<text x="285" y="360" text-anchor="middle" font-size="11" fill="#0b0b0b">0/2</text>
+<rect x="321" y="344" width="68" height="24" rx="3" fill="#0d366b"><title>Abrir chamado conversando (pergunta o … · Gemini 3.8 Flash: 2/2</title></rect>
+<text x="355" y="360" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="391" y="344" width="68" height="24" rx="3" fill="#0d366b"><title>Abrir chamado conversando (pergunta o … · Gemini 3.5 Flash Lite: 2/2</title></rect>
+<text x="425" y="360" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="461" y="344" width="68" height="24" rx="3" fill="#3987e5"><title>Abrir chamado conversando (pergunta o … · GPT-6 Luna: 1/2</title></rect>
+<text x="495" y="360" text-anchor="middle" font-size="11" fill="#ffffff">1/2</text>
+<rect x="531" y="344" width="68" height="24" rx="3" fill="#0d366b"><title>Abrir chamado conversando (pergunta o … · DeepSeek V4.1 Flash: 2/2</title></rect>
+<text x="565" y="360" text-anchor="middle" font-size="11" fill="#ffffff">2/2</text>
+<rect x="601" y="344" width="68" height="24" rx="3" fill="#3987e5"><title>Abrir chamado conversando (pergunta o … · Mistral Small 4: 1/2</title></rect>
+<text x="635" y="360" text-anchor="middle" font-size="11" fill="#ffffff">1/2</text>
+<rect x="671" y="344" width="68" height="24" rx="3" fill="#3987e5"><title>Abrir chamado conversando (pergunta o … · Qwen3.8 Flash (sem raciocínio): 1/2</title></rect>
+<text x="705" y="360" text-anchor="middle" font-size="11" fill="#ffffff">1/2</text>
+<text x="240" y="386" text-anchor="end" font-size="11.5" class="t1">PRD · Reabrir chamado resolvido há até…</text>
+<rect x="251" y="370" width="68" height="24" rx="3" fill="#cde2fb"><title>PRD · Reabrir chamado resolvido há até… · Gemini 3.5 Flash (produção): 0/1</title></rect>
+<text x="285" y="386" text-anchor="middle" font-size="11" fill="#0b0b0b">0/1</text>
+<rect x="321" y="370" width="68" height="24" rx="3" fill="#cde2fb"><title>PRD · Reabrir chamado resolvido há até… · Gemini 3.8 Flash: 0/1</title></rect>
+<text x="355" y="386" text-anchor="middle" font-size="11" fill="#0b0b0b">0/1</text>
+<rect x="391" y="370" width="68" height="24" rx="3" fill="#cde2fb"><title>PRD · Reabrir chamado resolvido há até… · Gemini 3.5 Flash Lite: 0/1</title></rect>
+<text x="425" y="386" text-anchor="middle" font-size="11" fill="#0b0b0b">0/1</text>
+<rect x="461" y="370" width="68" height="24" rx="3" fill="#cde2fb"><title>PRD · Reabrir chamado resolvido há até… · GPT-6 Luna: 0/1</title></rect>
+<text x="495" y="386" text-anchor="middle" font-size="11" fill="#0b0b0b">0/1</text>
+<rect x="531" y="370" width="68" height="24" rx="3" fill="#cde2fb"><title>PRD · Reabrir chamado resolvido há até… · DeepSeek V4.1 Flash: 0/1</title></rect>
+<text x="565" y="386" text-anchor="middle" font-size="11" fill="#0b0b0b">0/1</text>
+<rect x="601" y="370" width="68" height="24" rx="3" fill="#cde2fb"><title>PRD · Reabrir chamado resolvido há até… · Mistral Small 4: 0/1</title></rect>
+<text x="635" y="386" text-anchor="middle" font-size="11" fill="#0b0b0b">0/1</text>
+<rect x="671" y="370" width="68" height="24" rx="3" fill="#cde2fb"><title>PRD · Reabrir chamado resolvido há até… · Qwen3.8 Flash (sem raciocínio): 0/1</title></rect>
+<text x="705" y="386" text-anchor="middle" font-size="11" fill="#0b0b0b">0/1</text>
+<text x="240" y="412" text-anchor="end" font-size="11.5" class="t1">PRD · Confirmar o rascunho por texto</text>
+<rect x="251" y="396" width="68" height="24" rx="3" fill="#0d366b"><title>PRD · Confirmar o rascunho por texto · Gemini 3.5 Flash (produção): 1/1</title></rect>
+<text x="285" y="412" text-anchor="middle" font-size="11" fill="#ffffff">1/1</text>
+<rect x="321" y="396" width="68" height="24" rx="3" fill="#cde2fb"><title>PRD · Confirmar o rascunho por texto · Gemini 3.8 Flash: 0/1</title></rect>
+<text x="355" y="412" text-anchor="middle" font-size="11" fill="#0b0b0b">0/1</text>
+<rect x="391" y="396" width="68" height="24" rx="3" fill="#0d366b"><title>PRD · Confirmar o rascunho por texto · Gemini 3.5 Flash Lite: 1/1</title></rect>
+<text x="425" y="412" text-anchor="middle" font-size="11" fill="#ffffff">1/1</text>
+<rect x="461" y="396" width="68" height="24" rx="3" fill="#0d366b"><title>PRD · Confirmar o rascunho por texto · GPT-6 Luna: 1/1</title></rect>
+<text x="495" y="412" text-anchor="middle" font-size="11" fill="#ffffff">1/1</text>
+<rect x="531" y="396" width="68" height="24" rx="3" fill="#0d366b"><title>PRD · Confirmar o rascunho por texto · DeepSeek V4.1 Flash: 1/1</title></rect>
+<text x="565" y="412" text-anchor="middle" font-size="11" fill="#ffffff">1/1</text>
+<rect x="601" y="396" width="68" height="24" rx="3" fill="#0d366b"><title>PRD · Confirmar o rascunho por texto · Mistral Small 4: 1/1</title></rect>
+<text x="635" y="412" text-anchor="middle" font-size="11" fill="#ffffff">1/1</text>
+<rect x="671" y="396" width="68" height="24" rx="3" fill="#0d366b"><title>PRD · Confirmar o rascunho por texto · Qwen3.8 Flash (sem raciocínio): 1/1</title></rect>
+<text x="705" y="412" text-anchor="middle" font-size="11" fill="#ffffff">1/1</text>
+<text x="240" y="438" text-anchor="end" font-size="11.5" class="t1">PRD · Caso crítico para a empresa toda</text>
+<rect x="251" y="422" width="68" height="24" rx="3" fill="#cde2fb"><title>PRD · Caso crítico para a empresa toda · Gemini 3.5 Flash (produção): 0/1</title></rect>
+<text x="285" y="438" text-anchor="middle" font-size="11" fill="#0b0b0b">0/1</text>
+<rect x="321" y="422" width="68" height="24" rx="3" fill="#0d366b"><title>PRD · Caso crítico para a empresa toda · Gemini 3.8 Flash: 1/1</title></rect>
+<text x="355" y="438" text-anchor="middle" font-size="11" fill="#ffffff">1/1</text>
+<rect x="391" y="422" width="68" height="24" rx="3" fill="#0d366b"><title>PRD · Caso crítico para a empresa toda · Gemini 3.5 Flash Lite: 1/1</title></rect>
+<text x="425" y="438" text-anchor="middle" font-size="11" fill="#ffffff">1/1</text>
+<rect x="461" y="422" width="68" height="24" rx="3" fill="#cde2fb"><title>PRD · Caso crítico para a empresa toda · GPT-6 Luna: 0/1</title></rect>
+<text x="495" y="438" text-anchor="middle" font-size="11" fill="#0b0b0b">0/1</text>
+<rect x="531" y="422" width="68" height="24" rx="3" fill="#0d366b"><title>PRD · Caso crítico para a empresa toda · DeepSeek V4.1 Flash: 1/1</title></rect>
+<text x="565" y="438" text-anchor="middle" font-size="11" fill="#ffffff">1/1</text>
+<rect x="601" y="422" width="68" height="24" rx="3" fill="#cde2fb"><title>PRD · Caso crítico para a empresa toda · Mistral Small 4: 0/1</title></rect>
+<text x="635" y="438" text-anchor="middle" font-size="11" fill="#0b0b0b">0/1</text>
+<rect x="671" y="422" width="68" height="24" rx="3" fill="#cde2fb"><title>PRD · Caso crítico para a empresa toda · Qwen3.8 Flash (sem raciocínio): 0/1</title></rect>
+<text x="705" y="438" text-anchor="middle" font-size="11" fill="#0b0b0b">0/1</text>
+<text x="240" y="464" text-anchor="end" font-size="11.5" class="t1">PRD · Mensagem vaga não vira ação</text>
+<rect x="251" y="448" width="68" height="24" rx="3" fill="#0d366b"><title>PRD · Mensagem vaga não vira ação · Gemini 3.5 Flash (produção): 1/1</title></rect>
+<text x="285" y="464" text-anchor="middle" font-size="11" fill="#ffffff">1/1</text>
+<rect x="321" y="448" width="68" height="24" rx="3" fill="#0d366b"><title>PRD · Mensagem vaga não vira ação · Gemini 3.8 Flash: 1/1</title></rect>
+<text x="355" y="464" text-anchor="middle" font-size="11" fill="#ffffff">1/1</text>
+<rect x="391" y="448" width="68" height="24" rx="3" fill="#0d366b"><title>PRD · Mensagem vaga não vira ação · Gemini 3.5 Flash Lite: 1/1</title></rect>
+<text x="425" y="464" text-anchor="middle" font-size="11" fill="#ffffff">1/1</text>
+<rect x="461" y="448" width="68" height="24" rx="3" fill="#0d366b"><title>PRD · Mensagem vaga não vira ação · GPT-6 Luna: 1/1</title></rect>
+<text x="495" y="464" text-anchor="middle" font-size="11" fill="#ffffff">1/1</text>
+<rect x="531" y="448" width="68" height="24" rx="3" fill="#0d366b"><title>PRD · Mensagem vaga não vira ação · DeepSeek V4.1 Flash: 1/1</title></rect>
+<text x="565" y="464" text-anchor="middle" font-size="11" fill="#ffffff">1/1</text>
+<rect x="601" y="448" width="68" height="24" rx="3" fill="#0d366b"><title>PRD · Mensagem vaga não vira ação · Mistral Small 4: 1/1</title></rect>
+<text x="635" y="464" text-anchor="middle" font-size="11" fill="#ffffff">1/1</text>
+<rect x="671" y="448" width="68" height="24" rx="3" fill="#0d366b"><title>PRD · Mensagem vaga não vira ação · Qwen3.8 Flash (sem raciocínio): 1/1</title></rect>
+<text x="705" y="464" text-anchor="middle" font-size="11" fill="#ffffff">1/1</text>
+<rect x="20" y="62" width="20" height="10" rx="2" fill="#cde2fb"/>
+<rect x="42" y="62" width="20" height="10" rx="2" fill="#9ec5f4"/>
+<rect x="64" y="62" width="20" height="10" rx="2" fill="#6da7ec"/>
+<rect x="86" y="62" width="20" height="10" rx="2" fill="#3987e5"/>
+<rect x="108" y="62" width="20" height="10" rx="2" fill="#256abf"/>
+<rect x="130" y="62" width="20" height="10" rx="2" fill="#184f95"/>
+<rect x="152" y="62" width="20" height="10" rx="2" fill="#0d366b"/>
+<text x="20" y="86" font-size="11" class="t3">0% aprovado</text>
+<text x="174" y="86" text-anchor="end" font-size="11" class="t3">100%</text>
+</svg>

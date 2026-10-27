@@ -248,6 +248,32 @@ A troca de modelo é uma variável (`LLM_MODEL`), graças ao roteador de modelos
 
 **Custo sob controle:** o histórico enviado ao modelo tem no máximo 20 mensagens (cada uma cortada em 1.500 caracteres) e os cards viram resumos curtos entre colchetes. Prioridade, prazo, duplicidade e busca na central são código e não gastam token. Temperatura 0.2, até 6 passos e até 800 tokens de saída por passo.
 
+## Benchmark de modelos
+
+Para trocar a escolha qualitativa por dados, `npm run benchmark` roda o agent de produção (`runAgentTurn`) com 7 modelos via OpenRouter. São os 10 cenários do eval, duas vezes, mais 4 cenários tirados do PRD. O benchmark mede efetividade (as mesmas checagens do eval), qualidade (G-Eval com 7 critérios derivados do PRD, inclusive a transparência do `recordUnderstanding`, e painel de 2 juízes de famílias que não concorrem), latência e custo real cobrado. Depois combina tudo num score com pesos 40/30/15/15. Relatório completo, com gráficos e trechos das conversas: [`docs/benchmark/RELATORIO.md`](docs/benchmark/RELATORIO.md).
+
+| Modelo | Composto | Efetividade | Qualidade (1–5) | Latência p50 | Custo por 1.000 atendimentos |
+|---|---|---|---|---|---|
+| **GPT-6 Luna** | **0,867** | 88% | 4,73 | 5,7 s | **US$ 1,22** |
+| Gemini 3.5 Flash Lite | 0,841 | **96%** | 4,67 | **5,5 s** | US$ 7,24 |
+| DeepSeek V4.1 Flash | 0,795 | 88% | 4,69 | 7,3 s | US$ 4,94 |
+| Mistral Small 4 | 0,787 | 75% | 4,44 | 6,2 s | US$ 1,31 |
+| Gemini 3.5 Flash (atual) | 0,725 | 83% | 4,72 | 6,9 s | US$ 31,93 |
+| Qwen3.8 Flash (sem raciocínio) | 0,686 | 67% | 4,65 | 15,5 s | US$ 1,13 |
+| Gemini 3.8 Flash | 0,649 | 75% | **4,84** | 12,2 s | US$ 15,09 |
+
+**Recomendação: GPT-6 Luna.** Tem a mesma efetividade e qualidade do modelo atual (dentro dos intervalos de confiança), é mais rápido e custa 26× menos. Fica em 1º em 81% de 10 mil combinações de pesos sorteadas. A alternativa sem trocar de fornecedor é o Gemini 3.5 Flash Lite. O `LLM_MODEL` padrão não mudou: antes da troca, falta corrigir dois pontos do prompt que o benchmark revelou (reabrir chamado resolvido e agir em caso crítico) e rodar `npm run eval` com o modelo novo.
+
+**Engenharia de cache.** O briefing do turno passou a trazer a hora cheia, em vez dos minutos, e cada conversa vai ao OpenRouter com `session_id`. Assim o prefixo do prompt fica estável e as chamadas da conversa caem no mesmo provedor. Luna, Mistral e Qwen leem de 71% a 91% do prompt do cache, e o Luna paga US$ 1,22 em vez de US$ 2,48 por 1.000 atendimentos. Nos juízes, a parte fixa do prompt vem primeiro e a conversa por último, e um cache local por hash do pedido faz com que rodar de novo não custe nada. Pelo OpenRouter, os Gemini não fizeram cache (0%).
+
+O estudo gastou US$ 1,80 dos US$ 2,00 de uma chave criada só para ele. A estimativa abaixo confere o custo e o crédito da chave sem gastar nada:
+
+```bash
+npm run benchmark -- --dry-run
+```
+
+`npm run benchmark` roda o que falta (precisa de `OPENROUTER_API_KEY`), e `npm run benchmark -- --report` regera o relatório e os gráficos a partir dos resultados gravados, sem chamar API.
+
 ---
 
 ## Deploy e segurança

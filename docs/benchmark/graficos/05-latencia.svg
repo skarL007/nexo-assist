@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 338" width="760" height="338" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" role="img" aria-label="Latência por turno (todos os passos do agent)">
+<style>
+.bg{fill:#fcfcfb}.t1{fill:#0b0b0b}.t2{fill:#52514e}.t3{fill:#898781}
+.grid{stroke:#e1e0d9}.axis{stroke:#c3c2b7}.ring{stroke:#fcfcfb}.frame{stroke:rgba(11,11,11,.1)}
+.s1{fill:#2a78d6}.s2{fill:#eb6834}.s3{fill:#1baf7a}.s4{fill:#eda100}.mute{fill:#b5b4ad}
+.l1{stroke:#2a78d6}.l2{stroke:#eb6834}.lm{stroke:#b5b4ad}
+@media (prefers-color-scheme: dark){
+.bg{fill:#1a1a19}.t1{fill:#f0efec}.t2{fill:#c3c2b7}.t3{fill:#898781}
+.grid{stroke:#2c2c2a}.axis{stroke:#383835}.ring{stroke:#1a1a19}.frame{stroke:rgba(255,255,255,.1)}
+.s1{fill:#3987e5}.s2{fill:#d95926}.s3{fill:#199e70}.s4{fill:#c98500}.mute{fill:#5a5955}
+.l1{stroke:#3987e5}.l2{stroke:#d95926}.lm{stroke:#5a5955}}
+</style>
+<title>Latência por turno (todos os passos do agent)</title>
+<rect class="bg frame" x="0.5" y="0.5" width="759" height="337" rx="8" stroke-width="1"/>
+<text x="20" y="28" font-size="15" font-weight="600" class="t1">Latência por turno (todos os passos do agent)</text>
+<text x="20" y="47" font-size="12" class="t2">Ponto = mediana (p50); linha até o p95; verde = tempo até a 1ª palavra aparecer (p50).</text>
+<circle cx="26" cy="66" r="5" class="s1"/>
+<text x="38" y="70" font-size="12" class="t1">p50</text>
+<line x1="77.8" x2="91.8" y1="66" y2="66" class="l1" stroke-width="2"/>
+<text x="95.8" y="70" font-size="12" class="t1">até o p95</text>
+<circle cx="181.2" cy="66" r="5" class="s3"/>
+<text x="193.2" y="70" font-size="12" class="t1">1ª palavra</text>
+<line x1="220" x2="220" y1="78" y2="294" class="grid" stroke-width="1"/>
+<text x="220" y="310" text-anchor="middle" font-size="11" class="t3">0 s</text>
+<line x1="298" x2="298" y1="78" y2="294" class="grid" stroke-width="1"/>
+<text x="298" y="310" text-anchor="middle" font-size="11" class="t3">6 s</text>
+<line x1="376" x2="376" y1="78" y2="294" class="grid" stroke-width="1"/>
+<text x="376" y="310" text-anchor="middle" font-size="11" class="t3">12 s</text>
+<line x1="454" x2="454" y1="78" y2="294" class="grid" stroke-width="1"/>
+<text x="454" y="310" text-anchor="middle" font-size="11" class="t3">18 s</text>
+<line x1="532" x2="532" y1="78" y2="294" class="grid" stroke-width="1"/>
+<text x="532" y="310" text-anchor="middle" font-size="11" class="t3">24 s</text>
+<line x1="610" x2="610" y1="78" y2="294" class="grid" stroke-width="1"/>
+<text x="610" y="310" text-anchor="middle" font-size="11" class="t3">30 s</text>
+<text x="210" y="103" text-anchor="end" font-size="12" class="t1">Gemini 3.5 Flash Lite</text>
+<line x1="292" x2="346.6" y1="99" y2="99" class="l1" stroke-width="2" stroke-linecap="round"/>
+<circle cx="289.2" cy="99" r="4.5" class="s3 ring" stroke-width="2"><title>Gemini 3.5 Flash Lite: 1ª palavra 5 s</title></circle>
+<circle cx="292" cy="99" r="6" class="s1 ring" stroke-width="2"><title>Gemini 3.5 Flash Lite: 5,5 s · p95 9,7 s</title></circle>
+<text x="622" y="103" font-size="11.5" class="t2">5,5 s · p95 9,7 s</text>
+<text x="210" y="133" text-anchor="end" font-size="12" class="t1" font-weight="600">GPT-6 Luna ★</text>
+<line x1="294.6" x2="342.4" y1="129" y2="129" class="l2" stroke-width="2" stroke-linecap="round"/>
+<circle cx="290.6" cy="129" r="4.5" class="s3 ring" stroke-width="2"><title>GPT-6 Luna ★: 1ª palavra 5 s</title></circle>
+<circle cx="294.6" cy="129" r="6" class="s2 ring" stroke-width="2"><title>GPT-6 Luna ★: 5,7 s · p95 9,4 s</title></circle>
+<text x="622" y="133" font-size="11.5" class="t2">5,7 s · p95 9,4 s</text>
+<text x="210" y="163" text-anchor="end" font-size="12" class="t1">Mistral Small 4</text>
+<line x1="300.4" x2="465.2" y1="159" y2="159" class="l1" stroke-width="2" stroke-linecap="round"/>
+<circle cx="295.3" cy="159" r="4.5" class="s3 ring" stroke-width="2"><title>Mistral Small 4: 1ª palavra 6 s</title></circle>
+<circle cx="300.4" cy="159" r="6" class="s1 ring" stroke-width="2"><title>Mistral Small 4: 6,2 s · p95 18,9 s</title></circle>
+<text x="622" y="163" font-size="11.5" class="t2">6,2 s · p95 18,9 s</text>
+<text x="210" y="193" text-anchor="end" font-size="12" class="t1">Gemini 3.5 Flash (produção)</text>
+<line x1="310" x2="364.5" y1="189" y2="189" class="l1" stroke-width="2" stroke-linecap="round"/>
+<circle cx="305.7" cy="189" r="4.5" class="s3 ring" stroke-width="2"><title>Gemini 3.5 Flash (produção): 1ª palavra 7 s</title></circle>
+<circle cx="310" cy="189" r="6" class="s1 ring" stroke-width="2"><title>Gemini 3.5 Flash (produção): 6,9 s · p95 11,1 s</title></circle>
+<text x="622" y="193" font-size="11.5" class="t2">6,9 s · p95 11,1 s</text>
+<text x="210" y="223" text-anchor="end" font-size="12" class="t1">DeepSeek V4.1 Flash</text>
+<line x1="314.9" x2="505.1" y1="219" y2="219" class="l1" stroke-width="2" stroke-linecap="round"/>
+<circle cx="300.3" cy="219" r="4.5" class="s3 ring" stroke-width="2"><title>DeepSeek V4.1 Flash: 1ª palavra 6 s</title></circle>
+<circle cx="314.9" cy="219" r="6" class="s1 ring" stroke-width="2"><title>DeepSeek V4.1 Flash: 7,3 s · p95 21,9 s</title></circle>
+<text x="622" y="223" font-size="11.5" class="t2">7,3 s · p95 21,9 s</text>
+<text x="210" y="253" text-anchor="end" font-size="12" class="t1">Gemini 3.8 Flash</text>
+<line x1="378.8" x2="517" y1="249" y2="249" class="l1" stroke-width="2" stroke-linecap="round"/>
+<circle cx="374.6" cy="249" r="4.5" class="s3 ring" stroke-width="2"><title>Gemini 3.8 Flash: 1ª palavra 12 s</title></circle>
+<circle cx="378.8" cy="249" r="6" class="s1 ring" stroke-width="2"><title>Gemini 3.8 Flash: 12,2 s · p95 22,8 s</title></circle>
+<text x="622" y="253" font-size="11.5" class="t2">12,2 s · p95 22,8 s</text>
+<text x="210" y="283" text-anchor="end" font-size="12" class="t1">Qwen3.8 Flash (sem raciocínio)</text>
+<line x1="421.1" x2="576.8" y1="279" y2="279" class="l1" stroke-width="2" stroke-linecap="round"/>
+<circle cx="391.4" cy="279" r="4.5" class="s3 ring" stroke-width="2"><title>Qwen3.8 Flash (sem raciocínio): 1ª palavra 13 s</title></circle>
+<circle cx="421.1" cy="279" r="6" class="s1 ring" stroke-width="2"><title>Qwen3.8 Flash (sem raciocínio): 15,5 s · p95 27,4 s</title></circle>
+<text x="622" y="283" font-size="11.5" class="t2">15,5 s · p95 27,4 s</text>
+</svg>

@@ -15,7 +15,8 @@
     "db:migrate": "tsx --env-file-if-exists=.env scripts/migrate.ts",
     "db:seed": "tsx --env-file-if-exists=.env scripts/seed.ts",
     "db:setup": "npm run db:migrate && npm run db:seed",
-    "eval": "tsx --env-file-if-exists=.env evals/run.ts"
+    "eval": "tsx --env-file-if-exists=.env evals/run.ts",
+    "benchmark": "tsx --env-file-if-exists=.env evals/benchmark/run.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",

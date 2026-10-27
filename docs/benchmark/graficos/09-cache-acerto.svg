@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 320" width="760" height="320" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" role="img" aria-label="Engenharia de cache: % do prompt lido do cache do provedor">
+<style>
+.bg{fill:#fcfcfb}.t1{fill:#0b0b0b}.t2{fill:#52514e}.t3{fill:#898781}
+.grid{stroke:#e1e0d9}.axis{stroke:#c3c2b7}.ring{stroke:#fcfcfb}.frame{stroke:rgba(11,11,11,.1)}
+.s1{fill:#2a78d6}.s2{fill:#eb6834}.s3{fill:#1baf7a}.s4{fill:#eda100}.mute{fill:#b5b4ad}
+.l1{stroke:#2a78d6}.l2{stroke:#eb6834}.lm{stroke:#b5b4ad}
+@media (prefers-color-scheme: dark){
+.bg{fill:#1a1a19}.t1{fill:#f0efec}.t2{fill:#c3c2b7}.t3{fill:#898781}
+.grid{stroke:#2c2c2a}.axis{stroke:#383835}.ring{stroke:#1a1a19}.frame{stroke:rgba(255,255,255,.1)}
+.s1{fill:#3987e5}.s2{fill:#d95926}.s3{fill:#199e70}.s4{fill:#c98500}.mute{fill:#5a5955}
+.l1{stroke:#3987e5}.l2{stroke:#d95926}.lm{stroke:#5a5955}}
+</style>
+<title>Engenharia de cache: % do prompt lido do cache do provedor</title>
+<rect class="bg frame" x="0.5" y="0.5" width="759" height="319" rx="8" stroke-width="1"/>
+<text x="20" y="28" font-size="15" font-weight="600" class="t1">Engenharia de cache: % do prompt lido do cache do provedor</text>
+<text x="20" y="47" font-size="12" class="t2">Tokens de entrada cacheados ÷ tokens de entrada, em todas as chamadas do benchmark.</text>
+<line x1="220" x2="220" y1="60" y2="276" class="grid" stroke-width="1"/>
+<text x="220" y="292" text-anchor="middle" font-size="11" class="t3">0%</text>
+<line x1="332.5" x2="332.5" y1="60" y2="276" class="grid" stroke-width="1"/>
+<text x="332.5" y="292" text-anchor="middle" font-size="11" class="t3">25%</text>
+<line x1="445" x2="445" y1="60" y2="276" class="grid" stroke-width="1"/>
+<text x="445" y="292" text-anchor="middle" font-size="11" class="t3">50%</text>
+<line x1="557.5" x2="557.5" y1="60" y2="276" class="grid" stroke-width="1"/>
+<text x="557.5" y="292" text-anchor="middle" font-size="11" class="t3">75%</text>
+<line x1="670" x2="670" y1="60" y2="276" class="grid" stroke-width="1"/>
+<text x="670" y="292" text-anchor="middle" font-size="11" class="t3">100%</text>
+<text x="210" y="85" text-anchor="end" font-size="12" class="t1">Qwen3.8 Flash (sem raciocínio)</text>
+<path d="M220,71 H624.5 Q628.5,71 628.5,75 V87 Q628.5,91 624.5,91 H220 Z" class="s1"><title>Qwen3.8 Flash (sem raciocínio): 91%</title></path>
+<text x="634.5" y="85" font-size="12" class="t1">91%</text>
+<text x="210" y="115" text-anchor="end" font-size="12" class="t1">Mistral Small 4</text>
+<path d="M220,101 H597.8 Q601.8,101 601.8,105 V117 Q601.8,121 597.8,121 H220 Z" class="s1"><title>Mistral Small 4: 85%</title></path>
+<text x="607.8" y="115" font-size="12" class="t1">85%</text>
+<text x="210" y="145" text-anchor="end" font-size="12" class="t1" font-weight="600">GPT-6 Luna ★</text>
+<path d="M220,131 H535.5 Q539.5,131 539.5,135 V147 Q539.5,151 535.5,151 H220 Z" class="s2"><title>GPT-6 Luna ★: 71%</title></path>
+<text x="545.5" y="145" font-size="12" class="t1">71%</text>
+<text x="210" y="175" text-anchor="end" font-size="12" class="t1">DeepSeek V4.1 Flash</text>
+<path d="M220,161 H433.1 Q437.1,161 437.1,165 V177 Q437.1,181 433.1,181 H220 Z" class="s1"><title>DeepSeek V4.1 Flash: 48%</title></path>
+<text x="443.1" y="175" font-size="12" class="t1">48%</text>
+<text x="210" y="205" text-anchor="end" font-size="12" class="t1">Gemini 3.5 Flash (produção)</text>
+
+<text x="226" y="205" font-size="12" class="t1">0%</text>
+<text x="210" y="235" text-anchor="end" font-size="12" class="t1">Gemini 3.8 Flash</text>
+
+<text x="226" y="235" font-size="12" class="t1">0%</text>
+<text x="210" y="265" text-anchor="end" font-size="12" class="t1">Gemini 3.5 Flash Lite</text>
+
+<text x="226" y="265" font-size="12" class="t1">0%</text>
+</svg>
