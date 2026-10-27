@@ -15,7 +15,8 @@ export default function RestrictedAccessPage() {
         <div className="space-y-2">
           <h1 className="text-xl font-semibold">Acesso restrito</h1>
           <p className="text-sm text-muted-foreground">
-            Esta demonstração usa um modelo de IA pago. Abra pelo link de acesso que você recebeu.
+            Esta demonstração usa um modelo de IA pago. Abra pelo link de acesso que você recebeu. Os links expiram: se
+            este parou de funcionar, peça um novo.
           </p>
         </div>
       </div>
