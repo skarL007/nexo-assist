@@ -33,7 +33,8 @@ export class DrizzleTicketRepository implements TicketRepository {
     try {
       await this.db.insert(tickets).values(ticket);
     } catch (error) {
-      if (String((error as Error).message).includes("UNIQUE")) {
+      // O Drizzle embrulha o erro do banco: a mensagem dele é a consulta; o "UNIQUE" está na causa.
+      if (/UNIQUE/.test(String((error as Error).cause ?? error))) {
         throw new DomainError("conflict", `O código ${ticket.code} acabou de ser usado.`);
       }
       throw error;

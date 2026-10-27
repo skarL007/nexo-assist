@@ -90,15 +90,6 @@ export class DrizzleMessageRepository implements MessageRepository {
     return row?.total ?? 0;
   }
 
-  async countModelReplies(): Promise<number> {
-    // O seed grava respostas sem trace, e ações do sistema (botão Confirmar) não têm uso de tokens.
-    const [row] = await this.db
-      .select({ total: count() })
-      .from(messages)
-      .where(and(eq(messages.role, "agent"), sql`json_extract(${messages.trace}, '$.usage') is not null`));
-    return row?.total ?? 0;
-  }
-
   async countByRoleSince(role: MessageRole, since: Date): Promise<number> {
     const [row] = await this.db
       .select({ total: count() })

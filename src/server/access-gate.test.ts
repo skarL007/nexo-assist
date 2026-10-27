@@ -15,6 +15,10 @@ describe("porta de acesso com link temporário", () => {
     expect(decideAccess({ secret: undefined, tokenFromUrl: null, tokenFromCookie: undefined, now: NOW })).toEqual({ kind: "open" });
   });
 
+  it("na Vercel, sem segredo configurado, fecha em vez de abrir (o modelo pago não fica público por engano)", () => {
+    expect(decideAccess({ secret: undefined, tokenFromUrl: null, tokenFromCookie: undefined, now: NOW, deployed: true })).toEqual({ kind: "deny" });
+  });
+
   it("libera o link assinado dentro da validade e diz até quando vale", () => {
     expect(decide(valid)).toEqual({ kind: "grant", expiresAt: in5min });
   });

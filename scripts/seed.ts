@@ -46,8 +46,8 @@ async function seedConversation(
 }
 
 async function main() {
-  // Ordem importa por causa das chaves estrangeiras.
-  for (const table of [schema.drafts, schema.messages, schema.conversations, schema.ticketComments, schema.tickets, schema.articles, schema.employees]) {
+  // Ordem importa por causa das chaves estrangeiras. Zerar usage_counters reinicia o teto total.
+  for (const table of [schema.usageCounters, schema.drafts, schema.messages, schema.conversations, schema.ticketComments, schema.tickets, schema.articles, schema.employees]) {
     await db.delete(table);
   }
 

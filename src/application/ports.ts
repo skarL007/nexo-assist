@@ -58,8 +58,6 @@ export interface MessageRepository {
   countByRole(conversationId: string, role: MessageRole): Promise<number>;
   /** Mensagens de um papel no sistema todo desde `since` (teto global de custo). */
   countByRoleSince(role: MessageRole, since: Date): Promise<number>;
-  /** Respostas que chamaram o modelo (com uso de tokens no trace), no sistema todo: teto total de custo. */
-  countModelReplies(): Promise<number>;
   /** Mensagens do funcionário em todas as conversas dele desde `since` (limite por pessoa). */
   countByEmployeeSince(employeeId: string, since: Date): Promise<number>;
 }
@@ -86,6 +84,12 @@ export interface DraftRepository {
   claimPending(id: number, employeeId: string, status: DraftStatus): Promise<Draft | null>;
   /** Descarta os pendentes da conversa (opcionalmente só os criados desde `since`). */
   cancelPending(conversationId: string, since?: Date): Promise<void>;
+}
+
+/** Contadores globais com teto (custo do deploy). */
+export interface BudgetRepository {
+  /** Soma 1 ao contador se ele estiver abaixo do teto, de forma atômica. false = teto atingido. */
+  reserve(key: string, limit: number): Promise<boolean>;
 }
 
 export interface Clock {

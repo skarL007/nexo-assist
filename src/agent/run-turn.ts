@@ -2,15 +2,15 @@
  * Um turno do chat: recebe a mensagem do funcionário e produz eventos em tempo real
  * (passos, cards, texto) até a resposta final ser salva.
  *
- *   1. checa limites (30 mensagens por sessão, teto diário de custo)
- *   2. salva a mensagem; se a conversa está com um analista, o agent não responde
+ *   1. checa limites (30 mensagens por sessão, 40/h e 120/dia por pessoa)
+ *   2. salva a mensagem e confere os limites de novo; com um analista, o agent não responde
  *   3. roda o agent com as últimas mensagens; o 1º passo é sempre recordUnderstanding
  *   4. salva a resposta com o trace (decisão, passos, tools, tokens, tempo)
  */
 import { RequestContext } from "@mastra/core/request-context";
 import type { ChatStreamEvent } from "@/contracts/chat";
 import { env } from "@/config/env";
-import { agentCanReply, EMPLOYEE_MESSAGES_PER_DAY, EMPLOYEE_MESSAGES_PER_HOUR, totalBudgetReached } from "@/domain/conversation";
+import { agentCanReply, EMPLOYEE_MESSAGES_PER_DAY, EMPLOYEE_MESSAGES_PER_HOUR } from "@/domain/conversation";
 import type { Employee } from "@/domain/employee";
 import { DomainError } from "@/domain/errors";
 import type { ToolCallLog, TurnTrace } from "@/domain/message";
@@ -42,6 +42,7 @@ export async function* runAgentTurn(employee: Employee, text: string, abortSigna
   await assertWithinPersonalLimits(services, employee.id, conversation.id);
 
   const employeeMessage = await services.messages.add({ conversationId: conversation.id, role: "employee", text });
+  await assertWithinPersonalLimits(services, employee.id, conversation.id, { saved: true });
   yield { type: "employee_message", message: employeeMessage };
 
   // Com um analista (ou aguardando um), o agent fica em silêncio.
@@ -50,7 +51,7 @@ export async function* runAgentTurn(employee: Employee, text: string, abortSigna
     return;
   }
 
-  // Teto global conferido DEPOIS de gravar: pedidos simultâneos enxergam uns aos outros.
+  // Tetos globais conferidos DEPOIS de gravar e ANTES do modelo: pedidos simultâneos enxergam uns aos outros.
   await assertWithinBudget(services);
   const keyVar = apiKeyVarFor(env().LLM_MODEL);
   if (keyVar && !env()[keyVar]) throw new Error(`${keyVar} não configurada.`);
@@ -168,9 +169,14 @@ async function* streamAgent(
   }
 }
 
-/** Limites por sessão e por pessoa (somando todas as conversas dela). */
-async function assertWithinPersonalLimits(services: Services, employeeId: string, conversationId: string) {
-  if ((await services.conversations.remainingMessages(conversationId)) <= 0) {
+/**
+ * Limites por sessão e por pessoa (somando todas as conversas dela). Conferidos antes
+ * de gravar (o caso normal, sem deixar mensagem órfã) e de novo depois (`saved`):
+ * pedidos simultâneos passam juntos pela primeira checagem, mas na segunda já se enxergam.
+ */
+async function assertWithinPersonalLimits(services: Services, employeeId: string, conversationId: string, { saved = false } = {}) {
+  const own = saved ? 1 : 0; // depois de gravar, a própria mensagem já entra na conta
+  if ((await services.conversations.remainingMessages(conversationId)) + own <= 0) {
     throw new DomainError("message_limit", "Você chegou ao limite de mensagens desta sessão. Comece uma nova conversa para continuar.");
   }
   const now = Date.now();
@@ -178,18 +184,23 @@ async function assertWithinPersonalLimits(services: Services, employeeId: string
     services.messages.countByEmployeeSince(employeeId, new Date(now - HOUR_MS)),
     services.messages.countByEmployeeSince(employeeId, new Date(now - DAY_MS)),
   ]);
-  if (lastHour >= EMPLOYEE_MESSAGES_PER_HOUR || lastDay >= EMPLOYEE_MESSAGES_PER_DAY) {
+  if (lastHour - own >= EMPLOYEE_MESSAGES_PER_HOUR || lastDay - own >= EMPLOYEE_MESSAGES_PER_DAY) {
     throw new DomainError("message_limit", "Você enviou muitas mensagens em pouco tempo. Tente de novo mais tarde.");
   }
 }
 
-/** Tetos globais de custo do deploy: mensagens em 24h e, se configurado, respostas do modelo no total. */
+/**
+ * Tetos globais de custo do deploy: mensagens em 24h e, se configurado, turnos do modelo
+ * no total. O total é uma reserva atômica feita antes de chamar o modelo: vale mesmo
+ * para pedidos simultâneos e conta também o turno que falhar ou for cancelado.
+ */
 async function assertWithinBudget(services: Services) {
   const last24h = await services.messages.countByRoleSince("employee", new Date(Date.now() - DAY_MS));
   if (last24h > env().DAILY_AGENT_TURN_LIMIT) {
     throw new DomainError("daily_limit", "O Nexo Assist atingiu o limite de uso de hoje. Fale com o service desk pelo ramal 4000.");
   }
-  if (totalBudgetReached(await services.messages.countModelReplies(), env().TOTAL_AGENT_TURN_LIMIT)) {
+  const totalLimit = env().TOTAL_AGENT_TURN_LIMIT;
+  if (totalLimit !== undefined && !(await services.budget.reserve("model_turns", totalLimit))) {
     throw new DomainError("daily_limit", "O Nexo Assist atingiu o limite de uso desta demonstração. Fale com o service desk pelo ramal 4000.");
   }
 }

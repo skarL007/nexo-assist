@@ -8,6 +8,7 @@ import { TicketService } from "@/application/ticket-service";
 import { env } from "@/config/env";
 import { db } from "./db/client";
 import { FlakyTicketRepository } from "./legacy-ticket-system";
+import { DrizzleBudgetRepository } from "./repositories/budget-repository";
 import { DrizzleConversationRepository } from "./repositories/conversation-repository";
 import { DrizzleDraftRepository } from "./repositories/draft-repository";
 import { DrizzleArticleRepository, DrizzleEmployeeRepository } from "./repositories/employee-repository";
@@ -24,13 +25,14 @@ export function createServices(options: ServiceOptions = {}) {
   const employees = new DrizzleEmployeeRepository(database);
   const articles = new DrizzleArticleRepository(database);
   const messages = new DrizzleMessageRepository(database);
+  const budget = new DrizzleBudgetRepository(database);
   const legacyTickets = new FlakyTicketRepository(new DrizzleTicketRepository(database), env().LEGACY_FAILURE_RATE);
 
   const tickets = new TicketService(legacyTickets, { onRetry: options.onLegacyRetry });
   const conversations = new ConversationService(new DrizzleConversationRepository(database), messages);
   const drafts = new DraftService(new DrizzleDraftRepository(database), tickets, conversations, messages);
 
-  return { employees, articles, messages, tickets, conversations, drafts };
+  return { employees, articles, messages, budget, tickets, conversations, drafts };
 }
 
 export type Services = ReturnType<typeof createServices>;

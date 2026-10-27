@@ -15,6 +15,13 @@
       "when": 1793127129190,
       "tag": "0001_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1793144832255,
+      "tag": "0002_usage_counters",
+      "breakpoints": true
     }
   ]
 }

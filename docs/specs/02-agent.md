@@ -57,4 +57,5 @@ Ver `evals/scenarios.ts`. Exemplos:
 - Histórico: últimas 20 mensagens; cards viram resumos curtos.
 - Regras determinísticas fora do modelo (prioridade, prazo, duplicidade, busca).
 - `temperature: 0.2`, `maxSteps: 6`, teto diário (`DAILY_AGENT_TURN_LIMIT`).
-- Teto total opcional (`TOTAL_AGENT_TURN_LIMIT`): conta as respostas que chamaram o modelo (com `usage` no trace); ao chegar nele, o chat mostra o aviso de limite e o modelo não é chamado. No deploy: 100 respostas, cerca de R$ 6.
+- Teto total opcional (`TOTAL_AGENT_TURN_LIMIT`): cada turno reserva uma vaga no contador `usage_counters` antes de chamar o modelo, num único comando (soma 1 só se estiver abaixo do teto). Pedidos simultâneos não passam do teto, e turno que falha ou é cancelado também conta. Ao chegar nele, o chat mostra o aviso de limite e o modelo não é chamado. O seed zera o contador. No deploy: 100 turnos, cerca de R$ 6.
+- Limites por pessoa (30 por sessão, 40/h, 120/dia) conferidos antes de gravar a mensagem e de novo depois: numa rajada de pedidos paralelos, os excedentes param na segunda checagem.
