@@ -5,6 +5,7 @@
  */
 import { jwtVerify, SignJWT } from "jose";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { env } from "@/config/env";
 import type { Employee, EmployeeRole } from "@/domain/employee";
 import { createServices } from "@/infrastructure/container";
@@ -56,3 +57,11 @@ export async function requireUser(role: EmployeeRole): Promise<Employee> {
 }
 
 export const homeFor = (role: EmployeeRole) => (role === "analyst" ? "/console" : "/atendimento");
+
+/** Para páginas: sem sessão vai para o login; papel errado vai para a sua área. */
+export async function requirePageUser(role: EmployeeRole): Promise<Employee> {
+  const user = await currentUser();
+  if (!user) redirect("/login");
+  if (user.role !== role) redirect(homeFor(user.role));
+  return user;
+}
