@@ -1,19 +1,22 @@
 /**
- * Porta de acesso do deploy público: só entra quem tem o link com o token
- * (`/?access=TOKEN`). O token vira um cookie httpOnly e o link fica limpo.
+ * Porta de acesso do deploy público: só entra quem tem um link temporário
+ * (`/?access=TOKEN`). O token é `<validade>.<assinatura>`: a validade em segundos
+ * e um HMAC dela com o segredo ACCESS_TOKEN, que nunca sai do servidor.
+ * O token vira um cookie httpOnly com a mesma validade, e o link fica limpo.
  * Sem ACCESS_TOKEN configurado (ex.: desenvolvimento local), a porta fica aberta.
  *
  * Lógica pura (sem Next) para poder ser testada; quem aplica é `src/proxy.ts`.
+ * Os links são gerados por `npm run access-link` (scripts/access-link.ts).
  */
-import { timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 export const ACCESS_COOKIE = "nexo_access";
 export const ACCESS_PARAM = "access";
 
 export type AccessDecision =
   | { kind: "open" } // porta desligada
-  | { kind: "allow" } // cookie válido
-  | { kind: "grant" } // token válido na URL: grava o cookie e limpa a URL
+  | { kind: "allow" } // cookie dentro da validade
+  | { kind: "grant"; expiresAt: Date } // link válido: grava o cookie até expiresAt e limpa a URL
   | { kind: "deny" };
 
 /** Comparação em tempo constante: não deixa descobrir o token medindo o tempo de resposta. */
@@ -23,14 +26,35 @@ export function sameSecret(a: string, b: string): boolean {
   return left.length === right.length && timingSafeEqual(left, right);
 }
 
+const sign = (secret: string, expiresAtSeconds: string) =>
+  createHmac("sha256", secret).update(`nexo-access:${expiresAtSeconds}`).digest("base64url");
+
+export function createAccessToken(secret: string, expiresAt: Date): string {
+  const seconds = String(Math.floor(expiresAt.getTime() / 1000));
+  return `${seconds}.${sign(secret, seconds)}`;
+}
+
+/** Validade do token, se a assinatura confere e ele ainda vale; senão, null. */
+function validUntil(secret: string, token: string, now: Date): Date | null {
+  const [seconds, signature, ...rest] = token.split(".");
+  if (!seconds || !signature || rest.length || !/^\d+$/.test(seconds)) return null;
+  if (!sameSecret(signature, sign(secret, seconds))) return null;
+  const expiresAt = new Date(Number(seconds) * 1000);
+  return expiresAt > now ? expiresAt : null;
+}
+
 export function decideAccess(input: {
-  expectedToken: string | undefined;
+  secret: string | undefined;
   tokenFromUrl: string | null;
   tokenFromCookie: string | undefined;
+  now: Date;
 }): AccessDecision {
-  const { expectedToken, tokenFromUrl, tokenFromCookie } = input;
-  if (!expectedToken) return { kind: "open" };
-  if (tokenFromUrl !== null) return sameSecret(tokenFromUrl, expectedToken) ? { kind: "grant" } : { kind: "deny" };
-  if (tokenFromCookie && sameSecret(tokenFromCookie, expectedToken)) return { kind: "allow" };
+  const { secret, tokenFromUrl, tokenFromCookie, now } = input;
+  if (!secret) return { kind: "open" };
+  if (tokenFromUrl !== null) {
+    const expiresAt = validUntil(secret, tokenFromUrl, now);
+    return expiresAt ? { kind: "grant", expiresAt } : { kind: "deny" };
+  }
+  if (tokenFromCookie && validUntil(secret, tokenFromCookie, now)) return { kind: "allow" };
   return { kind: "deny" };
 }

@@ -5,14 +5,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ACCESS_COOKIE, ACCESS_PARAM, decideAccess } from "@/server/access-gate";
 
-const THIRTY_DAYS = 30 * 24 * 60 * 60;
-
 export function proxy(request: NextRequest) {
   const token = request.nextUrl.searchParams.get(ACCESS_PARAM);
+  const now = new Date();
   const decision = decideAccess({
-    expectedToken: process.env.ACCESS_TOKEN || undefined,
+    secret: process.env.ACCESS_TOKEN || undefined,
     tokenFromUrl: token,
     tokenFromCookie: request.cookies.get(ACCESS_COOKIE)?.value,
+    now,
   });
 
   switch (decision.kind) {
@@ -21,7 +21,7 @@ export function proxy(request: NextRequest) {
       return NextResponse.next();
 
     case "grant": {
-      // Grava o cookie e tira o token da URL (não fica no histórico nem em prints).
+      // Grava o cookie com a validade do link e tira o token da URL (não fica no histórico nem em prints).
       const clean = request.nextUrl.clone();
       clean.searchParams.delete(ACCESS_PARAM);
       const response = NextResponse.redirect(clean);
@@ -30,7 +30,7 @@ export function proxy(request: NextRequest) {
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         path: "/",
-        maxAge: THIRTY_DAYS,
+        maxAge: Math.max(1, Math.floor((decision.expiresAt.getTime() - now.getTime()) / 1000)),
       });
       return response;
     }
