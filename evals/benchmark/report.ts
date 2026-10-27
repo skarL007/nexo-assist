@@ -22,6 +22,8 @@ const num = (value: number, digits = 2) =>
 const pct = (value: number) => (Number.isFinite(value) ? `${num(value * 100, 0)}%` : "—");
 const money = (value: number, digits = 4) => (Number.isFinite(value) ? `US$ ${num(value, digits)}` : "—");
 const seconds = (ms: number) => (Number.isFinite(ms) ? `${num(ms / 1000, 1)} s` : "—");
+const statusNote = (s: CandidateSummary) =>
+  s.disqualifiedReason ? `desqualificado — ${s.disqualifiedReason}` : s.status === "avaliado" ? "sem notas dos juízes" : s.status;
 const table = (header: string[], rows: string[][]) =>
   [`| ${header.join(" | ")} |`, `|${header.map(() => "---").join("|")}|`, ...rows.map((r) => `| ${r.join(" | ")} |`)].join("\n");
 
@@ -68,7 +70,7 @@ export function buildReport() {
     )}\n`,
   );
 
-  writeFileSync(
+  if (evaluated.length) writeFileSync(
     `${OUT_DIR}/pareto.svg`,
     paretoChart(evaluated.map((s) => ({ label: s.label, costUsd: s.cost.perAtendimentoUsd, quality: s.quality.overall.mean, onFrontier: frontier.includes(s.key) }))),
   );
@@ -84,7 +86,7 @@ export function buildReport() {
           cost: WEIGHTS.cost * s.scores.cost,
         },
       })),
-      ...summaries.filter((s) => !s.scores).map((s) => ({ label: s.label, parts: null, note: s.status })),
+      ...summaries.filter((s) => !s.scores).map((s) => ({ label: s.label, parts: null, note: statusNote(s) })),
     ]),
   );
 
@@ -109,7 +111,7 @@ export function buildReport() {
       ]),
     ),
     "",
-    ...summaries.filter((s) => !s.scores).map((s) => `- **${s.label}**: ${s.status}${s.disqualifiedReason ? ` — ${s.disqualifiedReason}` : ""}`),
+    ...summaries.filter((s) => !s.scores).map((s) => `- **${s.label}**: ${statusNote(s)}`),
     "",
     "![Score composto por dimensão](composto.svg)",
     "",
