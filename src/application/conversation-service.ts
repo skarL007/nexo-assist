@@ -24,15 +24,26 @@ export class ConversationService {
     private readonly clock: Clock = systemClock,
   ) {}
 
-  /** Volta para a conversa aberta do funcionário ou começa uma nova (história 6). */
-  async getOrStart(employeeId: string): Promise<Conversation> {
-    return (await this.conversations.findLatestOpenByEmployee(employeeId)) ?? this.start(employeeId);
+  /** Conversa aberta do funcionário — é o que permite voltar outro dia (história 6). */
+  async findOpen(employeeId: string): Promise<Conversation | null> {
+    return this.conversations.findLatestOpenByEmployee(employeeId);
   }
 
-  async startNew(employeeId: string): Promise<Conversation> {
-    const current = await this.conversations.findLatestOpenByEmployee(employeeId);
-    if (current) await this.save(current, nextStatus(current.status, "close"));
-    return this.start(employeeId);
+  /** Para o console do analista. */
+  async listAll(): Promise<Conversation[]> {
+    return this.conversations.listAll();
+  }
+
+  async getOrStart(employeeId: string): Promise<Conversation> {
+    return (await this.findOpen(employeeId)) ?? this.start(employeeId);
+  }
+
+  /** "Nova conversa": encerra a atual; a próxima mensagem abre outra sessão. */
+  async closeOpen(employeeId: string): Promise<void> {
+    const current = await this.findOpen(employeeId);
+    if (!current) return;
+    await this.save(current, nextStatus(current.status, "close"));
+    await this.messages.add({ conversationId: current.id, role: "system", text: "Conversa encerrada pelo funcionário" });
   }
 
   /** Busca a conversa garantindo que é do funcionário (privacidade). */
