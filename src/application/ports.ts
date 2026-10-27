@@ -66,7 +66,7 @@ export interface Draft {
 export interface DraftRepository {
   insert(draft: Omit<Draft, "id">): Promise<Draft>;
   findById(id: number): Promise<Draft | null>;
-  findPendingByConversation(conversationId: string): Promise<Draft[]>;
+  listByConversation(conversationId: string): Promise<Draft[]>;
   setStatus(id: number, status: DraftStatus): Promise<void>;
 }
 
