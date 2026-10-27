@@ -35,6 +35,12 @@ export class TicketService {
     return filtered.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
   }
 
+  /** Resolvidos há até 7 dias: ainda podem ser reabertos (Anexo A). */
+  async listReopenable(employeeId: string): Promise<Ticket[]> {
+    const now = this.clock.now();
+    return (await this.listMine(employeeId)).filter((t) => canReopen(t, now));
+  }
+
   /** Chamado de outra pessoa responde "não encontrado" — nem confirma que existe. */
   async getMine(employeeId: string, code: string): Promise<Ticket> {
     const ticket = await this.call(() => this.repo.findByCode(code.trim().toUpperCase()));
