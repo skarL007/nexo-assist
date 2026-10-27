@@ -1,7 +1,8 @@
 /**
  * Avaliação das decisões do agent com o modelo de verdade.
  *
- *   npm run eval
+ *   npm run eval                 → todos os cenários
+ *   npm run eval -- duplicidade  → só os que têm "duplicidade" no nome
  *
  * Usa um banco próprio (eval.db), recriado antes de rodar. Cada cenário começa
  * numa conversa nova. O resultado mostra o que passou, o que falhou e o custo.
@@ -17,7 +18,9 @@ async function main() {
   // Imports depois de configurar o ambiente: o banco é lido na primeira chamada.
   const { runAgentTurn } = await import("@/agent/run-turn");
   const { createServices } = await import("@/infrastructure/container");
-  const { scenarios } = await import("./scenarios");
+  const { scenarios: all } = await import("./scenarios");
+  const filter = process.argv[2]?.toLowerCase();
+  const scenarios = filter ? all.filter((s) => s.name.toLowerCase().includes(filter)) : all;
 
   const services = createServices();
   let passed = 0;
