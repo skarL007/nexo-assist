@@ -25,10 +25,22 @@ describe("privacidade", () => {
 });
 
 describe("duplicidade e reabertura", () => {
-  it("considera duplicado um aberto da mesma categoria", async () => {
+  it("considera duplicado um aberto da mesma categoria com palavra em comum no título", async () => {
     const { service } = setup();
-    expect(await service.findPossibleDuplicates("ana", "hardware")).toHaveLength(1);
-    expect(await service.findPossibleDuplicates("ana", "network")).toHaveLength(0);
+    expect(await service.findPossibleDuplicates("ana", "hardware", "Notebook continua lento")).toHaveLength(1);
+    expect(await service.findPossibleDuplicates("ana", "network", "Notebook continua lento")).toHaveLength(0);
+  });
+
+  it("não oferece chamado da mesma categoria que é outro problema", async () => {
+    // Achado no teste em produção: "tela não liga" oferecia o pedido de segundo monitor.
+    const { service } = setup([makeTicket({ code: "REQ-10442", type: "REQ", title: "Segundo monitor para home office" })]);
+    expect(await service.findPossibleDuplicates("ana", "hardware", "Tela não está ligando")).toHaveLength(0);
+  });
+
+  it("ignora acentos, maiúsculas e palavras genéricas na comparação", async () => {
+    const { service } = setup([makeTicket({ title: "Erro na impressão do 3º andar" })]);
+    expect(await service.findPossibleDuplicates("ana", "hardware", "IMPRESSAO falhando")).toHaveLength(1);
+    expect(await service.findPossibleDuplicates("ana", "hardware", "Erro no teclado")).toHaveLength(0);
   });
 
   it("lista como reabríveis só os resolvidos há até 7 dias", async () => {

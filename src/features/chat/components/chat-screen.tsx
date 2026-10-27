@@ -60,9 +60,10 @@ export function ChatScreen({ firstName }: { firstName: string }) {
         onCancel: () => dispatch(resolveDraft({ draftId, action: "cancel" })),
         onEdit: () => composer.current?.prefill(`Quero mudar no rascunho D-${draftId}: `),
         shortcut: draftId === shortcutDraftId,
+        locked: sending,
       }),
     }),
-    [dispatch, send, shortcutDraftId],
+    [dispatch, send, shortcutDraftId, sending],
   );
 
   if (!conversation) {
@@ -102,7 +103,7 @@ export function ChatScreen({ firstName }: { firstName: string }) {
               message={message}
               viewer="employee"
               draftStatuses={conversation.draftStatuses}
-              // Escolhas só valem na última resposta; rascunhos pendentes valem sempre.
+              // Escolhas só valem na última resposta; rascunhos pendentes valem sempre, mas travam enquanto o Nexo responde.
               actions={index === lastAgentIndex && !sending ? actions : { draftActions: actions.draftActions }}
             />
           ))}
