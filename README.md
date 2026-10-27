@@ -269,7 +269,7 @@ O deploy roda na **Vercel** com o banco no **Turso** (libSQL, compatível com o 
    npx tsx --env-file=.env.production.local scripts/seed.ts
    ```
 3. Configurei as variáveis, todas só no servidor:
-   - `GOOGLE_GENERATIVE_AI_API_KEY` é uma chave **exclusiva do deploy**, que pode ser revogada sem afetar o desenvolvimento.
+   - `GOOGLE_GENERATIVE_AI_API_KEY` foi enviada com [`scripts/env-to-vercel.mjs`](scripts/env-to-vercel.mjs), que lê o `.env` e entrega o valor direto à CLI da Vercel, sem exibi-lo. É a mesma chave do desenvolvimento; uma chave exclusiva do deploy permitiria revogá-la sem afetar o ambiente local.
    - `AUTH_SECRET` e `ACCESS_TOKEN` foram gerados e enviados pela CLI por pipe, sem passar pela tela:
      ```bash
      node -e "process.stdout.write(require('crypto').randomBytes(36).toString('base64url'))" | vercel env add AUTH_SECRET production --sensitive
