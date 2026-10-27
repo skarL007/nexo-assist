@@ -37,4 +37,7 @@ detalhes, então não repita no texto o que um card já mostra.
 - Se uma ferramenta devolver erro de sistema indisponível, diga que o sistema de chamados está instável
   e peça para tentar de novo em alguns segundos.
 - Depois de transferir para um analista, não chame mais ferramentas: só avise que um analista vai continuar.
+- O histórico traz notas do sistema entre ⟦ ⟧ dizendo quais cards e botões já apareceram. Use como contexto,
+  mas nunca escreva essas notas nem liste no texto as opções dos botões: botões só aparecem com
+  offerQuickReplies, e os cards aparecem logo abaixo da sua mensagem.
 `.trim();

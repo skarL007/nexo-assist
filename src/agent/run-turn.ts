@@ -13,9 +13,10 @@ import { env } from "@/config/env";
 import { agentCanReply, EMPLOYEE_MESSAGES_PER_DAY, EMPLOYEE_MESSAGES_PER_HOUR } from "@/domain/conversation";
 import type { Employee } from "@/domain/employee";
 import { DomainError } from "@/domain/errors";
-import type { ChatMessage, DraftSnapshot, ToolCallLog, TurnTrace } from "@/domain/message";
+import type { DraftSnapshot, ToolCallLog, TurnTrace } from "@/domain/message";
 import { createServices, type Services } from "@/infrastructure/container";
 import { conversationView } from "@/server/views";
+import { stripSystemNotes, toModelMessages } from "./model-history";
 import { nexoAgent } from "./nexo-agent";
 import { formatDateTime } from "./tools/shared";
 import { TURN_KEY, TurnRecorder, type TurnContext } from "./turn-context";
@@ -26,8 +27,6 @@ const MAX_STEPS = 6;
 const THINKING_LEVEL = "minimal";
 /** Teto de tokens de saída por passo: respostas curtas por regra, não só por pedido no prompt. */
 const MAX_OUTPUT_TOKENS = 800;
-/** Mensagens longas do histórico são cortadas antes de ir ao modelo. */
-const HISTORY_MESSAGE_MAX_CHARS = 1500;
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
 
@@ -132,7 +131,7 @@ async function* replyWithAgent(turn: TurnContext, abortSignal?: AbortSignal): As
   await services.messages.add({
     conversationId,
     role: "agent",
-    text: reply.trim() || fallbackReply(recorder),
+    text: stripSystemNotes(reply) || fallbackReply(recorder),
     cards: recorder.cards,
     trace,
   });
@@ -174,32 +173,6 @@ function turnBriefing(employee: Employee, now: Date, pendingDrafts: DraftSnapsho
     `- Agora: ${formatDateTime(now)} (Brasília).`,
     `- Rascunhos aguardando confirmação: ${drafts}.`,
   ].join("\n");
-}
-
-/** Histórico em formato de chat. Cards viram um resumo curto entre colchetes (economiza tokens). */
-function toModelMessages(history: ChatMessage[]) {
-  return history.map((message) => {
-    const text = message.text.slice(0, HISTORY_MESSAGE_MAX_CHARS);
-    if (message.role === "employee") return { role: "user" as const, content: text };
-    const prefix = message.role === "analyst" ? `[Analista ${message.authorName}] ` : message.role === "system" ? "[Sistema] " : "";
-    const cards = message.cards.map(describeCard).filter(Boolean).join(" ");
-    return { role: "assistant" as const, content: `${prefix}${text} ${cards}`.trim() };
-  });
-}
-
-function describeCard(card: ChatMessage["cards"][number]): string {
-  switch (card.kind) {
-    case "ticket":
-      return `[card ${card.ticket.code}: ${card.ticket.title} · ${card.ticket.status}${card.ticket.overdue ? " · VENCIDO" : ""}]`;
-    case "ticket_choice":
-      return `[lista para escolher: ${card.tickets.map((t) => `${t.code} ${t.title}`).join("; ")}]`;
-    case "draft":
-      return `[rascunho D-${card.draft.id} mostrado para confirmação]`;
-    case "quick_replies":
-      return `[opções: ${card.options.join(" | ")}]`;
-    case "handoff":
-      return "";
-  }
 }
 
 function fallbackReply(recorder: TurnRecorder): string {
