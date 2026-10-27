@@ -1,6 +1,16 @@
 /** Implementações em memória das portas, usadas só nos testes. */
+import type { Conversation } from "@/domain/conversation";
+import type { ChatMessage, DraftStatus, MessageRole } from "@/domain/message";
 import type { Ticket, TicketType } from "@/domain/ticket";
-import type { Clock, TicketRepository } from "./ports";
+import type {
+  Clock,
+  ConversationRepository,
+  Draft,
+  DraftRepository,
+  MessageRepository,
+  NewMessage,
+  TicketRepository,
+} from "./ports";
 
 export class InMemoryTicketRepository implements TicketRepository {
   readonly tickets = new Map<string, Ticket>();
@@ -50,4 +60,75 @@ export function makeTicket(overrides: Partial<Ticket> = {}): Ticket {
     resolvedAt: null,
     ...overrides,
   };
+}
+
+export class InMemoryConversationRepository implements ConversationRepository {
+  readonly items = new Map<string, Conversation>();
+  async findById(id: string) {
+    return this.items.get(id) ?? null;
+  }
+  async findLatestOpenByEmployee(employeeId: string) {
+    return [...this.items.values()].find((c) => c.employeeId === employeeId && c.status !== "closed") ?? null;
+  }
+  async listAll() {
+    return [...this.items.values()];
+  }
+  async insert(conversation: Conversation) {
+    this.items.set(conversation.id, conversation);
+  }
+  async update(conversation: Conversation) {
+    this.items.set(conversation.id, conversation);
+  }
+}
+
+export class InMemoryMessageRepository implements MessageRepository {
+  readonly items: ChatMessage[] = [];
+  async add(message: NewMessage) {
+    const saved: ChatMessage = {
+      id: String(this.items.length + 1),
+      conversationId: message.conversationId,
+      role: message.role,
+      authorName: message.authorName ?? null,
+      text: message.text,
+      cards: message.cards ?? [],
+      trace: message.trace ?? null,
+      createdAt: new Date().toISOString(),
+    };
+    this.items.push(saved);
+    return saved;
+  }
+  async listByConversation(conversationId: string) {
+    return this.items.filter((m) => m.conversationId === conversationId);
+  }
+  async listRecent(conversationId: string, limit: number) {
+    return (await this.listByConversation(conversationId)).slice(-limit);
+  }
+  async lastByConversations(ids: string[]) {
+    return new Map(ids.map((id) => [id, this.items.filter((m) => m.conversationId === id).at(-1)!]));
+  }
+  async countByRole(conversationId: string, role: MessageRole) {
+    return this.items.filter((m) => m.conversationId === conversationId && m.role === role).length;
+  }
+  async countByRoleSince(role: MessageRole) {
+    return this.items.filter((m) => m.role === role).length;
+  }
+}
+
+export class InMemoryDraftRepository implements DraftRepository {
+  readonly items: Draft[] = [];
+  async insert(draft: Omit<Draft, "id">) {
+    const saved = { ...draft, id: this.items.length + 1 };
+    this.items.push(saved);
+    return saved;
+  }
+  async findById(id: number) {
+    return this.items.find((d) => d.id === id) ?? null;
+  }
+  async listByConversation(conversationId: string) {
+    return this.items.filter((d) => d.conversationId === conversationId);
+  }
+  async setStatus(id: number, status: DraftStatus) {
+    const draft = this.items.find((d) => d.id === id);
+    if (draft) draft.status = status;
+  }
 }
