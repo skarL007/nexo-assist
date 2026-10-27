@@ -47,9 +47,9 @@ Qualquer senha funciona para os usuários de exemplo (regra do desafio). Na tela
 Outros comandos:
 
 ```bash
-npm test              # 62 testes unitários (domínio, serviços, HTTP) — sem LLM
+npm test              # 111 testes unitários (domínio, serviços, HTTP, benchmark) — sem LLM
 npm run test:e2e      # Playwright contra o build de produção — sem LLM
-npm run eval          # 10 cenários de decisão do agent com o modelo real
+npm run eval          # 11 cenários de decisão do agent com o modelo real
 npm run db:seed       # volta os dados ao estado inicial
 npm run typecheck && npm run lint
 ```
@@ -225,12 +225,12 @@ O prompt ([`agent/instructions.ts`](src/agent/instructions.ts)) cuida só da con
 
 | Camada | O que cobre | Comando |
 |---|---|---|
-| **Testes unitários** (Vitest, 62) | prazos com fim de semana, matriz de prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado, confirmação obrigatória, clique duplo, transferência em caso crítico, bloqueio de CSRF | `npm test` |
+| **Testes unitários** (Vitest, 111) | prazos com fim de semana, matriz de prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado, confirmação obrigatória, clique duplo, transferência em caso crítico, bloqueio de CSRF | `npm test` |
 | **E2E** (Playwright, 6) | login, permissões (funcionário não acessa o console nem a API do analista) e o ciclo da transferência de ponta a ponta, contra o build de produção | `npm run test:e2e` |
-| **Evals** (10 cenários, modelo real) | intenção, tools esperadas e proibidas, transferência e vazamento de dados de outra pessoa | `npm run eval` |
+| **Evals** (11 cenários, modelo real) | intenção, tools esperadas e proibidas, transferência, reabertura e vazamento de dados de outra pessoa | `npm run eval` |
 | **Trace em toda resposta** | qualquer decisão pode ser auditada na própria interface e no console do analista | — |
 
-Os evals já pagaram o próprio custo. Um deles pegou o agent abrindo rascunho novo para um problema que já tinha chamado aberto; o ajuste nas instruções (consultar `listMyTickets` antes) levou o resultado a 10/10. Outro mostrou 10,8 s de latência por causa do "raciocínio" do Gemini; com `thinkingLevel: "minimal"` a latência caiu e os 10 cenários continuaram passando.
+Os evals já pagaram o próprio custo. Um deles pegou o agent abrindo rascunho novo para um problema que já tinha chamado aberto; o ajuste nas instruções (consultar `listMyTickets` antes) levou o resultado a 10/10. Outro mostrou 10,8 s de latência por causa do "raciocínio" do Gemini; com `thinkingLevel: "minimal"` a latência caiu e os 10 cenários continuaram passando. Depois, o [benchmark](#benchmark-de-modelos) achou um defeito que nenhum modelo resolvia, porque estava no prompt: reabrir chamado resolvido. A regra foi para o código e virou o 11º cenário.
 
 O processo de desenvolvimento (SDD, TDD, skills, MCPs e uso de IA) está em [`docs/PROCESSO-IA.md`](docs/PROCESSO-IA.md), e as especificações em [`docs/specs/`](docs/specs).
 
@@ -244,7 +244,9 @@ O processo de desenvolvimento (SDD, TDD, skills, MCPs e uso de IA) está em [`do
 - **Latência baixa** com `thinkingLevel: "minimal"`: atendimento precisa de resposta rápida, não de raciocínio longo.
 - **Custo de frações de centavo por conversa**, o que permite um deploy aberto para avaliação sem risco de conta alta.
 
-A troca de modelo é uma variável (`LLM_MODEL`), graças ao roteador de modelos do Mastra. Para usar OpenAI, por exemplo, basta `LLM_MODEL=openai/gpt-4.1-mini` com `OPENAI_API_KEY`, ajustando a checagem de chave em `run-turn.ts`. Os evals dizem se a troca piorou alguma decisão.
+A troca de modelo é uma variável (`LLM_MODEL`), graças ao roteador de modelos do Mastra. Pelo OpenRouter, basta `LLM_MODEL=openrouter/<fornecedor>/<modelo>` com `OPENROUTER_API_KEY`. Os evals dizem se a troca piorou alguma decisão.
+
+**Decisão atual e próximo passo.** O [benchmark](#benchmark-de-modelos) mostrou o **GPT-6 Luna** com a mesma efetividade e qualidade do Gemini 3.5 Flash (diferenças dentro dos intervalos de confiança) a um custo **26× menor**. Mantive o Gemini em produção por enquanto: a vantagem do Luna é de custo, não de qualidade, os intervalos de efetividade do Luna e do Flash Lite se sobrepõem, e trocar perto da entrega exigiria uma nova chave em produção. O próximo passo é uma rodada de confirmação Luna × Flash Lite, seguida de `npm run eval` com o vencedor e da troca de uma linha (`LLM_MODEL`).
 
 **Custo sob controle:** o histórico enviado ao modelo tem no máximo 20 mensagens (cada uma cortada em 1.500 caracteres) e os cards viram resumos curtos entre colchetes. Prioridade, prazo, duplicidade e busca na central são código e não gastam token. Temperatura 0.2, até 6 passos e até 800 tokens de saída por passo.
 
@@ -262,7 +264,9 @@ Para trocar a escolha qualitativa por dados, `npm run benchmark` roda o agent de
 | Qwen3.8 Flash (sem raciocínio) | 0,686 | 67% | 4,65 | 15,5 s | US$ 1,13 |
 | Gemini 3.8 Flash | 0,649 | 75% | **4,84** | 12,2 s | US$ 15,09 |
 
-**Recomendação: GPT-6 Luna.** Tem a mesma efetividade e qualidade do modelo atual (dentro dos intervalos de confiança), é mais rápido e custa 26× menos. Fica em 1º em 81% de 10 mil combinações de pesos sorteadas. A alternativa sem trocar de fornecedor é o Gemini 3.5 Flash Lite. O `LLM_MODEL` padrão não mudou: antes da troca, falta corrigir dois pontos do prompt que o benchmark revelou (reabrir chamado resolvido e agir em caso crítico) e rodar `npm run eval` com o modelo novo.
+**Recomendação: GPT-6 Luna.** Tem a mesma efetividade e qualidade do modelo atual (dentro dos intervalos de confiança), é mais rápido e custa 26× menos. Fica em 1º em 81% de 10 mil combinações de pesos sorteadas. A alternativa sem trocar de fornecedor é o Gemini 3.5 Flash Lite. O `LLM_MODEL` padrão não mudou (veja [Escolha do modelo](#escolha-do-modelo)). O benchmark também revelou dois pontos do prompt que valem para qualquer modelo:
+- **Reabrir chamado resolvido** (0 de 7 modelos passavam): **já corrigido**. A consulta de chamados agora devolve também os resolvidos há até 7 dias, e o cenário entrou no `npm run eval` (11/11 com o Gemini).
+- **Agir em caso crítico para a empresa toda** (4 de 7 modelos não agiam): fica para a próxima rodada.
 
 **Engenharia de cache.** O briefing do turno passou a trazer a hora cheia, em vez dos minutos, e cada conversa vai ao OpenRouter com `session_id`. Assim o prefixo do prompt fica estável e as chamadas da conversa caem no mesmo provedor. Luna, Mistral e Qwen leem de 71% a 91% do prompt do cache, e o Luna paga US$ 1,22 em vez de US$ 2,48 por 1.000 atendimentos. Nos juízes, a parte fixa do prompt vem primeiro e a conversa por último, e um cache local por hash do pedido faz com que rodar de novo não custe nada. Pelo OpenRouter, os Gemini não fizeram cache (0%).
 
