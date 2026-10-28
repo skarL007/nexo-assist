@@ -62,6 +62,14 @@ Se a chave do provedor do `LLM_MODEL` não estiver configurada, o chat avisa **a
 
 Na primeira dúvida (confiança < 0,5), o turno só pode fazer uma pergunta: a partir do passo 1 a única tool liberada é `offerQuickReplies` (`stepPolicy` com `recorder.clarifying`). A regra não depende de o modelo obedecer à instrução.
 
+## Incidente em massa
+
+Ao montar um rascunho de chamado novo, o sistema confere se **3 ou mais outras pessoas** abriram incidentes (INC) da mesma categoria, com uma palavra relevante do título em comum, nas **últimas 4 horas úteis** (`domain/known-issue.ts`). Se sim, o impacto "só eu" sobe para "equipe", a prioridade é recalculada pela matriz e o trace registra o guardrail. A tool devolve só categoria, quantas pessoas e desde quando: nada de nomes ou números de chamados de outras pessoas. O agent diz que é um problema conhecido e já acompanhado. O console mostra o banner "Possível incidente em massa". Aceite: eval "Incidente em massa: sistema de ponto fora do ar" (seed com 3 pessoas): rascunho com impacto `team`, resposta sem "Gustavo", "Helena", "Igor" ou os códigos deles. Com 2 pessoas, ou fora da janela, nada muda (teste unitário).
+
+## Sinal de frustração
+
+`recordUnderstanding` registra também `frustration` (`none`, `some` ou `high`) e o motivo. A regra é código (`domain/frustration.ts`): frustração alta, ou moderada em dois turnos seguidos, faz o agent **oferecer** um analista, continuando a ajudar. Ele não transfere sozinho por isso, e a frustração nunca muda a prioridade. O funcionário não vê o rótulo. O console mostra o chip "Frustração alta" (texto, não só cor), põe esses casos primeiro entre os de mesmo status, e o relatório traz o motivo. Aceite: "minha VPN caiu de novo, é a terceira vez essa semana, isso é um absurdo" registra `high` e a resposta oferece um analista sem transferir; "Qual o horário do service desk?" registra `none` e não oferece.
+
 ## Custo
 
 - Histórico: últimas 20 mensagens; cards viram resumos curtos.

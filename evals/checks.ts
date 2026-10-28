@@ -15,6 +15,12 @@ export interface ScenarioOutcome {
   ticketChanges?: number;
   /** Prioridade de cada rascunho de chamado novo que o agent montou. */
   draftPriorities?: string[];
+  /** Impacto de cada rascunho de chamado novo (incidente em massa sobe para "team"). */
+  draftImpacts?: string[];
+  /** Frustração registrada no último entendimento. */
+  lastFrustration?: string;
+  /** Opções de resposta rápida mostradas em algum turno. */
+  quickReplies?: string[];
 }
 
 export function checkScenario(expect: Scenario["expect"], outcome: ScenarioOutcome): string[] {
@@ -38,6 +44,16 @@ export function checkScenario(expect: Scenario["expect"], outcome: ScenarioOutco
   if (expect.draftPriorityNot) {
     if (outcome.draftPriorities === undefined) failures.push("sem dados de rascunhos para checar");
     for (const priority of outcome.draftPriorities ?? []) if (expect.draftPriorityNot.includes(priority as never)) failures.push(`rascunho com prioridade ${priority}`);
+  }
+  if (expect.frustration && (outcome.lastFrustration ?? "none") !== expect.frustration) failures.push(`frustração ${outcome.lastFrustration ?? "none"}`);
+  if (expect.offersAnalyst) {
+    const inText = outcome.replies.some((r) => /analista/i.test(r));
+    const inButton = (outcome.quickReplies ?? []).some((o) => /analista/i.test(o));
+    if (!inText && !inButton) failures.push("não ofereceu analista");
+  }
+  if (expect.draftImpact) {
+    if (!outcome.draftImpacts?.length) failures.push("nenhum rascunho de chamado novo");
+    else if (!outcome.draftImpacts.every((impact) => impact === expect.draftImpact)) failures.push(`rascunho com impacto ${outcome.draftImpacts.join("/")}`);
   }
   return failures;
 }

@@ -1,4 +1,4 @@
-import { desc, eq, like, sql } from "drizzle-orm";
+import { and, desc, eq, gte, like, ne, sql } from "drizzle-orm";
 import type { TicketRepository } from "@/application/ports";
 import { DomainError } from "@/domain/errors";
 import type { Ticket, TicketType } from "@/domain/ticket";
@@ -18,6 +18,10 @@ export class DrizzleTicketRepository implements TicketRepository {
 
   async listByOwner(ownerId: string): Promise<Ticket[]> {
     return this.db.select().from(tickets).where(eq(tickets.ownerId, ownerId)).orderBy(desc(tickets.updatedAt));
+  }
+
+  async listOpenCreatedSince(since: Date): Promise<Ticket[]> {
+    return this.db.select().from(tickets).where(and(ne(tickets.status, "resolved"), gte(tickets.createdAt, since)));
   }
 
   async nextCode(type: TicketType): Promise<string> {

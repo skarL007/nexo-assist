@@ -85,7 +85,8 @@ export function canReopen(ticket: Pick<Ticket, "status" | "resolvedAt">, now: Da
 // Palavras que aparecem em quase todo título e não dizem qual é o problema.
 const GENERIC_WORDS = new Set(["problema", "problemas", "erro", "erros", "falha", "funciona", "funcionando", "consigo", "preciso", "pedido", "chamado", "ajuda"]);
 
-const keywords = (title: string) => new Set(tokenize(title).filter((word) => word.length >= 3 && !GENERIC_WORDS.has(word)));
+/** Palavras relevantes de um título (duplicidade e incidente em massa). */
+export const titleKeywords = (title: string) => new Set(tokenize(title).filter((word) => word.length >= 3 && !GENERIC_WORDS.has(word)));
 
 /**
  * Possível duplicado: mesmo tipo, mesma categoria e pelo menos uma palavra relevante em comum no título.
@@ -94,6 +95,6 @@ const keywords = (title: string) => new Set(tokenize(title).filter((word) => wor
  */
 export function sameProblem(ticket: Pick<Ticket, "type" | "category" | "title">, candidate: Pick<Ticket, "type" | "category" | "title">): boolean {
   if (ticket.type !== candidate.type || ticket.category !== candidate.category) return false;
-  const existing = keywords(ticket.title);
-  return [...keywords(candidate.title)].some((word) => existing.has(word));
+  const existing = titleKeywords(ticket.title);
+  return [...titleKeywords(candidate.title)].some((word) => existing.has(word));
 }

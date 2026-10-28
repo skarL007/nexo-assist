@@ -102,3 +102,21 @@ describe("snapshot", () => {
     expect(snapshot.overdue).toBe(true);
   });
 });
+
+describe("incidente em massa", () => {
+  const at = new Date("2026-10-27T12:00:00Z"); // 1 h antes do relógio fixo, dentro do expediente
+  const vpn = (code: string, ownerId: string) => makeTicket({ code, ownerId, title: "VPN caiu", category: "network", status: "open", createdAt: at, updatedAt: at });
+
+  it("conta só os relatos de outras pessoas: os próprios chamados da Ana não fazem dela um incidente", async () => {
+    const { service } = setup([vpn("INC-1", "ana"), vpn("INC-2", "ana"), vpn("INC-3", "bia"), vpn("INC-4", "caio")]);
+    expect(await service.knownIssueFor("ana", { category: "network", title: "VPN caiu agora", description: "…" })).toBeNull();
+    // Para o console são 3 pessoas (ana, bia, caio): o banner aparece.
+    expect(await service.knownIssues()).toHaveLength(1);
+  });
+
+  it("três outras pessoas com o mesmo problema: a Ana entra num incidente conhecido", async () => {
+    const { service } = setup([vpn("INC-1", "bia"), vpn("INC-2", "caio"), vpn("INC-3", "duda")]);
+    expect(await service.knownIssueFor("ana", { category: "network", title: "VPN caiu agora", description: "…" })).toMatchObject({ people: 3, reports: 3 });
+    expect(await service.knownIssues()).toHaveLength(1);
+  });
+});

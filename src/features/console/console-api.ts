@@ -3,7 +3,7 @@
  * e polling prontos. As mutações invalidam o cache e a lista se atualiza sozinha.
  */
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { ConsoleConversationDetail, ConsoleConversationSummary, SuggestionView } from "@/contracts/chat";
+import type { ConsoleConversationDetail, ConsoleConversationSummary, KnownIssueView, SuggestionView } from "@/contracts/chat";
 
 export const consoleApi = createApi({
   reducerPath: "consoleApi",
@@ -12,6 +12,11 @@ export const consoleApi = createApi({
   endpoints: (build) => ({
     listConversations: build.query<ConsoleConversationSummary[], void>({
       query: () => "/conversations",
+      providesTags: ["Conversation"],
+    }),
+    // Mesma tag: o tempo real (e a rede de segurança do polling) atualiza o banner junto com a lista.
+    listKnownIssues: build.query<KnownIssueView[], void>({
+      query: () => "/known-issues",
       providesTags: ["Conversation"],
     }),
     getConversation: build.query<ConsoleConversationDetail, string>({
@@ -34,6 +39,7 @@ export const consoleApi = createApi({
 
 export const {
   useListConversationsQuery,
+  useListKnownIssuesQuery,
   useGetConversationQuery,
   useConversationActionMutation,
   useSendAnalystMessageMutation,

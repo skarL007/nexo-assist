@@ -2,6 +2,7 @@
  * O relatório da conversa em texto, para o analista colar no chamado (botão "Copiar").
  * As mesmas frases servem para o painel, então ficam aqui uma vez só.
  */
+import { FRUSTRATION_LABEL, type FrustrationSignal } from "@/domain/frustration";
 import { HANDOFF_REASON_LABEL, STATUS_LABEL } from "@/domain/conversation";
 import type { ConsoleConversationDetail } from "@/contracts/chat";
 import { buildConversationReport, type ConversationReport, type PendingItem } from "@/domain/conversation-report";
@@ -83,6 +84,12 @@ export function reportAsText(report: ConversationReport): string {
     ...section("Falhas", report.failures),
     ...section("Chamados citados", report.tickets.map(ticketLine)),
     ...section("Pendências", report.pending.map((item) => pendingLine(item, report.employee.name))),
+    ...(report.frustration ? [``, frustrationLine(report.frustration)] : []),
     ...(report.lowestConfidence !== null ? [``, `Menor confiança do agent: ${percent(report.lowestConfidence)}`] : []),
   ].join("\n");
+}
+
+/** "Frustração alta: terceira vez que a VPN cai na semana". */
+export function frustrationLine(signal: FrustrationSignal): string {
+  return `${FRUSTRATION_LABEL[signal.level]}${signal.reason ? `: ${signal.reason}` : ""}`;
 }

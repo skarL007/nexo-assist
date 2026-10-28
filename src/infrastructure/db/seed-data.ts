@@ -191,5 +191,25 @@ export const tickets = (): Ticket[] => {
       createdAt: ago(1 * DAY),
       updatedAt: ago(5 * HOUR),
     },
+    // Três pessoas com o sistema de ponto fora do ar na última hora e meia: incidente em massa.
+    ...([
+      ["INC-20330", "emp-gustavo", "Sistema de ponto fora do ar", 40],
+      ["INC-20331", "emp-helena", "Ponto eletrônico não abre", 70],
+      ["INC-20332", "emp-igor", "Erro 500 no sistema de ponto", 100],
+    ] as const).map(
+      ([code, ownerId, title, minutesAgo]): Ticket => ({
+        ...base,
+        code,
+        type: "INC",
+        title,
+        description: "O sistema de ponto mostra erro 500 ao abrir; não dá para registrar o ponto.",
+        category: "software",
+        priority: "medium",
+        status: "open",
+        ownerId,
+        createdAt: ago(minutesAgo * 60_000),
+        updatedAt: ago(minutesAgo * 60_000),
+      }),
+    ),
   ];
 };

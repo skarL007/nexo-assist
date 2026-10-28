@@ -1,3 +1,4 @@
+import type { FrustrationSignal } from "@/domain/frustration";
 import { randomUUID } from "node:crypto";
 import { and, asc, count, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import type { MessageRepository, NewMessage } from "@/application/ports";
@@ -76,6 +77,24 @@ export class DrizzleMessageRepository implements MessageRepository {
       .from(messages)
       .where(inArray(sql`rowid`, lastRowIds));
     return new Map(rows.map((row) => [row.conversationId, toDomain({ ...row, trace: null })]));
+  }
+
+  async lastFrustrations(conversationIds: string[]): Promise<Map<string, FrustrationSignal>> {
+    if (conversationIds.length === 0) return new Map();
+    // Último entendimento de cada conversa: no SQLite, as colunas soltas com max() vêm da linha do máximo.
+    const rows = await this.db
+      .select({
+        conversationId: messages.conversationId,
+        level: sql<string | null>`json_extract(${messages.trace}, '$.decision.frustration')`,
+        reason: sql<string | null>`json_extract(${messages.trace}, '$.decision.frustrationReason')`,
+        last: sql<number>`max(rowid)`,
+      })
+      .from(messages)
+      .where(and(inArray(messages.conversationId, conversationIds), eq(messages.role, "agent"), sql`json_extract(${messages.trace}, '$.decision') is not null`))
+      .groupBy(messages.conversationId);
+    return new Map(
+      rows.flatMap((row) => (row.level === "some" || row.level === "high" ? [[row.conversationId, { level: row.level, reason: row.reason }] as const] : [])),
+    );
   }
 
   async countByRole(conversationId: string, role: MessageRole): Promise<number> {

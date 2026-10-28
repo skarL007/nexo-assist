@@ -92,6 +92,28 @@ async function main() {
         minutesAgo: 25,
         cards: [{ kind: "handoff", reason: "employee_request", summary: CARLA_SUMMARY }],
       },
+      {
+        role: "agent",
+        text: "Chamei um analista para você, Carla. Ele já recebe o resumo da conversa.",
+        minutesAgo: 25,
+        // Entendimento registrado no turno da transferência: frustração alta (chip e ordem na fila do console).
+        trace: {
+          decision: {
+            intent: "talk_to_analyst",
+            understanding: "Carla quer falar com um analista: precisa do acesso de aprovação no SAP hoje",
+            confidence: 0.93,
+            reasoning: "Pediu uma pessoa explicitamente.",
+            frustration: "high",
+            frustrationReason: "urgente: precisa fechar pedidos hoje e o acesso ainda não saiu",
+          },
+          steps: [],
+          toolCalls: [],
+          guardrails: [],
+          model: null,
+          usage: null,
+          latencyMs: 0,
+        },
+      },
     ],
   );
 

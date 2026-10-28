@@ -10,6 +10,7 @@ const base: ConsoleConversationSummary = {
   handoffReason: null,
   handoffConfidence: null,
   handoffAt: null,
+  frustration: null,
   lastMessage: { role: "employee", text: "Minha VPN caiu", at: "2026-10-27T13:00:00Z" },
   ticketCode: null,
 };
@@ -43,5 +44,12 @@ describe("estado na lista", () => {
     const older = { ...base, id: "old", status: "waiting_analyst" as const, handoffAt: "2026-10-27T12:00:00Z" };
     const newer = { ...base, id: "new", status: "waiting_analyst" as const, handoffAt: "2026-10-27T12:30:00Z" };
     expect(sortForConsole([base, newer, older]).map((c) => c.id)).toEqual(["old", "new", "c1"]);
+  });
+
+  it("frustração alta vem primeiro entre as de mesmo status, mas não fura a fila de outro status", () => {
+    const waitingOld = { ...base, id: "w-old", status: "waiting_analyst" as const, handoffAt: "2026-10-27T12:00:00Z" };
+    const waitingAngry = { ...base, id: "w-angry", status: "waiting_analyst" as const, handoffAt: "2026-10-27T12:30:00Z", frustration: { level: "high" as const, reason: "terceira vez" } };
+    const agentAngry = { ...base, id: "a-angry", frustration: { level: "high" as const, reason: null } };
+    expect(sortForConsole([agentAngry, waitingOld, waitingAngry, base]).map((c) => c.id)).toEqual(["w-angry", "w-old", "a-angry", "c1"]);
   });
 });

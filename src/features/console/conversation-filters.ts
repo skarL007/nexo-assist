@@ -54,6 +54,9 @@ export function sortForConsole(list: ConsoleConversationSummary[]): ConsoleConve
   const rank = { waiting_analyst: 0, with_analyst: 1, with_agent: 2, closed: 3 } as const;
   return [...list].sort((a, b) => {
     if (rank[a.status] !== rank[b.status]) return rank[a.status] - rank[b.status];
+    // Frustração alta primeiro entre as de mesmo status (nunca passa na frente de outro status).
+    const calm = (c: ConsoleConversationSummary) => (c.frustration?.level === "high" ? 0 : 1);
+    if (calm(a) !== calm(b)) return calm(a) - calm(b);
     if (a.status === "waiting_analyst") return (a.handoffAt ?? "").localeCompare(b.handoffAt ?? "");
     return (b.lastMessage?.at ?? "").localeCompare(a.lastMessage?.at ?? "");
   });

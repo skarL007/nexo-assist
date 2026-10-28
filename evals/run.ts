@@ -43,9 +43,12 @@ async function main() {
 
     const before = await ticketFingerprint();
     const draftPriorities: string[] = [];
+    const draftImpacts: string[] = [];
+    const quickReplies: string[] = [];
     const toolsUsed = new Set<string>();
     const replies: string[] = [];
     let lastIntent: string | undefined;
+    let lastFrustration: string | undefined;
     let status = "with_agent";
 
     for (const text of scenario.turns) {
@@ -56,8 +59,13 @@ async function main() {
         const reply = event.conversation.messages.at(-1);
         replies.push(reply?.text ?? "");
         for (const call of reply?.trace?.toolCalls ?? []) toolsUsed.add(call.tool);
-        for (const card of reply?.cards ?? []) if (card.kind === "draft" && card.draft.kind === "create") draftPriorities.push(card.draft.fields.priority);
+        for (const card of reply?.cards ?? []) if (card.kind === "quick_replies") quickReplies.push(...card.options);
+        for (const card of reply?.cards ?? []) if (card.kind === "draft" && card.draft.kind === "create") {
+          draftPriorities.push(card.draft.fields.priority);
+          draftImpacts.push(card.draft.fields.impact);
+        }
         lastIntent = reply?.trace?.decision?.intent ?? lastIntent;
+        lastFrustration = reply?.trace?.decision?.frustration ?? lastFrustration;
         tokens += (reply?.trace?.usage?.inputTokens ?? 0) + (reply?.trace?.usage?.outputTokens ?? 0);
       }
     }
@@ -65,7 +73,7 @@ async function main() {
     await withExtraArticles([]);
     const after = await ticketFingerprint();
     const ticketChanges = [...after].filter(([code, state]) => before.get(code) !== state).length;
-    return { lastIntent, toolsUsed, finalStatus: status, replies, ticketChanges, draftPriorities };
+    return { lastIntent, toolsUsed, finalStatus: status, replies, ticketChanges, draftPriorities, draftImpacts, lastFrustration, quickReplies };
   }
 
   let providerErrors = 0;

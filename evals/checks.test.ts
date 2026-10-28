@@ -47,3 +47,27 @@ describe("resposta precisa trazer o que o artigo diz", () => {
     expect(checkScenario({ replyIncludes: ["outlook", "Authenticator"] }, { ...ok, replies: ["Instale o app Outlook no celular."] })).toEqual(['faltou "Authenticator"']);
   });
 });
+
+describe("incidente em massa", () => {
+  it("todo rascunho precisa sair com o impacto esperado; sem rascunho, falha", () => {
+    expect(checkScenario({ draftImpact: "team" }, { ...ok, draftImpacts: ["team"] })).toEqual([]);
+    expect(checkScenario({ draftImpact: "team" }, { ...ok, draftImpacts: ["me"] })).toEqual(["rascunho com impacto me"]);
+    expect(checkScenario({ draftImpact: "team" }, ok)).toEqual(["nenhum rascunho de chamado novo"]);
+  });
+});
+
+describe("frustração", () => {
+  it("compara com o último entendimento; sem o campo conta como none", () => {
+    expect(checkScenario({ frustration: "high" }, { ...ok, lastFrustration: "high" })).toEqual([]);
+    expect(checkScenario({ frustration: "high" }, ok)).toEqual(["frustração none"]);
+    expect(checkScenario({ frustration: "none" }, ok)).toEqual([]);
+  });
+});
+
+describe("oferta de analista", () => {
+  it("vale no texto ou no botão; sem nenhum dos dois, falha", () => {
+    expect(checkScenario({ offersAnalyst: true }, { ...ok, quickReplies: ["Falar com um analista"] })).toEqual([]);
+    expect(checkScenario({ offersAnalyst: true }, { ...ok, replies: ["Se preferir, chamo um analista."] })).toEqual([]);
+    expect(checkScenario({ offersAnalyst: true }, { ...ok, replies: ["Vamos ver isso."] })).toEqual(["não ofereceu analista"]);
+  });
+});

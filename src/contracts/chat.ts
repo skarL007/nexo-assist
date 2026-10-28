@@ -2,6 +2,7 @@
  * Contrato entre o servidor e o browser: formato das respostas da API
  * e dos eventos do stream do chat. Tipos puros + schemas Zod dos pedidos.
  */
+import type { FrustrationSignal } from "@/domain/frustration";
 import { z } from "zod";
 import type { ConversationStatus, HandoffReason } from "@/domain/conversation";
 import type { Card, ChatMessage, DraftStatus, TicketSnapshot, TraceStep } from "@/domain/message";
@@ -29,6 +30,15 @@ export interface SlaAlertView {
   level: "at_risk" | "overdue";
   headline: string;
   lines: string[];
+}
+
+/** Possível incidente em massa, sem quem relatou nem os números dos chamados (banner do console). */
+export interface KnownIssueView {
+  category: string;
+  terms: string[];
+  reports: number;
+  people: number;
+  since: string;
 }
 
 export const feedbackSchema = z.strictObject({
@@ -96,6 +106,8 @@ export interface ConsoleConversationSummary {
   handoffAt: string | null;
   lastMessage: { role: ChatMessage["role"]; text: string; at: string } | null;
   ticketCode: string | null;
+  /** Frustração no último entendimento do agent (o funcionário nunca vê). */
+  frustration: FrustrationSignal | null;
 }
 
 export interface ConsoleConversationDetail extends ConsoleConversationSummary {

@@ -28,6 +28,9 @@ export class TurnRecorder {
     this.pending.push({ type: "step", step });
   }
 
+  /** Regra de frustração: o turno termina oferecendo um analista (botão), sem transferir. */
+  offerAnalyst = false;
+
   card(card: Card) {
     this.cards.push(card);
     this.pending.push({ type: "card", card });

@@ -34,6 +34,7 @@ const report: ConversationReport = {
     { code: "REQ-1", ticket: null },
   ],
   lowestConfidence: 0.41,
+  frustration: null,
   pending: [{ kind: "waiting_analyst", since: "2026-10-27T13:07:00.000Z" }],
 };
 
