@@ -6,8 +6,9 @@ import { migrate } from "drizzle-orm/libsql/migrator";
 import { beforeEach, describe, expect, it } from "vitest";
 import { makeTicket } from "@/application/test-doubles";
 import { createDatabase, type Database } from "../db/client";
-import { employees } from "../db/schema";
+import { conversations, employees, messages } from "../db/schema";
 import { DrizzleBudgetRepository } from "./budget-repository";
+import { DrizzleChangeFeed } from "./change-feed";
 import { DrizzleTicketRepository } from "./ticket-repository";
 
 let db: Database;
@@ -46,5 +47,33 @@ describe("número do chamado", () => {
     });
     await repo.insert(makeTicket({ code: "INC-1" }));
     await expect(repo.insert(makeTicket({ code: "INC-1" }))).rejects.toMatchObject({ code: "conflict" });
+  });
+});
+
+describe("assinaturas do tempo real", () => {
+  const person = (id: string) => ({ id, name: id, email: `${id}@nexo.com.br`, role: "employee" as const, department: "TI", passwordChangedAt: new Date() });
+  const conversation = (id: string, employeeId: string, at: number) => ({ id, employeeId, status: "with_agent" as const, createdAt: new Date(at), updatedAt: new Date(at) });
+  const message = (id: string, conversationId: string, at: number) => ({ id, conversationId, role: "analyst" as const, text: "oi", cards: [], createdAt: new Date(at) });
+
+  it("muda com mensagem nova (mesmo no mesmo milissegundo) e com a conversa atualizada", async () => {
+    const feed = new DrizzleChangeFeed(db);
+    await db.insert(employees).values([person("ana"), person("bia")]);
+    await db.insert(conversations).values([conversation("c-ana", "ana", 1000), conversation("c-bia", "bia", 1000)]);
+    await db.insert(messages).values(message("m1", "c-ana", 2000));
+
+    const console0 = await feed.consoleVersion();
+    const ana0 = await feed.employeeVersion("ana");
+    const bia0 = await feed.employeeVersion("bia");
+    expect(await feed.consoleVersion()).toBe(console0); // estável sem mudança
+
+    await db.insert(messages).values(message("m2", "c-ana", 2000));
+    expect(await feed.consoleVersion()).not.toBe(console0);
+    expect(await feed.employeeVersion("ana")).not.toBe(ana0);
+    expect(await feed.employeeVersion("bia")).toBe(bia0); // a conversa de outra pessoa não acorda a Bia
+
+    const ana1 = await feed.employeeVersion("ana");
+    await db.update(conversations).set({ status: "with_analyst", updatedAt: new Date(3000) });
+    expect(await feed.employeeVersion("ana")).not.toBe(ana1);
+    expect(await feed.employeeVersion("ninguem")).toBe("none");
   });
 });

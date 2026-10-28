@@ -16,6 +16,7 @@ import { GeminiEmbedder } from "./ai/gemini-embedder";
 import { db } from "./db/client";
 import { FlakyTicketRepository } from "./legacy-ticket-system";
 import { DrizzleBudgetRepository } from "./repositories/budget-repository";
+import { DrizzleChangeFeed } from "./repositories/change-feed";
 import { DrizzleConversationRepository } from "./repositories/conversation-repository";
 import { DrizzleDraftRepository } from "./repositories/draft-repository";
 import { DrizzleArticleRepository, DrizzleEmployeeRepository } from "./repositories/employee-repository";
@@ -52,7 +53,9 @@ export function createServices(options: ServiceOptions = {}) {
   const writer = missingApiKey(config.LLM_MODEL, config) ? null : mastraReplyWriter;
   const replySuggestions = new ReplySuggestionService(conversations, budget, writer, suggestionRepository, config.TOTAL_AGENT_TURN_LIMIT);
 
-  return { employees, articles, knowledge, messages, budget, tickets, conversations, drafts, feedback, insights, replySuggestions };
+  const changes = new DrizzleChangeFeed(database);
+
+  return { employees, articles, knowledge, messages, budget, tickets, conversations, drafts, feedback, insights, replySuggestions, changes };
 }
 
 export type Services = ReturnType<typeof createServices>;
