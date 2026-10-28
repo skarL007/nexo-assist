@@ -12,7 +12,8 @@ Cada melhoria grande tem uma pergunta, um método que outra pessoa pode repetir,
 | Incidente em massa | Com 3 pessoas relatando, o rascunho sobe o impacto sem revelar quem são? | **3/3** com o modelo real; regra com 8 testes de unidade | `npm run eval -- "incidente em massa" --repeat=3` |
 | Frustração | Frustração alta oferece analista sem transferir? Pergunta neutra não oferece? | **6/6**, depois de mover a oferta para o código (antes, 2/3) | `npm run eval -- frustração --repeat=3` |
 | Resolução honesta e lacunas | A taxa de resolução desconta chamado, abandono e reabertura? As lacunas mascaram dados pessoais? | Regras com testes de unidade; E2E confere os grupos e a lacuna do seed | `npm test` · `npx playwright test e2e/insights.spec.ts` |
-| [Funcionário simulado](SIMULACAO.md) | O agent acerta o estado final em várias execuções seguidas (pass^k)? | ver o arquivo | `npm run eval:sim` |
+| Suíte de evals | O agent toma a decisão certa nos 26 cenários (8 de ataque)? | **26/26** na rodada completa de 28/10, sem falha do provedor; 1 turno respondido pelo modelo reserva | `npm run eval` |
+| [Funcionário simulado](SIMULACAO.md) | O agent acerta o estado final em várias execuções seguidas (pass^k)? | pass^1 **0,72** (13/18) · pass^3 **0,50** (3 de 6 personas sem falha); apontou 3 comportamentos do agent para corrigir | `npm run eval:sim` |
 
 ## O que os evals pegaram nesta rodada
 
@@ -20,3 +21,5 @@ Cada melhoria grande tem uma pergunta, um método que outra pessoa pode repetir,
 - **Telemetria:** mostrou 6 chamadas paralelas de `recordUnderstanding` num turno, invisíveis no console. Ficou registrado como próximo ajuste.
 - **Runner dos evals:** quando o Gemini devolvia 503 dentro do stream, o Mastra respondia com a mensagem reserva e o uso zerado, e um ataque podia "passar" sem o modelo ter respondido. Agora isso conta como falha do provedor.
 - **Seed:** a lacuna de exemplo era sobre impressora, mas a central tem um artigo de impressora. O exemplo foi trocado por projetor.
+- **Limite de mensagens no runner:** 15 "erros do provedor" de uma rodada eram, na verdade, o limite do próprio app (40 mensagens por hora por pessoa), porque todos os cenários usavam os mesmos funcionários. Agora o runner libera a janela antes de cada cenário e só repete falha do provedor. A suíte voltou a dar 26/26.
+- **Simulação com estado herdado:** as repetições do `eval:sim` viam o chamado aberto pela anterior e o tratavam como duplicado. Cada execução agora parte do seed. Com o estado limpo, a simulação achou três comportamentos do agent para corrigir: abrir chamado a partir de uma resposta rápida que não era um "sim", anexar um problema novo ao chamado errado e oferecer analista depois de o chamado já resolver o pedido ([detalhes](SIMULACAO.md)).

@@ -45,6 +45,13 @@ Além da Vercel, o app roda numa imagem Docker no Komodo da minha máquina. A pr
 
 A imagem (`Dockerfile`) usa Node 24 em Debian slim, roda como o usuário `node` (sem root) e guarda o banco libSQL em `/data/nexo.db`, num volume. A cada start, `scripts/docker-init.ts` (empacotado com o esbuild, porque a imagem não tem `tsx`) aplica as migrações e cria os dados de exemplo só se a tabela `employees` estiver vazia. `SEED_IF_EMPTY=0` desliga o seed. Depois disso, `server.js` assume o processo. O `HEALTHCHECK` consulta `/login` e aceita qualquer status abaixo de 500, porque com `ACCESS_TOKEN` quem responde sem o link é a porta de acesso. Como `/login` não toca no banco, quem prova que o banco funciona é a prova de fumaça do CI, não o healthcheck.
 
+Validação local em 28/10/2026, com o `main` buildado a partir de um `git archive` (Docker 29): a imagem tem **486 MB** e `scripts/docker-smoke.sh` passou nas **25 checagens**.
+
+- No primeiro start: migração e seed, contêiner healthy, sem root, `/login` 200, API do console 401 sem sessão, login real de funcionária e de analista, 403 da funcionária no console, e o analista assumindo uma conversa.
+- Depois de um restart: nada é recriado e a conversa assumida continua com o analista.
+
+O CircleCI ainda não rodou nenhum job. Ele começa quando o projeto for conectado (passo 1 de *Passos do dono*, abaixo).
+
 ### O que o CI prova
 
 `scripts/docker-smoke.sh` sobe a imagem com um `AUTH_SECRET` descartável e um volume novo. Como o Docker do CircleCI é remoto, tudo roda por `docker exec`. O script confere, nesta ordem:
