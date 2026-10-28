@@ -50,6 +50,8 @@ with_agent ──handoff──▶ waiting_analyst ──assume──▶ with_ana
 - **Linha de estado:** "Agent pediu ajuda · confiança 41%", "Transferida há 25 minutos", "Agent atendendo", "Você está atendendo".
 - **Conversa:** resumo da transferência no topo e histórico com o trace do agent. Ações: Assumir; Devolver ao agent; Encerrar. Só quem assumiu pode responder.
 - **Painel:** chamados do funcionário, com o da transferência em destaque.
+- **Relatório da conversa:** o botão "Relatório" no cabeçalho abre, acima do histórico, um resumo para o analista não precisar ler a conversa inteira: o que a pessoa precisa, por que foi transferida, o que o agent já fez (passos, artigos da central de ajuda, falhas), os chamados citados com status e prazo atuais e o que está pendente (espera por atendente, rascunho sem confirmar, chamado com prazo vencido). É montado do histórico e dos traces, sem chamar o modelo (não gasta o teto nem inventa nada). "Copiar" leva o relatório em texto, para colar no chamado.
+- Aceite: conversa do Bruno (seed) → Relatório mostra o resumo da transferência, "Agent sem segurança para decidir · confiança 41%" e a pendência "Bruno espera um atendente desde…"; Copiar põe o mesmo conteúdo em texto na área de transferência. Chamados citados aparecem com o status de agora (teste unitário em `domain/conversation-report.test.ts`).
 
 ## API
 

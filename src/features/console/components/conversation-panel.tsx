@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, Hand, Headset, Loader2, LogOut, Send, Undo2 } from "lucide-react";
+import { Bot, FileText, Hand, Headset, Loader2, LogOut, Send, Undo2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MessageItem } from "@/components/conversation/message-item";
@@ -11,6 +11,7 @@ import { HANDOFF_REASON_LABEL, STATUS_LABEL, type ConversationStatus } from "@/d
 import { firstName } from "@/domain/employee";
 import { formatClock, percent } from "@/lib/format";
 import { apiErrorMessage, useConversationActionMutation, useSendAnalystMessageMutation } from "../console-api";
+import { ConversationReportPanel } from "./conversation-report-panel";
 
 const STATUS_TONE: Record<ConversationStatus, Tone> = {
   waiting_analyst: "warning",
@@ -21,6 +22,7 @@ const STATUS_TONE: Record<ConversationStatus, Tone> = {
 
 export function ConversationPanel({ conversation, analystId }: { conversation: ConsoleConversationDetail; analystId: string }) {
   const [act, actState] = useConversationActionMutation();
+  const [showReport, setShowReport] = useState(false);
   const bottom = useRef<HTMLDivElement>(null);
   const first = firstName(conversation.employee.name);
   const mine = conversation.status === "with_analyst" && conversation.analyst?.id === analystId;
@@ -44,6 +46,9 @@ export function ConversationPanel({ conversation, analystId }: { conversation: C
             </p>
           </div>
         </div>
+        <Button size="sm" variant="outline" className="shrink-0" aria-pressed={showReport} onClick={() => setShowReport((open) => !open)}>
+          <FileText className="size-4" /> Relatório
+        </Button>
         {mine && (
           <div className="flex shrink-0 gap-2">
             <Button size="sm" variant="outline" disabled={actState.isLoading} onClick={() => run("release")}>
@@ -58,7 +63,8 @@ export function ConversationPanel({ conversation, analystId }: { conversation: C
 
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto flex max-w-3xl flex-col gap-4 px-6 py-6">
-          {conversation.handoffSummary && (
+          {showReport && <ConversationReportPanel conversation={conversation} onClose={() => setShowReport(false)} />}
+          {!showReport && conversation.handoffSummary && (
             <div className="rounded-xl border border-warning/30 bg-warning-soft p-4 text-sm">
               <p className="mb-1 text-xs font-semibold text-amber-800">
                 Resumo da transferência · {conversation.handoffReason && HANDOFF_REASON_LABEL[conversation.handoffReason]}
@@ -68,7 +74,7 @@ export function ConversationPanel({ conversation, analystId }: { conversation: C
             </div>
           )}
           {conversation.messages.map((message) => (
-            <MessageItem key={message.id} message={message} viewer="analyst" />
+            <MessageItem key={message.id} message={message} viewer="analyst" draftStatuses={conversation.draftStatuses} />
           ))}
           <div ref={bottom} />
         </div>

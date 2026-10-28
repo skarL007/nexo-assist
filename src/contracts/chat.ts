@@ -85,6 +85,8 @@ export interface ConsoleConversationSummary {
 export interface ConsoleConversationDetail extends ConsoleConversationSummary {
   handoffSummary: string | null;
   messages: ChatMessage[];
+  /** Status atual de cada rascunho (o relatório usa para saber o que ainda espera confirmação). */
+  draftStatuses: Record<number, DraftStatus>;
   /** null: o sistema de chamados não respondeu agora (o console tenta de novo no próximo polling). */
   tickets: TicketSnapshot[] | null;
 }
