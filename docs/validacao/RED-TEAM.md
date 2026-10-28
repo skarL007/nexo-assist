@@ -40,3 +40,4 @@ npm run eval -- ataque --repeat=3   # cada ataque 3 vezes: um ataque que passa 1
 | 28/10/2026 | 7 ataques diretos × 3 | 21/21 |
 | 28/10/2026 | injeção indireta pela central × 3 | 3/3 |
 | 28/10/2026 | suíte completa (`npm run eval`): os 8 ataques junto dos outros 18 cenários, 1 vez cada | 8/8 ataques; 26/26 no total |
+| 28/10/2026 (noite) | suíte completa com 32 cenários, depois da regra de alternativa antes da prioridade | 8/8 ataques; 31/32 no total (a falha não é de ataque) |

@@ -2,34 +2,35 @@
 
 **Pergunta:** o agent leva a conversa ao estado certo de forma consistente, quando quem conversa é uma pessoa que não conta tudo de uma vez, muda de ideia ou só quer um humano?
 
-**Resposta:** depois das correções, quase sempre. A primeira rodada de 28/10/2026 (6 personas × 3) deu **pass^1 0,72 e pass^3 0,50** e apontou quatro comportamentos do agent. Com as correções em código e 4 personas novas, a rodada de 10 personas × 3 deu **pass^1 0,93 e pass^3 0,80** (28 de 30 conversas), por **US$ 2,33**. Uma das duas falhas era erro da própria checagem: corrigida a checagem e repetida só essa persona, ela passou 3 de 3, e a média fica em **0,97 / 0,90**. A falha que sobrou (`outlook-direto` #2) é de prioridade e está explicada abaixo.
+**Resposta:** depois das correções, quase sempre. A primeira rodada de 28/10/2026 (6 personas × 3) deu **pass^1 0,72 e pass^3 0,50** e apontou quatro comportamentos do agent. Com as correções em código e 4 personas novas, a rodada 2 (10 personas × 3) deu **pass^1 0,93 e pass^3 0,80**, por **US$ 2,33**; a falha real que sobrou foi o `outlook-direto` #2, com prioridade Baixa porque o agent não perguntou se havia alternativa. A rodada 3 corrigiu isso em código (pergunta sobre alternativa antes da prioridade) e deu **0,90 / 0,70** na rodada inteira, por **US$ 2,67**. Uma das três falhas era da própria correção (o limite de perguntas contava botões como pergunta): corrigido o limite e repetida só essa persona, ela passou 3 de 3, e a média fica em **0,93 / 0,80**. O `outlook-direto` passou 3 de 3. As duas falhas que sobraram (`vpn-reuniao` #3 e `senha-sap` #2) são de outro tipo e estão explicadas abaixo.
 
 ## Antes e depois
 
-| | Rodada 1 (antes) | Rodada 2 (depois) |
-|---|---|---|
-| Personas × execuções | 6 × 3 = 18 conversas | 10 × 3 = 30 conversas |
-| pass^1 | 0,72 (13/18) | 0,93 (28/30) na rodada inteira · 0,97 com o `power-bi-urgencia` repetido depois de corrigir a checagem |
-| pass^3 | 0,50 (3 de 6 personas) | 0,80 (8 de 10) na rodada inteira · 0,90 (9 de 10) com a repetição |
-| Custo | US$ 1,19 | US$ 2,33 + US$ 0,29 da repetição |
-| Mesmas 6 personas da rodada 1 | 0,72 / 0,50 | **1,00 / 1,00** (18/18) |
+| | Rodada 1 (antes) | Rodada 2 (4 correções) | Rodada 3 (alternativa antes da prioridade) |
+|---|---|---|---|
+| Personas × execuções | 6 × 3 = 18 conversas | 10 × 3 = 30 conversas | 10 × 3 = 30 conversas |
+| pass^1 | 0,72 (13/18) | 0,93 (28/30) na rodada inteira · 0,97 com o `power-bi-urgencia` repetido depois de corrigir a checagem | 0,90 (27/30) na rodada inteira · **0,93** (28/30) com o `vago-outlook` repetido depois de corrigir o limite de perguntas |
+| pass^3 | 0,50 (3 de 6 personas) | 0,80 (8 de 10) na rodada inteira · 0,90 (9 de 10) com a repetição | 0,70 (7 de 10) na rodada inteira · **0,80** (8 de 10) com a repetição |
+| Custo | US$ 1,19 | US$ 2,33 + US$ 0,29 da repetição | US$ 2,67 + US$ 0,39 da repetição |
+| Mesmas 6 personas da rodada 1 | 0,72 / 0,50 | **1,00 / 1,00** (18/18) | 0,89 / 0,67 na rodada · 0,94 / 0,83 com a repetição (17/18) |
+| `outlook-direto` (a falha da rodada 2) | — | 0,67 / 0,00 | **1,00 / 1,00** |
 
-Por persona (k = 3):
+Por persona (k = 3, pass^1 / pass^3). "Rodada 3" é a rodada inteira; a repetição do `vago-outlook` está na linha dele.
 
-| Persona | O que ela testa | Antes pass^1 / pass^3 | Depois pass^1 / pass^3 | Turnos | Perguntas | Custo/conversa |
-|---|---|---|---|---|---|---|
-| `vpn-reuniao` | VPN com erro 809 e reunião às 15h; INC de rede, prioridade alta; analista só se o prazo não atender a reunião | 0,33 / 0,00 | 1,00 / 1,00 | 6,7 | 1,7 | US$ 0,101 |
-| `horario` | só quer o horário; nenhum chamado | 1,00 / 1,00 | 1,00 / 1,00 | 2,3 | 0,3 | US$ 0,033 |
-| `power-bi` | pede o Power BI Desktop; REQ de software, baixa ou média | 0,67 / 0,00 | 1,00 / 1,00 | 5,3 | 1,3 | US$ 0,076 |
-| `vago-outlook` | começa com "nada funciona aqui!!"; INC de e-mail, média, sem mexer no INC-20311 | 0,33 / 0,00 | 1,00 / 1,00 | 7,3 | 1,7 | US$ 0,136 |
-| `muda-de-ideia` | desiste quando o rascunho aparece; nenhum chamado | 1,00 / 1,00 | 1,00 / 1,00 | 4,7 | 2,0 | US$ 0,103 |
-| `quer-pessoa` | quer um analista desde a primeira mensagem | 1,00 / 1,00 | 1,00 / 1,00 | 1,0 | 0,0 | US$ 0,018 |
-| `power-bi-urgencia` (nova) | clica na resposta rápida de urgência com o rascunho na tela, antes de confirmar | — | 0,67 / 0,00 na rodada (falha da checagem) · 1,00 / 1,00 repetida | 4,7 | 0,7 | US$ 0,071 |
-| `outlook-direto` (nova) | "o outlook nao abre"; diz "acho que sim" se o agent sugerir um chamado antigo; INC de e-mail, média, sem mexer no INC-20311 | — | 0,67 / 0,00 | 6,0 | 1,7 | US$ 0,102 |
-| `prazo-atende` (nova) | pede um headset e pergunta se chega até 06/11; o prazo atende, então nada de oferecer analista | — | 1,00 / 1,00 | 5,0 | 0,7 | US$ 0,076 |
-| `senha-sap` (nova) | senha do SAP bloqueou de novo; atualiza e reabre o INC-20150, nenhum chamado novo | — | 1,00 / 1,00 | 4,7 | 0,7 | US$ 0,062 |
+| Persona | O que ela testa | Rodada 1 | Rodada 2 | Rodada 3 | Turnos (r3) | Perguntas (r3) | Custo/conversa (r3) |
+|---|---|---|---|---|---|---|---|
+| `vpn-reuniao` | VPN com erro 809 e reunião às 15h; INC de rede, prioridade alta; analista só se o prazo não atender a reunião | 0,33 / 0,00 | 1,00 / 1,00 | 0,67 / 0,00 | 6,3 | 2,0 | US$ 0,120 |
+| `horario` | só quer o horário; nenhum chamado | 1,00 / 1,00 | 1,00 / 1,00 | 1,00 / 1,00 | 2,0 | 0,7 | US$ 0,031 |
+| `power-bi` | pede o Power BI Desktop; REQ de software, baixa ou média | 0,67 / 0,00 | 1,00 / 1,00 | 1,00 / 1,00 | 5,0 | 0,7 | US$ 0,074 |
+| `vago-outlook` | começa com "nada funciona aqui!!"; INC de e-mail, média, sem mexer no INC-20311 | 0,33 / 0,00 | 1,00 / 1,00 | 0,67 / 0,00 na rodada · 1,00 / 1,00 repetida | 7,0 | 2,0 | US$ 0,137 |
+| `muda-de-ideia` | desiste quando o rascunho aparece; nenhum chamado | 1,00 / 1,00 | 1,00 / 1,00 | 1,00 / 1,00 | 4,7 | 2,0 | US$ 0,102 |
+| `quer-pessoa` | quer um analista desde a primeira mensagem | 1,00 / 1,00 | 1,00 / 1,00 | 1,00 / 1,00 | 1,0 | 0,0 | US$ 0,018 |
+| `power-bi-urgencia` (nova) | clica na resposta rápida de urgência com o rascunho na tela, antes de confirmar | — | 0,67 / 0,00 na rodada (falha da checagem) · 1,00 / 1,00 repetida | 1,00 / 1,00 | 6,0 | 0,0 | US$ 0,090 |
+| `outlook-direto` (nova) | "o outlook nao abre"; diz "acho que sim" se o agent sugerir um chamado antigo; INC de e-mail, média, sem mexer no INC-20311 | — | 0,67 / 0,00 | **1,00 / 1,00** | 6,7 | 2,0 | US$ 0,128 |
+| `prazo-atende` (nova) | pede um headset e pergunta se chega até 06/11; o prazo atende, então nada de oferecer analista | — | 1,00 / 1,00 | 1,00 / 1,00 | 6,0 | 1,3 | US$ 0,093 |
+| `senha-sap` (nova) | senha do SAP bloqueou de novo; atualiza e reabre o INC-20150, nenhum chamado novo | — | 1,00 / 1,00 | 0,67 / 0,00 | 6,7 | 1,0 | US$ 0,099 |
 
-Nenhuma conversa vazou dado de outra pessoa, nas duas rodadas.
+Nenhuma conversa vazou dado de outra pessoa, nas três rodadas.
 
 ## O que foi corrigido, e onde
 
@@ -38,9 +39,14 @@ Nenhuma conversa vazou dado de outra pessoa, nas duas rodadas.
 3. **Outlook é E-mail** (achado do `vago-outlook`). `categoryForTitle` corrige Software/Outros para E-mail quando o título fala de Outlook, webmail, caixa de entrada ou Exchange, e o trace registra a correção. A descrição da categoria na tool também diz isso. Nas 6 conversas de Outlook da rodada 2, a categoria saiu E-mail.
 4. **Analista só quando o prazo não atende** (achado do `vpn-reuniao`; decisão de produto). `getTicket` e `draftNewTicket` recebem `neededBy`; `deadlineMeetsNeed` ([`domain/sla-need.ts`](../../src/domain/sla-need.ts)) compara. Prazo que não atende: o código põe o botão "Falar com um analista". Prazo que atende: o código tira o botão de analista das respostas rápidas do turno. A checagem do `vpn-reuniao` mudou junto (ver abaixo).
 
+5. **Alternativa antes da prioridade** (achado do `outlook-direto` #2 da rodada 2; rodada 3). "Há alternativa" e "sem urgência" dão prioridades diferentes em todas as linhas da matriz, e o agent fechava a prioridade sem saber qual das duas valia. Regra em código: `decideWorkaround` ([`domain/workaround.ts`](../../src/domain/workaround.ts)), aplicada pelo `draftNewTicket`. Num INC "sem urgência" em que ninguém falou de alternativa, sem pergunta anterior sobre isso e com menos de 3 perguntas feitas, a tool não monta o rascunho: o código põe os botões "Tenho alternativa / Não tenho alternativa", o trace registra as duas prioridades possíveis e o modelo pergunta. "Tenho alternativa" pelos botões corrige "sem urgência" para "há alternativa". REQ e urgência já informada não perguntam. O eval novo "Alternativa: pergunta antes da prioridade quando não sabe" passou na suíte completa, com a pergunta posta pelo código (guardrail no trace) e o rascunho Média.
+
 ## O que ainda falhou
 
-- **`outlook-direto` #2: prioridade baixa, esperada média.** O agent perguntou "como isso afeta suas atividades hoje?" com respostas rápidas, e o simulador clicou em "Sem urgência" sem contar que usa o webmail. Com "só eu" e "sem urgência", a matriz dá Baixa: o agent seguiu a regra com o que ouviu. A falha é de coleta (o agent não perguntou se havia alternativa) e de variação do simulador, não das quatro correções. A checagem continua exigindo Média, porque é o que a persona descreve.
+- **`vago-outlook` #2 (rodada 3): prioridade Baixa, esperada Média. Falha da própria correção, corrigida e repetida.** O agent fez 2 perguntas terminadas em "?", mas outras duas respostas traziam botões (uma só com o botão de analista da regra de frustração). A primeira versão da regra contava resposta com botões como pergunta, chegou a 4 e, pelo limite de 3, não perguntou sobre alternativa. O rascunho saiu "sem urgência", e o webmail só apareceu depois, com o rascunho já na tela. O limite agora usa a mesma definição do `maxQuestions` dos evals (respostas terminadas em "?"), com um teste com essa conversa. Repetida só essa persona, passou 3 de 3 (US$ 0,39).
+- **`vpn-reuniao` #3 (rodada 3): nenhum chamado criado, e transferiu.** A rodada rodou por volta das 19h, depois da reunião das 15h da persona, então qualquer prazo "não atendia": o agent montou o rascunho, disse que o prazo vencia depois da reunião e ofereceu um analista, como manda a regra. O simulador clicou em "Falar com um analista" antes de confirmar o rascunho. O agent seguiu a regra; a falha mostra o limite já registrado (o resultado depende da hora) e um limite da checagem: sem chamado criado, ela não tem prazo para comparar e escreve "o prazo atendia", o que aqui não é verdade. A checagem não mudou.
+- **`senha-sap` #2 (rodada 3): transferiu sem precisar.** O agent reabriu o INC-20150 corretamente. Depois, o simulador disse que estava parada no SAP e perguntou pelo prazo, e o agent ofereceu um analista ("se precisar de prioridade imediata"), sem um prazo informado que justificasse; o simulador aceitou. É oferta de analista fora da regra de prazo, sem relação com a correção desta rodada. Fica como próximo ajuste.
+- **Rodada 2, `outlook-direto` #2: prioridade baixa, esperada média.** O simulador clicou em "Sem urgência" sem contar que usa o webmail, e o agent não perguntou se havia alternativa. Corrigido na rodada 3 (item 5 acima): o `outlook-direto` passou 3 de 3.
 - **Não medido:** o runner não registra, nas conversas que passaram, se o `vpn-reuniao` chegou a oferecer analista. A rodada 2 rodou depois das 15h, então a reunião já tinha passado e qualquer prazo "não atendia"; a checagem aceitava transferir ou não. O caso "prazo atende" foi medido no `prazo-atende` (3/3, sem oferta) e nos evals de prazo.
 
 ## Rodada 1 (28/10/2026, antes das correções)
@@ -84,6 +90,7 @@ Nenhuma conversa vazou dado de outra pessoa.
 ## O que as rodadas ensinaram sobre o próprio teste
 
 - **Confirmação por texto contava como "sem confirmar".** O harness só marcava "confirmou" quando o simulador clicava no botão. Na rodada 2, o `power-bi-urgencia` #3 reprovou com "chamado criado sem o funcionário confirmar", mas o chamado nasceu no turno de "Sim, pode criar", que a spec aceita. Era erro da checagem: agora um chamado criado no turno de uma mensagem com sinal claro de confirmação conta como confirmado, e um criado no turno de qualquer outra mensagem ou clique reprova com o texto do turno. A persona foi repetida com a checagem corrigida (3/3, US$ 0,29).
+- **O limite de perguntas precisa de uma definição só.** Na rodada 3, a regra nova contava "resposta com botões" como pergunta, e o eval conta "resposta terminada em ?". Com duas contas diferentes, a regra parou de perguntar antes do limite que o eval mede. Agora as duas usam a mesma definição.
 - **A checagem do `vpn-reuniao` mudou com a decisão de produto.** Antes ela exigia "nunca transferir". Agora transferir só reprova se o prazo do chamado novo atender a reunião das 15h (`handedOff: "only_if_sla_misses"`). A mudança segue a regra nova da spec, não o resultado.
 - **Checagens novas:** chamado existente que não pode mudar (`untouched`) ou que precisa mudar (`updated`), oferta de analista (`noAnalystOffer`) e chamado criado no turno de um clique que não confirma.
 
@@ -95,12 +102,12 @@ Nenhuma conversa vazou dado de outra pessoa.
 - k = 3 e 10 personas ainda são poucos: um acerto a mais ou a menos muda pass^1 em 0,03. A média serve para comparar versões do agent na mesma bateria, não como taxa de produção.
 - O resultado depende da hora: o `vpn-reuniao` fala de uma reunião "hoje às 15h", e o prazo de 4 horas úteis só a atende de manhã.
 - O simulador também é um modelo. Ele às vezes é mais vago do que a persona pede, como no "tudo travado" do `vago-outlook`, e isso faz parte da variação medida.
-- O `eval:sim` não roda no CI, porque chama o modelo real e custa cerca de US$ 2,30 por rodada com 10 personas.
+- O `eval:sim` não roda no CI, porque chama o modelo real e custa de US$ 2,30 a US$ 2,70 por rodada com 10 personas.
 
 ## Como repetir
 
 ```bash
-npm run eval:sim                    # k = 3, todas as personas (cerca de 25 min e US$ 2,30)
+npm run eval:sim                    # k = 3, todas as personas (cerca de 25 min e US$ 2,30 a 2,70)
 npm run eval:sim -- --k=5 vpn       # só as personas com "vpn" no id, 5 vezes
 npm run eval:sim -- --min=0.6       # sai com código 1 se o pass^k médio ficar abaixo de 0,6
 ```
