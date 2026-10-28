@@ -46,7 +46,7 @@ export function ConsoleScreen({ analyst }: { analyst: { id: string; name: string
             <>
               {/* key: trocar de conversa zera o texto digitado e o erro da anterior (senão iriam para outra pessoa). */}
               <ConversationPanel key={detail.data.id} conversation={detail.data} analystId={analyst.id} />
-              <TicketsPanel employeeName={detail.data.employee.name} tickets={detail.data.tickets} ticketCode={detail.data.ticketCode} />
+              <TicketsPanel employeeName={detail.data.employee.name} tickets={detail.data.tickets} ticketCode={detail.data.ticketCode} slaAlerts={detail.data.slaAlerts} />
             </>
           ) : detail.isError ? (
             <Centered>

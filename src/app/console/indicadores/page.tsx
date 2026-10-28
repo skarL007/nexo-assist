@@ -8,6 +8,7 @@ const WINDOW_DAYS = 30;
 
 export default async function InsightsPage() {
   const analyst = await requirePageUser("analyst");
-  const insights = await createServices().insights.lastDays(WINDOW_DAYS);
-  return <InsightsScreen analystName={analyst.name} insights={insights} days={WINDOW_DAYS} generatedAt={new Date().toISOString()} />;
+  const services = createServices();
+  const [insights, slaQueue] = await Promise.all([services.insights.lastDays(WINDOW_DAYS), services.insights.slaQueue()]);
+  return <InsightsScreen analystName={analyst.name} insights={insights} slaQueue={slaQueue} days={WINDOW_DAYS} generatedAt={new Date().toISOString()} />;
 }

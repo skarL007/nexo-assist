@@ -6,7 +6,7 @@ import type { Conversation } from "@/domain/conversation";
 import type { Employee } from "@/domain/employee";
 import type { Article } from "@/domain/knowledge";
 import type { Card, ChatMessage, DraftKind, DraftStatus, MessageRole, NewTicketFields, TicketUpdateFields, TurnTrace } from "@/domain/message";
-import type { Ticket, TicketType } from "@/domain/ticket";
+import type { Priority, Ticket, TicketStatus, TicketType } from "@/domain/ticket";
 
 export interface EmployeeRepository {
   findById(id: string): Promise<Employee | null>;
@@ -111,6 +111,8 @@ export interface InsightsSource {
   feedbackSince(since: Date): Promise<{ helpful: boolean }[]>;
   draftStatusesSince(since: Date): Promise<{ status: DraftStatus }[]>;
   countAnalysts(): Promise<number>;
+  /** Chamados abertos de todo mundo, com o nome de quem abriu (fila de prazos do console). */
+  openTickets(): Promise<{ code: string; title: string; priority: Priority; status: TicketStatus; updatedAt: Date; ownerName: string }[]>;
 }
 
 /** Contadores globais com teto (custo do deploy). */

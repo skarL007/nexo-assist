@@ -1,8 +1,10 @@
 /** Monta as respostas da API (contracts) a partir dos serviços. */
-import type { ConsoleConversationDetail, ConsoleConversationSummary, ConversationView } from "@/contracts/chat";
+import type { ConsoleConversationDetail, ConsoleConversationSummary, ConversationView, SlaAlertView } from "@/contracts/chat";
 import { MESSAGE_LIMIT_PER_SESSION, type Conversation } from "@/domain/conversation";
 import type { Employee } from "@/domain/employee";
-import type { ChatMessage } from "@/domain/message";
+import type { ChatMessage, TicketSnapshot } from "@/domain/message";
+import { slaRisk } from "@/domain/sla-risk";
+import { explainSla } from "@/lib/sla-text";
 import type { Services } from "@/infrastructure/container";
 import { logError } from "./http";
 
@@ -81,12 +83,25 @@ export async function consoleDetail(services: Services, conversation: Conversati
       return null;
     }),
   ]);
+  const snapshots = tickets ? tickets.map((t) => services.tickets.snapshot(t)) : null;
   return {
     ...summary(conversation, people, messages.at(-1)),
     handoffSummary: conversation.handoff?.summary ?? null,
     messages,
     draftStatuses,
     feedback,
-    tickets: tickets ? tickets.map((t) => services.tickets.snapshot(t)) : null,
+    tickets: snapshots,
+    slaAlerts: snapshots ? slaAlerts(snapshots, new Date()) : [],
   };
+}
+
+/** Vencidos primeiro (mais atrasado no topo), depois os em risco (o que vence antes no topo). */
+export function slaAlerts(tickets: TicketSnapshot[], now: Date): SlaAlertView[] {
+  return tickets
+    .flatMap((t) => {
+      const risk = slaRisk({ code: t.code, title: t.title, priority: t.priority, status: t.status, updatedAt: new Date(t.updatedAt) }, now);
+      return risk ? [risk] : [];
+    })
+    .sort((a, b) => (a.level === b.level ? (a.level === "overdue" ? b.overdueMs - a.overdueMs : a.remainingMs - b.remainingMs) : a.level === "overdue" ? -1 : 1))
+    .map((risk) => ({ code: risk.code, title: risk.title, level: risk.level, ...explainSla(risk) }));
 }

@@ -1,5 +1,7 @@
 import { HANDOFF_REASON_LABEL } from "@/domain/conversation";
 import type { Insights } from "@/domain/insights";
+import type { SlaRisk } from "@/domain/sla-risk";
+import { explainSla } from "@/lib/sla-text";
 import { formatClock, formatSeconds, formatUsd, percent } from "@/lib/format";
 import { ConsoleRail } from "./console-rail";
 
@@ -7,7 +9,19 @@ const dash = "—";
 const pct = (value: number | null) => (value === null ? dash : percent(value));
 
 /** Indicadores do atendimento: o que o agent resolve, por que transfere, quanto demora e quanto custa. */
-export function InsightsScreen({ analystName, insights, days, generatedAt }: { analystName: string; insights: Insights; days: number; generatedAt: string }) {
+export function InsightsScreen({
+  analystName,
+  insights,
+  slaQueue,
+  days,
+  generatedAt,
+}: {
+  analystName: string;
+  insights: Insights;
+  slaQueue: (SlaRisk & { ownerName: string })[];
+  days: number;
+  generatedAt: string;
+}) {
   const totalHandoffs = insights.handoffs.reduce((sum, h) => sum + h.count, 0);
   const maxHandoff = Math.max(1, ...insights.handoffs.map((h) => h.count));
 
@@ -66,6 +80,43 @@ export function InsightsScreen({ analystName, insights, days, generatedAt }: { a
               detail={`${insights.drafts.confirmed} confirmados · ${insights.drafts.cancelled} descartados · ${insights.drafts.pending} pendentes`}
             />
             <Tile small label="Analistas no service desk" value={String(insights.analysts)} detail={`${totalHandoffs} transferência${totalHandoffs === 1 ? "" : "s"}`} />
+          </section>
+
+          <section aria-labelledby="sla-title" className="rounded-xl border bg-surface p-5">
+            <h2 id="sla-title" className="font-semibold">
+              Prazos em risco agora
+            </h2>
+            <p className="mb-4 text-xs text-muted-foreground">Chamados abertos vencidos ou com 75% ou mais do prazo usado, com a conta do prazo.</p>
+            {slaQueue.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhum chamado com prazo em risco.</p>
+            ) : (
+              <ul className="divide-y">
+                {slaQueue.map((risk) => {
+                  const text = explainSla(risk);
+                  return (
+                    <li key={risk.code} className="py-3 text-sm">
+                      <details>
+                        <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1">
+                          <span className={risk.level === "overdue" ? "font-medium text-danger" : "font-medium text-amber-800"}>
+                            {risk.level === "overdue" ? "Vencido" : "Em risco"}
+                          </span>
+                          <span className="font-medium">{text.headline}</span>
+                          <span className="text-muted-foreground">
+                            {risk.title} · {risk.ownerName}
+                          </span>
+                          <span className="text-xs text-primary">por quê?</span>
+                        </summary>
+                        <ul className="mt-2 list-disc space-y-0.5 pl-5 text-xs text-muted-foreground">
+                          {text.lines.map((line) => (
+                            <li key={line}>{line}</li>
+                          ))}
+                        </ul>
+                      </details>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </section>
 
           <section aria-labelledby="handoffs-title" className="rounded-xl border bg-surface p-5">

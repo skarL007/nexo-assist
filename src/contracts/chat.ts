@@ -22,6 +22,15 @@ export interface ConversationView {
   messages: ChatMessage[];
 }
 
+/** Alerta de prazo (vencido ou em risco) com a explicação da conta, pronto para mostrar. */
+export interface SlaAlertView {
+  code: string;
+  title: string;
+  level: "at_risk" | "overdue";
+  headline: string;
+  lines: string[];
+}
+
 export const feedbackSchema = z.strictObject({
   messageId: z.string().min(1).max(100),
   helpful: z.boolean(),
@@ -96,6 +105,8 @@ export interface ConsoleConversationDetail extends ConsoleConversationSummary {
   draftStatuses: Record<number, DraftStatus>;
   /** Avaliações do funcionário ("Isso resolveu?"), para o analista ver o que não funcionou. */
   feedback: Record<string, boolean>;
+  /** Chamados do funcionário com prazo vencido ou em risco, com o porquê. */
+  slaAlerts: SlaAlertView[];
   /** null: o sistema de chamados não respondeu agora (o console tenta de novo no próximo polling). */
   tickets: TicketSnapshot[] | null;
 }

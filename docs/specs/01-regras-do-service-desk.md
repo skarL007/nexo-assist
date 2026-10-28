@@ -51,3 +51,11 @@ Aceite: sexta 17h + 4h úteis = segunda 11h; pedido no sábado começa a contar 
 ## Escopo
 
 Apenas TI. RH, financeiro e facilities são redirecionados sem abrir chamado.
+
+## Aviso proativo de prazo (com o porquê)
+
+- Um chamado aberto entra em **risco** quando 75% ou mais da janela do SLA já passou (em tempo útil; crítico em tempo corrido), e fica **vencido** depois do prazo. Cálculo em `domain/sla-risk.ts`, sem o modelo.
+- O aviso mostra a conta: prioridade e janela, de quando conta (última atualização), prazo, quanto falta ou o atraso em tempo útil e quanto o relógio ficou parado fora do expediente.
+- **Funcionário:** ao abrir o chat (com o agent), um aviso por chamado (até 2) com "por quê?", "Falar com um analista" (manda o pedido citando o chamado) e "Dispensar" (vale para a aba). Se o sistema de chamados cair, o chat abre igual, sem o aviso.
+- **Analista:** o painel de chamados da conversa mostra os prazos com o porquê; Indicadores tem a fila "Prazos em risco agora" de todo mundo, vencidos primeiro.
+- Aceite: seed → INC-20311 da Ana (média, atualizado há 6 dias) aparece como "venceu o prazo há …" no chat dela e na fila do console, com "Prioridade Média: resposta em até 3 dias úteis".

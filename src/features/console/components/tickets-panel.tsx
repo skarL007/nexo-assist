@@ -1,5 +1,6 @@
-import { ArrowLeftRight, ChevronRight } from "lucide-react";
+import { AlarmClock, ArrowLeftRight, ChevronRight } from "lucide-react";
 import { TicketStatus, ticketTone } from "@/components/nexo/status-pill";
+import type { SlaAlertView } from "@/contracts/chat";
 import { firstName } from "@/domain/employee";
 import type { TicketSnapshot } from "@/domain/message";
 import { CATEGORY_LABEL, PRIORITY_LABEL, STATUS_LABEL } from "@/domain/ticket";
@@ -9,7 +10,17 @@ import { cn } from "@/lib/utils";
 const DOT: Record<string, string> = { danger: "bg-danger", warning: "bg-warning", info: "bg-primary", success: "bg-success", neutral: "bg-muted-foreground/50" };
 
 /** Painel lateral: chamados do funcionário, destacando o que motivou a transferência. */
-export function TicketsPanel({ employeeName, tickets, ticketCode }: { employeeName: string; tickets: TicketSnapshot[] | null; ticketCode: string | null }) {
+export function TicketsPanel({
+  employeeName,
+  tickets,
+  ticketCode,
+  slaAlerts = [],
+}: {
+  employeeName: string;
+  tickets: TicketSnapshot[] | null;
+  ticketCode: string | null;
+  slaAlerts?: SlaAlertView[];
+}) {
   if (!tickets) {
     return (
       <aside className="hidden w-80 shrink-0 flex-col border-l bg-surface xl:flex">
@@ -36,6 +47,27 @@ export function TicketsPanel({ employeeName, tickets, ticketCode }: { employeeNa
       </header>
 
       <div className="flex-1 space-y-5 overflow-y-auto p-4">
+        {slaAlerts.length > 0 && (
+          <section aria-label="Prazos" className="space-y-2">
+            <h3 className="text-xs text-muted-foreground">Prazos</h3>
+            {slaAlerts.map((alert) => (
+              <details key={alert.code} className={cn("rounded-xl border p-3 text-xs", alert.level === "overdue" ? "border-danger/30 bg-danger-soft" : "border-warning/30 bg-warning-soft")}>
+                <summary className="flex cursor-pointer list-none items-start gap-2 text-sm font-medium">
+                  <AlarmClock className={cn("mt-0.5 size-4 shrink-0", alert.level === "overdue" ? "text-danger" : "text-amber-700")} />
+                  <span>
+                    {alert.headline}
+                    <span className="block text-xs font-normal text-muted-foreground">{alert.title} · por quê?</span>
+                  </span>
+                </summary>
+                <ul className="mt-2 list-disc space-y-0.5 pl-5 text-muted-foreground">
+                  {alert.lines.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              </details>
+            ))}
+          </section>
+        )}
         {current && (
           <section className="space-y-2">
             <h3 className="text-xs text-muted-foreground">Desta conversa</h3>
