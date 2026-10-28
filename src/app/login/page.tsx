@@ -6,6 +6,13 @@ import { createServices } from "@/infrastructure/container";
 import { formatSeconds, percent } from "@/lib/format";
 import { logError } from "@/server/http";
 import { currentUser, homeFor } from "@/server/session";
+import { ssoConfig } from "@/server/sso";
+
+const SSO_ERRORS: Record<string, string> = {
+  desconhecido: "Seu e-mail não está no service desk. Fale com a TI no ramal 4000.",
+  dominio: "Use a sua conta corporativa da Nexo.",
+  falhou: "Não foi possível entrar pelo SSO. Tente de novo ou use e-mail e senha.",
+};
 
 export const dynamic = "force-dynamic";
 
@@ -19,10 +26,12 @@ async function loginStats(): Promise<Insights | null> {
   }
 }
 
-export default async function LoginPage() {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ sso?: string }> }) {
   const user = await currentUser();
   if (user) redirect(homeFor(user.role));
   const stats = await loginStats();
+  const sso = ssoConfig();
+  const ssoError = SSO_ERRORS[(await searchParams).sso ?? ""];
 
   return (
     <main className="grid min-h-screen lg:grid-cols-2">
@@ -61,6 +70,16 @@ export default async function LoginPage() {
             <h2 className="font-serif text-4xl">Entrar</h2>
             <p className="text-sm text-muted-foreground">Use seu e-mail corporativo e a senha de rede Nexo.</p>
           </div>
+          {ssoError && (
+            <p role="alert" className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
+              {ssoError}
+            </p>
+          )}
+          {sso && (
+            <a href="/api/auth/sso" className="flex h-10 items-center justify-center rounded-lg border bg-card text-sm font-medium hover:bg-muted">
+              Entrar com {sso.label}
+            </a>
+          )}
           <LoginForm />
         </div>
         <footer className="flex justify-between text-xs text-muted-foreground">

@@ -104,12 +104,23 @@ async function* replyWithAgent(turn: TurnContext, abortSignal?: AbortSignal): As
     latencyMs: Date.now() - startedAt.getTime(),
   };
 
-  await services.messages.add({
+  const reply = await services.messages.add({
     conversationId,
     role: "agent",
     text: stripMarkdown(stripSystemNotes(run.reply)) || fallbackReply(recorder),
     cards: recorder.cards,
     trace,
+  });
+
+  // Observabilidade externa opcional (OpenTelemetry/Langfuse). Sem configuração, telemetry é null.
+  // Esperado aqui (até 2 s) porque a função da Vercel pode congelar depois da resposta.
+  await services.telemetry?.turnFinished({
+    conversationId,
+    employeeId: employee.id,
+    startedAt,
+    trace,
+    input: history.findLast((m) => m.role === "employee")?.text ?? "",
+    output: reply.text,
   });
 }
 

@@ -21,6 +21,7 @@ with_agent ──handoff──▶ waiting_analyst ──assume──▶ with_ana
 - "Manter conectado neste computador" (Tela 1 do protótipo): marcado, a sessão dura 7 dias; desmarcado, o cookie some quando o navegador fecha (e a sessão vence em 8 horas de qualquer jeito).
 - "Meu perfil" mostra o e-mail com o selo "Gerenciado pela TI", como no protótipo.
 - Os números do painel do login são **deste ambiente**, dos últimos 30 dias: tempo médio de resposta do agent, % resolvido sem analista e analistas no service desk (antes eram os do protótipo, fixos). Sem dados, aparece "—". Se o banco falhar, o login abre mesmo assim.
+- **SSO opcional (OpenID Connect).** Com `OIDC_ISSUER`, `OIDC_CLIENT_ID` e `OIDC_CLIENT_SECRET` definidos, o login mostra "Entrar com {OIDC_LABEL}" (ex.: Microsoft Entra, Google Workspace, Okta). Fluxo authorization code com PKCE (S256), `state` e `nonce` num cookie assinado de 10 minutos. O `id_token` é validado (assinatura pelo JWKS do provedor, `iss`, `aud`, `exp`, `nonce`, e-mail verificado e, com `OIDC_ALLOWED_DOMAIN`, o domínio). Entra só quem já é funcionário da base (ninguém é criado pelo SSO). Aceite: `e2e/sso.spec.ts` contra um provedor OIDC falso: Ana entra pelo SSO e cai no chat; e-mail fora da base volta ao login com "Seu e-mail não está no service desk"; `state` adulterado é recusado. Sem as variáveis, nada muda.
 
 ## "Isso resolveu?"
 
@@ -69,6 +70,10 @@ with_agent ──handoff──▶ waiting_analyst ──assume──▶ with_ana
 |---|---|---|---|
 | POST | `/api/auth/login` | todos | `{ email, password }` → cookie de sessão |
 | POST | `/api/auth/logout` | todos | apaga a sessão |
+| GET | `/api/auth/sso` → `/api/auth/sso/callback` | todos | SSO (só com OIDC configurado) |
+| GET | `/api/console/stream`, `/api/chat/stream` | analista / funcionário | SSE de "mudou" (tempo real) |
+| POST | `/api/chat/feedback` | funcionário | `{ messageId, helpful }` |
+| POST | `/api/console/conversations/:id/suggestion` | analista que assumiu | sugestão de resposta |
 | GET | `/api/chat` | funcionário | conversa aberta (ou vazia) |
 | POST | `/api/chat` | funcionário | `{ text }` → stream NDJSON |
 | POST | `/api/chat/new` | funcionário | encerra a conversa atual |

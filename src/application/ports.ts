@@ -107,6 +107,22 @@ export interface FeedbackRepository {
 }
 
 /** Leitura agregada para os indicadores (não muda nada). */
+/** Um turno do agent terminado, para observabilidade externa (OpenTelemetry/Langfuse). */
+export interface TurnTelemetry {
+  conversationId: string;
+  employeeId: string;
+  startedAt: Date;
+  trace: TurnTrace;
+  /** Texto do funcionário e resposta: só saem com a captura de conteúdo ligada. */
+  input: string;
+  output: string;
+}
+
+export interface TelemetrySink {
+  /** Nunca lança: falha de envio não pode derrubar o turno. */
+  turnFinished(turn: TurnTelemetry): Promise<void>;
+}
+
 /**
  * Assinaturas baratas do estado (tempo real). Mudam quando algo que a tela mostra muda;
  * o valor em si não importa, só se é diferente do anterior.

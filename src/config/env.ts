@@ -28,6 +28,21 @@ const schema = z.object({
   DAILY_AGENT_TURN_LIMIT: z.coerce.number().int().positive().default(500),
   /** Teto total de respostas do modelo (gasto fixo da demonstração). Vazio = sem teto. */
   TOTAL_AGENT_TURN_LIMIT: z.coerce.number().int().positive().optional(),
+  /** Telemetria opcional (OpenTelemetry GenAI). Langfuse: as duas chaves bastam. */
+  LANGFUSE_PUBLIC_KEY: z.string().optional(),
+  LANGFUSE_SECRET_KEY: z.string().optional(),
+  LANGFUSE_BASE_URL: z.url().optional(),
+  /** Qualquer coletor OTLP/HTTP (variáveis padrão do OpenTelemetry). */
+  OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: z.url().optional(),
+  OTEL_EXPORTER_OTLP_TRACES_HEADERS: z.string().optional(),
+  /** "true" manda também o texto da conversa e os argumentos das tools (dado pessoal: desligado por padrão). */
+  /** SSO opcional (OpenID Connect). Sem as três primeiras, o login fica só com e-mail e senha. */
+  OIDC_ISSUER: z.url().optional(),
+  OIDC_CLIENT_ID: z.string().optional(),
+  OIDC_CLIENT_SECRET: z.string().optional(),
+  OIDC_LABEL: z.string().default("SSO corporativo"),
+  OIDC_ALLOWED_DOMAIN: z.string().optional(),
+  OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: z.enum(["true", "false"]).transform((v) => v === "true").optional(),
 });
 
 export type Env = z.infer<typeof schema>;

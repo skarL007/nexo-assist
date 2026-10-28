@@ -19,7 +19,8 @@
     "benchmark": "tsx --env-file-if-exists=.env evals/benchmark/run.ts",
     "access-link": "tsx --env-file=.env.deploy.local scripts/access-link.ts",
     "eval:busca": "tsx --env-file-if-exists=.env evals/retrieval/run.ts",
-    "eval:sugestao": "tsx --env-file-if-exists=.env evals/suggestion/run.ts"
+    "eval:sugestao": "tsx --env-file-if-exists=.env evals/suggestion/run.ts",
+    "otel:local": "tsx scripts/otel-local.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",

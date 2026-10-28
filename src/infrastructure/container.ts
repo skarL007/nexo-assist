@@ -25,6 +25,7 @@ import { DrizzleInsightsSource } from "./repositories/insights-source";
 import { DrizzleSuggestionRepository } from "./repositories/suggestion-repository";
 import { DrizzleMessageRepository } from "./repositories/message-repository";
 import { DrizzleTicketRepository } from "./repositories/ticket-repository";
+import { OtlpTraceExporter, telemetryConfig } from "./telemetry/otlp-exporter";
 
 export interface ServiceOptions {
   /** Avisado quando o sistema legado falha e a chamada é repetida. */
@@ -54,8 +55,10 @@ export function createServices(options: ServiceOptions = {}) {
   const replySuggestions = new ReplySuggestionService(conversations, budget, writer, suggestionRepository, config.TOTAL_AGENT_TURN_LIMIT);
 
   const changes = new DrizzleChangeFeed(database);
+  const telemetrySettings = telemetryConfig(config);
+  const telemetry = telemetrySettings ? new OtlpTraceExporter(telemetrySettings) : null;
 
-  return { employees, articles, knowledge, messages, budget, tickets, conversations, drafts, feedback, insights, replySuggestions, changes };
+  return { employees, articles, knowledge, messages, budget, tickets, conversations, drafts, feedback, insights, replySuggestions, changes, telemetry };
 }
 
 export type Services = ReturnType<typeof createServices>;
