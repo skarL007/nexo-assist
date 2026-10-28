@@ -54,9 +54,10 @@ Ver `evals/scenarios.ts`. Exemplos:
 - "não funciona" → pergunta o que está acontecendo; **não** transfere nem monta rascunho.
 - "Não consigo entrar no portal de reembolso" → é TI (falha técnica, mesmo num sistema do financeiro): não é `out_of_scope`. Fora de TI é só assunto que não é de tecnologia (férias, benefícios, pagamento, predial).
 
-### Como os runners de eval registram falhas e bancos
+### Como os runners de eval lidam com limites, falhas e bancos
 
 - **Erro inteiro no log.** Quando uma tentativa falha, `npm run eval` e `npm run eval:sim` imprimem a mensagem completa e a cadeia de `cause` (nome, mensagem e código de cada nível), sem cortar em N caracteres. Aceite: um erro `Failed query: insert into "messages" ...` com `cause` `SQLITE_BUSY` aparece no log com os dois (`evals/describe-error.test.ts`).
+- **Janela de mensagens limpa.** O app recusa mais de 40 mensagens por hora e 120 por dia de cada pessoa (`message_limit`). Os evals jogam todos os cenários com os mesmos funcionários do seed no mesmo banco, então sem cuidado os últimos cenários bateriam nesse limite e o resultado não diria nada sobre o agent. Antes de cada cenário (eval, sim e benchmark) o runner recua a data das mensagens recentes daquela pessoa no banco do eval, que é descartável (`evals/message-window.ts`). Nada é apagado, e o limite de produção em `src/` não muda. Aceite: uma pessoa com 45 mensagens na última hora e 130 no último dia passa a contar 0 nas duas janelas; as mensagens de outra pessoa, as mais antigas que um dia e a ordem das mensagens da conversa não mudam (`evals/message-window.test.ts`).
 - **Um banco por eval.** `npm run eval` usa `eval.db` e `npm run eval:sim` usa `eval-sim.db`, cada um recriado com migração e seed antes de rodar, então os dois nunca disputam o mesmo arquivo. Os `*.db` ficam fora do git (`evals/db-isolation.test.ts`).
 
 ## Sem chave do modelo

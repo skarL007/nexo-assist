@@ -23,6 +23,8 @@ async function main() {
   // Imports depois de configurar o ambiente: o banco é lido na primeira chamada.
   const { runAgentTurn } = await import("@/agent/run-turn");
   const { createServices } = await import("@/infrastructure/container");
+  const { db } = await import("@/infrastructure/db/client");
+  const { freeMessageWindow } = await import("./message-window");
   const { scenarios: all } = await import("./scenarios");
   const { ticketFingerprint, withExtraArticles } = await import("./ticket-fingerprint");
   const args = process.argv.slice(2);
@@ -40,6 +42,8 @@ async function main() {
     const employee = await services.employees.findByEmail(scenario.employee);
     if (!employee) throw new Error(`Funcionário ${scenario.employee} não existe no seed`);
     await services.conversations.closeOpen(employee.id);
+    // O app limita mensagens por pessoa (40/h, 120/dia): sem isto os últimos cenários bateriam no limite.
+    await freeMessageWindow(db(), employee.id);
     await withExtraArticles(scenario.extraArticles ?? []);
 
     const before = await ticketFingerprint();
