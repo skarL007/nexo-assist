@@ -10,6 +10,7 @@
  */
 import { execSync } from "node:child_process";
 import { checkScenario } from "./checks";
+import { describeError } from "./describe-error";
 
 process.env.DATABASE_URL = "file:eval.db";
 process.env.LEGACY_FAILURE_RATE = "0";
@@ -91,7 +92,7 @@ async function main() {
         outcome = await play(scenario);
       } catch (error) {
         providerErrors++;
-        console.log(`    (erro do provedor na tentativa ${attempt}: ${String((error as Error).message).slice(0, 80)})`);
+        console.log(`    (erro do provedor na tentativa ${attempt}: ${describeError(error)})`);
         await new Promise((resolve) => setTimeout(resolve, 5000 * attempt));
       }
     }
