@@ -15,13 +15,15 @@ export async function conversationView(services: Services, conversation: Convers
       remainingMessages: MESSAGE_LIMIT_PER_SESSION,
       messageLimit: MESSAGE_LIMIT_PER_SESSION,
       draftStatuses: {},
+      feedback: {},
       messages: [],
     };
   }
-  const [messages, remainingMessages, draftStatuses, analyst] = await Promise.all([
+  const [messages, remainingMessages, draftStatuses, feedback, analyst] = await Promise.all([
     services.messages.listByConversation(conversation.id),
     services.conversations.remainingMessages(conversation.id),
     services.drafts.statuses(conversation.id),
+    services.feedback.byConversation(conversation.id),
     conversation.analystId ? services.employees.findById(conversation.analystId) : null,
   ]);
   return {
@@ -31,6 +33,7 @@ export async function conversationView(services: Services, conversation: Convers
     remainingMessages,
     messageLimit: MESSAGE_LIMIT_PER_SESSION,
     draftStatuses,
+    feedback,
     messages,
   };
 }
@@ -67,10 +70,11 @@ export async function consoleList(services: Services, conversations: Conversatio
 }
 
 export async function consoleDetail(services: Services, conversation: Conversation): Promise<ConsoleConversationDetail> {
-  const [people, messages, draftStatuses, tickets] = await Promise.all([
+  const [people, messages, draftStatuses, feedback, tickets] = await Promise.all([
     peopleOf(services, [conversation]),
     services.messages.listByConversation(conversation.id),
     services.drafts.statuses(conversation.id),
+    services.feedback.byConversation(conversation.id),
     // Os chamados vêm do sistema legado, que às vezes cai: a conversa (banco local) abre mesmo assim.
     services.tickets.listMine(conversation.employeeId).catch((error: unknown) => {
       logError(error);
@@ -82,6 +86,7 @@ export async function consoleDetail(services: Services, conversation: Conversati
     handoffSummary: conversation.handoff?.summary ?? null,
     messages,
     draftStatuses,
+    feedback,
     tickets: tickets ? tickets.map((t) => services.tickets.snapshot(t)) : null,
   };
 }

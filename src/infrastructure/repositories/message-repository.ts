@@ -31,6 +31,11 @@ export class DrizzleMessageRepository implements MessageRepository {
     return toDomain(row);
   }
 
+  async findById(id: string): Promise<ChatMessage | null> {
+    const row = await this.db.query.messages.findFirst({ where: eq(messages.id, id) });
+    return row ? toDomain(row) : null;
+  }
+
   async listByConversation(conversationId: string): Promise<ChatMessage[]> {
     const rows = await this.db
       .select()

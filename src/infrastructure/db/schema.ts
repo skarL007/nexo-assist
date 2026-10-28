@@ -74,6 +74,14 @@ export const messages = sqliteTable("messages", {
   createdAt: timestamp("created_at").notNull(),
 }, (t) => [index("messages_conversation_idx").on(t.conversationId, t.createdAt), index("messages_role_created_idx").on(t.role, t.createdAt)]);
 
+/** "Isso resolveu?": uma avaliação por resposta do agent (avaliar de novo troca). */
+export const messageFeedback = sqliteTable("message_feedback", {
+  messageId: text("message_id").primaryKey().references(() => messages.id),
+  employeeId: text("employee_id").notNull().references(() => employees.id),
+  helpful: integer("helpful", { mode: "boolean" }).notNull(),
+  createdAt: timestamp("created_at").notNull(),
+}, (t) => [index("message_feedback_created_idx").on(t.createdAt)]);
+
 /** Contadores globais com teto (ex.: respostas do modelo no total). Reservados de forma atômica. */
 export const usageCounters = sqliteTable("usage_counters", {
   key: text("key").primaryKey(),

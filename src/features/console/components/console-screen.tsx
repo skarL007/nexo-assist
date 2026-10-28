@@ -1,12 +1,9 @@
 "use client";
 
-import { MessagesSquare } from "lucide-react";
 import { useState } from "react";
-import { BrandMark } from "@/components/nexo/brand";
-import { PersonAvatar } from "@/components/nexo/person-avatar";
 import { Button } from "@/components/ui/button";
-import { LogoutButton } from "@/features/shell/employee-sidebar";
 import { useGetConversationQuery, useListConversationsQuery } from "../console-api";
+import { ConsoleRail } from "./console-rail";
 import { ConversationList } from "./conversation-list";
 import { ConversationPanel } from "./conversation-panel";
 import { TicketsPanel } from "./tickets-panel";
@@ -29,21 +26,7 @@ export function ConsoleScreen({ analyst }: { analyst: { id: string; name: string
 
   return (
     <div className="flex h-screen">
-      <nav className="flex w-14 shrink-0 flex-col items-center gap-4 border-r bg-surface py-4">
-        <BrandMark />
-        <span className="relative grid size-9 place-items-center rounded-md bg-accent text-accent-foreground" title="Conversas">
-          <MessagesSquare className="size-4" />
-          {queueSize > 0 && (
-            <span className="absolute -top-1 -right-1 grid size-4 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-              {queueSize}
-            </span>
-          )}
-        </span>
-        <div className="mt-auto flex flex-col items-center gap-2">
-          <PersonAvatar name={analyst.name} className="size-8" online />
-          <LogoutButton className="px-2" />
-        </div>
-      </nav>
+      <ConsoleRail active="conversas" analystName={analyst.name} queueSize={queueSize} />
 
       {list.isLoading ? (
         <Centered>Carregando conversas…</Centered>

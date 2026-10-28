@@ -39,3 +39,10 @@ export function formatListTime(iso: string, now = new Date()): string {
 }
 
 export const percent = (value: number) => `${Math.round(value * 100)}%`;
+
+/** "3,2 s" */
+export const formatSeconds = (ms: number) => `${(ms / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} s`;
+
+/** "US$ 0,0156" (custo por chamada é fração de centavo: mostra 2 algarismos significativos). */
+export const formatUsd = (value: number) =>
+  `US$ ${value.toLocaleString("pt-BR", value >= 1 ? { minimumFractionDigits: 2, maximumFractionDigits: 2 } : { maximumSignificantDigits: 2 })}`;

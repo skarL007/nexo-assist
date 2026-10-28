@@ -18,6 +18,20 @@ export type ApiKeyVar = (typeof API_KEY_BY_PROVIDER)[keyof typeof API_KEY_BY_PRO
 export const REASONING_EFFORTS = ["none", "minimal", "low", "medium", "high"] as const;
 export type ReasoningEffort = (typeof REASONING_EFFORTS)[number];
 
+/**
+ * Preço por milhão de tokens (US$), o mesmo da tabela do benchmark (docs/benchmark/RELATORIO.md).
+ * Serve para estimar o custo nos indicadores; modelo fora da tabela fica sem estimativa.
+ */
+const PRICE_PER_MILLION: Record<string, { input: number; output: number }> = {
+  "google/gemini-3.5-flash": { input: 1.5, output: 9 },
+  "google/gemini-3.5-flash-lite": { input: 0.3, output: 2.5 },
+};
+
+export function pricePerToken(model: string): { input: number; output: number } | null {
+  const price = PRICE_PER_MILLION[model];
+  return price ? { input: price.input / 1e6, output: price.output / 1e6 } : null;
+}
+
 export function providerOf(model: string): string {
   return model.split("/")[0];
 }

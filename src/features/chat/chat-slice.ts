@@ -39,6 +39,11 @@ export const resolveDraft = createAsyncThunk("chat/draft", ({ draftId, ...body }
   apiFetch<ConversationView>(`/api/chat/drafts/${draftId}`, { method: "POST", body: JSON.stringify(body) }),
 );
 
+/** "Isso resolveu?": a tela marca na hora e desfaz se o servidor recusar. */
+export const rateReply = createAsyncThunk("chat/feedback", (body: { messageId: string; helpful: boolean }) =>
+  apiFetch<{ ok: true }>("/api/chat/feedback", { method: "POST", body: JSON.stringify(body) }),
+);
+
 /** Envia a mensagem e repassa cada evento do stream para o reducer. */
 export const sendMessage = createAsyncThunk("chat/send", async (text: string, { dispatch }) => {
   const response = await fetchOrOffline("/api/chat", {
@@ -128,6 +133,13 @@ const chatSlice = createSlice({
       })
       // Erro de rascunho aparece no próprio card (o aviso no fim da página ficava atrás do campo de mensagem).
       .addCase(resolveDraft.rejected, () => {})
+      .addCase(rateReply.pending, (state, { meta }) => {
+        if (state.conversation) state.conversation.feedback[meta.arg.messageId] = meta.arg.helpful;
+      })
+      .addCase(rateReply.rejected, (state, { meta, error }) => {
+        if (state.conversation) delete state.conversation.feedback[meta.arg.messageId];
+        state.error = error.message ?? "Não foi possível registrar a avaliação.";
+      })
       .addCase(startNewConversation.fulfilled, (state, { payload }) => {
         state.conversation = payload;
         state.error = null;

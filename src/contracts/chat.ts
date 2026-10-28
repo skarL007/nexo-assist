@@ -17,8 +17,15 @@ export interface ConversationView {
   remainingMessages: number;
   messageLimit: number;
   draftStatuses: Record<number, DraftStatus>;
+  /** "Isso resolveu?": id da resposta do agent → avaliação do funcionário. */
+  feedback: Record<string, boolean>;
   messages: ChatMessage[];
 }
+
+export const feedbackSchema = z.strictObject({
+  messageId: z.string().min(1).max(100),
+  helpful: z.boolean(),
+});
 
 /** Eventos do stream (um JSON por linha — NDJSON). */
 export type ChatStreamEvent =
@@ -87,6 +94,8 @@ export interface ConsoleConversationDetail extends ConsoleConversationSummary {
   messages: ChatMessage[];
   /** Status atual de cada rascunho (o relatório usa para saber o que ainda espera confirmação). */
   draftStatuses: Record<number, DraftStatus>;
+  /** Avaliações do funcionário ("Isso resolveu?"), para o analista ver o que não funcionou. */
+  feedback: Record<string, boolean>;
   /** null: o sistema de chamados não respondeu agora (o console tenta de novo no próximo polling). */
   tickets: TicketSnapshot[] | null;
 }
