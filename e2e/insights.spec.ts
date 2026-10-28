@@ -25,9 +25,9 @@ test("analista abre os indicadores pelo console", async ({ page }) => {
   await page.keyboard.press("Enter");
   await expect(resolution.getByText(/voltou com o mesmo assunto em até 7 dias/)).toBeVisible();
 
-  // Lacunas: as 3 buscas do seed sobre a impressora do 3º andar, sem artigo; o CPF do exemplo não aparece.
+  // Lacunas: as 3 buscas do seed sobre o projetor da sala de reunião, sem artigo; o CPF do exemplo não aparece.
   const gaps = page.getByRole("region", { name: "Lacunas da central" });
-  await expect(gaps.getByText("impressora, andar")).toBeVisible();
+  await expect(gaps.getByText("projetor, sala")).toBeVisible();
   await expect(gaps.getByText(/3 buscas sem artigo · 100% viraram chamado ou analista/)).toBeVisible();
   await expect(page.getByText(/123.456.789-09/)).toHaveCount(0);
 

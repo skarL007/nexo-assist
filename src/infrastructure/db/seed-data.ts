@@ -16,7 +16,7 @@ export const employees = (): Employee[] => [
   { id: "emp-bruno", name: "Bruno Tavares", email: "bruno.tavares@nexo.com.br", role: "employee", department: "Marketing", passwordChangedAt: ago(70 * DAY) },
   { id: "emp-diego", name: "Diego Ramos", email: "diego.ramos@nexo.com.br", role: "employee", department: "Jurídico", passwordChangedAt: ago(5 * DAY) },
   { id: "emp-elisa", name: "Elisa Prado", email: "elisa.prado@nexo.com.br", role: "employee", department: "RH", passwordChangedAt: ago(30 * DAY) },
-  // Conversas antigas que alimentam "Lacunas da central" (impressora do 3º andar, sem artigo).
+  // Conversas antigas que alimentam "Lacunas da central" (projetor da sala de reunião, sem artigo).
   { id: "emp-gustavo", name: "Gustavo Alves", email: "gustavo.alves@nexo.com.br", role: "employee", department: "Operações", passwordChangedAt: ago(60 * DAY) },
   { id: "emp-helena", name: "Helena Ribeiro", email: "helena.ribeiro@nexo.com.br", role: "employee", department: "Financeiro", passwordChangedAt: ago(25 * DAY) },
   { id: "emp-igor", name: "Igor Nunes", email: "igor.nunes@nexo.com.br", role: "employee", department: "Compras", passwordChangedAt: ago(12 * DAY) },
