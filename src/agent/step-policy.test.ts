@@ -12,6 +12,10 @@ describe("stepPolicy", () => {
     expect(activeTools).toEqual(expect.arrayContaining(["listMyTickets", "draftNewTicket", "confirmDraft", "transferToAnalyst"]));
   });
 
+  it("no turno de esclarecimento (baixa confiança), só pode oferecer respostas rápidas: nada de rascunho, confirmação ou transferência", () => {
+    expect(stepPolicy(1, false, true)).toEqual({ activeTools: ["offerQuickReplies"] });
+  });
+
   it("depois de transferir para um analista, não chama mais tools", () => {
     expect(stepPolicy(2, true)).toEqual({ toolChoice: "none" });
   });

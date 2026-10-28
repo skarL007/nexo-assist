@@ -10,6 +10,12 @@ import { CATEGORY_LABEL, IMPACT_LABEL, PRIORITY_LABEL, TICKET_TYPE_LABEL, type C
 /** Tamanho dos campos do rascunho: os mesmos que o agent respeita ao montá-lo. */
 export const DRAFT_LIMITS = { title: [5, 80], description: [20, 600], comment: [5, 600] } as const;
 
+/**
+ * Teto de rascunhos numa conversa. "Alterar detalhes" não chama o modelo, então não
+ * passa pelos limites de mensagens: sem teto, um script gravaria rascunhos sem fim.
+ */
+export const MAX_DRAFTS_PER_CONVERSATION = 20;
+
 /** O que o formulário do card deixa mudar. */
 export interface NewTicketEdit {
   type: TicketType;

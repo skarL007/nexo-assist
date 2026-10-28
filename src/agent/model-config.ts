@@ -34,6 +34,16 @@ export function missingApiKey(model: string, env: Partial<Record<ApiKeyVar, stri
   return keyVar && !env[keyVar] ? keyVar : null;
 }
 
+/**
+ * O que o chat responde quando falta a chave. Rodando local, diz o que configurar;
+ * no deploy, quem lê é o funcionário: a variável vai só para o log do servidor.
+ */
+export function missingKeyMessage(keyVar: ApiKeyVar, production: boolean): string {
+  return production
+    ? "O Nexo Assist está indisponível no momento. Tente de novo mais tarde."
+    : `O Nexo Assist não está configurado neste ambiente: defina ${keyVar} no .env e reinicie o servidor.`;
+}
+
 type ProviderOptions =
   | { google: { thinkingConfig: { thinkingLevel: "minimal" } } }
   | { openrouter: { reasoning: { effort: ReasoningEffort }; session_id: string } };

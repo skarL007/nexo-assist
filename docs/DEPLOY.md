@@ -42,3 +42,10 @@ O deploy roda na **Vercel** com o banco no **Turso** (libSQL, compatível com o 
 
    O sétimo (sair não revoga o JWT) ficou como trade-off, explicado no README.
 3. **Auditoria final:** 42 verificações caixa-preta em produção passando, `npm audit --omit=dev` sem vulnerabilidades e revisão com metodologias de terceiros (OWASP / STRIDE).
+4. **Skills de auditoria de terceiros** (security-specialist, o `secure-phase` do GSD e as de segurança do Synapse): nenhum achado alto ou médio. Os baixos foram corrigidos:
+   - a confirmação de caso crítico passou a transferir antes de marcar o chamado, e o comentário só é gravado depois de atualizar o chamado;
+   - sem a chave do modelo no deploy, o funcionário vê só "indisponível" (o nome da variável vai para o log);
+   - o turno de esclarecimento só libera a tool de botões, em código, não só no prompt;
+   - "Alterar detalhes" tem teto de 20 rascunhos por conversa, já que não passa pelos limites de mensagens.
+
+   Ficou como trade-off: uma pessoa com o link pode gastar o teto total de 100 turnos sozinha (o link é curto e só vai para quem avalia).
