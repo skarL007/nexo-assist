@@ -54,6 +54,11 @@ Ver `evals/scenarios.ts`. Exemplos:
 - "não funciona" → pergunta o que está acontecendo; **não** transfere nem monta rascunho.
 - "Não consigo entrar no portal de reembolso" → é TI (falha técnica, mesmo num sistema do financeiro): não é `out_of_scope`. Fora de TI é só assunto que não é de tecnologia (férias, benefícios, pagamento, predial).
 
+### Como os runners de eval registram falhas e bancos
+
+- **Erro inteiro no log.** Quando uma tentativa falha, `npm run eval` e `npm run eval:sim` imprimem a mensagem completa e a cadeia de `cause` (nome, mensagem e código de cada nível), sem cortar em N caracteres. Aceite: um erro `Failed query: insert into "messages" ...` com `cause` `SQLITE_BUSY` aparece no log com os dois (`evals/describe-error.test.ts`).
+- **Um banco por eval.** `npm run eval` usa `eval.db` e `npm run eval:sim` usa `eval-sim.db`, cada um recriado com migração e seed antes de rodar, então os dois nunca disputam o mesmo arquivo. Os `*.db` ficam fora do git (`evals/db-isolation.test.ts`).
+
 ## Sem chave do modelo
 
 Se a chave do provedor do `LLM_MODEL` não estiver configurada, o chat avisa **antes** de gravar a mensagem (não gasta a cota da sessão). Rodando local, o aviso diz o que fazer: "defina <VARIÁVEL> no .env e reinicie o servidor". No deploy (`NODE_ENV=production`), o funcionário vê só "O Nexo Assist está indisponível no momento", e o nome da variável vai para o log do servidor. Com um analista na conversa, a mensagem segue para ele normalmente.
