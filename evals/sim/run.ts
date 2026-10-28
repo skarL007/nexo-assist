@@ -9,11 +9,13 @@
  *   npm run eval:sim -- --min=0.6     → falha (código 1) se o pass^k médio ficar abaixo
  */
 import { execSync } from "node:child_process";
+import { describeError } from "../describe-error";
 import { checkSimRun, parseSimAction, type SimAction, type SimOutcome } from "./checks";
 import { passHatK } from "./pass-k";
 import type { Persona } from "./personas";
 
-process.env.DATABASE_URL = "file:eval.db";
+// Banco próprio: `npm run eval` usa eval.db, e os dois nunca disputam o mesmo arquivo.
+process.env.DATABASE_URL = "file:eval-sim.db";
 process.env.LEGACY_FAILURE_RATE = "0";
 
 const MAX_TURNS = 8;
@@ -143,7 +145,7 @@ async function main() {
         try {
           run = await play(persona);
         } catch (error) {
-          console.log(`    (erro na tentativa ${attempt}: ${String((error as Error).message).slice(0, 90)})`);
+          console.log(`    (erro na tentativa ${attempt}: ${describeError(error)})`);
         }
       }
       if (!run) continue;
