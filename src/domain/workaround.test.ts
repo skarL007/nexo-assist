@@ -83,7 +83,23 @@ describe("mentionsWorkaround", () => {
 });
 
 describe("countAgentQuestions", () => {
-  it("conta respostas do agent que terminam em ? ou mostram respostas rápidas", () => {
-    expect(countAgentQuestions([employee("oi?"), agent("Pode me dizer qual sistema?"), agent("Escolha uma opção.", ["A", "B"]), agent("Pronto, abri o INC-1.")])).toBe(2);
+  it("conta as respostas do agent que terminam em ?, a mesma definição do limite de perguntas dos evals", () => {
+    expect(countAgentQuestions([employee("oi?"), agent("Pode me dizer qual sistema?"), agent("Escolha uma opção.", ["A", "B"]), agent("Pronto, abri o INC-1.")])).toBe(1);
+  });
+
+  it("vago-outlook #2 (rodada 3): botões e a oferta de analista não contam como pergunta a mais", () => {
+    const history = [
+      employee("nada funciona aqui!!"),
+      agent("Pode me dar mais detalhes sobre o que está acontecendo?"),
+      employee("já falei, nada abre!"),
+      agent("Isso acontece no computador inteiro ou em um programa específico? Se preferir, pode falar com um analista.", ["Computador inteiro", "Sistema / Programa", "Falar com um analista"]),
+      employee("Sistema / Programa"),
+      agent("Qual é o programa? Se preferir, pode falar com um analista.", ["Falar com um analista"]),
+      employee("é o outlook! fica carregando e cai"),
+      agent("Isso afeta só você, sua equipe ou a empresa inteira?", ["Só eu", "Minha equipe", "Toda a empresa"]),
+      employee("Só eu"),
+    ];
+    expect(countAgentQuestions(history)).toBe(2);
+    expect(decideWorkaround(incNone, history).action).toBe("ask");
   });
 });

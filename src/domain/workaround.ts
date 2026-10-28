@@ -54,9 +54,12 @@ function askedAboutWorkaround(message: HistoryMessage): boolean {
   return [message.text, ...options].some((text) => ASKED.test(normalize(text)));
 }
 
-/** Perguntas do agent na conversa: resposta terminada em "?" ou com respostas rápidas. */
+/**
+ * Perguntas do agent na conversa: respostas terminadas em "?", a mesma definição do limite de
+ * perguntas dos evals (`maxQuestions`). Botões sozinhos (inclusive a oferta de analista) não contam.
+ */
 export function countAgentQuestions(history: HistoryMessage[]): number {
-  return history.filter((m) => m.role === "agent" && (m.text.trim().endsWith("?") || m.cards.some((c) => c.kind === "quick_replies"))).length;
+  return history.filter((m) => m.role === "agent" && m.text.trim().endsWith("?")).length;
 }
 
 const [HAS, HAS_NOT] = WORKAROUND_OPTIONS.map(normalize);
