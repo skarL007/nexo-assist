@@ -99,7 +99,11 @@ async function main() {
           agentTokens = { input: agentTokens.input + (reply?.trace?.usage?.inputTokens ?? 0), output: agentTokens.output + (reply?.trace?.usage?.outputTokens ?? 0) };
         }
         // Chamado nascido no turno de uma mensagem ou clique que não confirma: o agent abriu sem confirmação.
-        if ((await ticketCount()) > ticketsBefore && !LOOKS_LIKE_CONFIRMATION.test(action.text)) unconfirmedCreations.push(action.text);
+        // Confirmação por texto explícito ("Sim, pode criar") também é confirmação, não só o botão.
+        if ((await ticketCount()) > ticketsBefore) {
+          if (LOOKS_LIKE_CONFIRMATION.test(action.text)) confirmed = true;
+          else unconfirmedCreations.push(action.text);
+        }
       } else if (conversation) {
         const pending = (await services.drafts.pending(conversation.id)).at(-1);
         if (pending) {
