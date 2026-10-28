@@ -14,6 +14,11 @@ export const formatDayMonth = (iso: string) => dayMonth.format(new Date(iso)).re
 /** "16 out, 14:20" */
 export const formatDayTime = (iso: string) => `${formatDayMonth(iso)}, ${formatClock(iso)}`;
 
+/** Prazo: "15:00" se for hoje; senão "30 out, 15:00" (prazo de dias úteis não pode parecer de hoje). */
+export function formatDeadline(iso: string, now = new Date()): string {
+  return dayMonth.format(new Date(iso)) === dayMonth.format(now) ? formatClock(iso) : formatDayTime(iso);
+}
+
 /** "há 5 dias", "há 3 horas", "agora" */
 export function formatRelative(iso: string, now = Date.now()): string {
   const diffMinutes = Math.round((new Date(iso).getTime() - now) / 60_000);

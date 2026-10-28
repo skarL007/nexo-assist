@@ -142,6 +142,9 @@ export class InMemoryDraftRepository implements DraftRepository {
     draft.status = status;
     return { ...draft };
   }
+  async replacePending(conversationId: string) {
+    for (const d of this.items) if (d.conversationId === conversationId && d.status === "pending") d.status = "replaced";
+  }
   async cancelPending(conversationId: string, since?: Date) {
     for (const d of this.items) {
       if (d.conversationId === conversationId && d.status === "pending" && (!since || d.createdAt >= since)) d.status = "cancelled";

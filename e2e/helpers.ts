@@ -13,6 +13,7 @@ export async function logout(page: Page) {
 
 export const ANA = "ana.souza@nexo.com.br";
 export const CARLA = "carla.mendes@nexo.com.br";
+export const DIEGO = "diego.ramos@nexo.com.br";
 export const RAFAEL = "rafael.lima@nexo.com.br";
 
 export { expect };

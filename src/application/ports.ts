@@ -82,6 +82,8 @@ export interface DraftRepository {
    * Devolve o rascunho se conseguiu, ou null se ele não estava mais pendente.
    */
   claimPending(id: number, employeeId: string, status: DraftStatus): Promise<Draft | null>;
+  /** Marca os pendentes da conversa como "replaced": um rascunho novo vai tomar o lugar deles. */
+  replacePending(conversationId: string): Promise<void>;
   /** Descarta os pendentes da conversa (opcionalmente só os criados desde `since`). */
   cancelPending(conversationId: string, since?: Date): Promise<void>;
 }

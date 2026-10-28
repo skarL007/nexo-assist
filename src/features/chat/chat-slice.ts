@@ -6,7 +6,7 @@
  * evento "done", o servidor manda a conversa atualizada e `live` é limpo.
  */
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { ChatStreamEvent, ConversationView } from "@/contracts/chat";
+import type { ChatStreamEvent, ConversationView, DraftAction } from "@/contracts/chat";
 import type { Card, ChatMessage, TraceStep } from "@/domain/message";
 import { apiFetch, readNdjson } from "@/lib/api-client";
 
@@ -33,8 +33,8 @@ export const startNewConversation = createAsyncThunk("chat/new", () =>
   apiFetch<ConversationView>("/api/chat/new", { method: "POST" }),
 );
 
-export const resolveDraft = createAsyncThunk("chat/draft", ({ draftId, action }: { draftId: number; action: "confirm" | "cancel" }) =>
-  apiFetch<ConversationView>(`/api/chat/drafts/${draftId}`, { method: "POST", body: JSON.stringify({ action }) }),
+export const resolveDraft = createAsyncThunk("chat/draft", ({ draftId, ...body }: { draftId: number } & DraftAction) =>
+  apiFetch<ConversationView>(`/api/chat/drafts/${draftId}`, { method: "POST", body: JSON.stringify(body) }),
 );
 
 /** Envia a mensagem e repassa cada evento do stream para o reducer. */
@@ -117,7 +117,8 @@ const chatSlice = createSlice({
       .addCase(resolveDraft.fulfilled, (state, { payload }) => {
         state.conversation = payload;
       })
-      .addCase(resolveDraft.rejected, (state, { error }) => {
+      .addCase(resolveDraft.rejected, (state, { error, meta }) => {
+        if (meta.arg.action === "edit") return; // o próprio card mostra o erro
         state.error = error.message ?? "Não foi possível concluir o rascunho.";
       })
       .addCase(startNewConversation.fulfilled, (state, { payload }) => {

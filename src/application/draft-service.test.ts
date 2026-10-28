@@ -4,6 +4,7 @@ import { ConversationService } from "./conversation-service";
 import { DraftService } from "./draft-service";
 import {
   fixedClock,
+  makeTicket,
   InMemoryConversationRepository,
   InMemoryDraftRepository,
   InMemoryMessageRepository,
@@ -46,6 +47,8 @@ describe("rascunho antes de criar", () => {
     const first = await drafts.proposeNewTicket(conversation.id, "ana", fields);
     const revised = await drafts.proposeNewTicket(conversation.id, "ana", { ...fields, title: "VPN da filial não conecta — erro 809" });
     expect((await drafts.pending(conversation.id)).map((d) => d.id)).toEqual([revised.id]);
+    // "Substituído", não "Descartado": quem descarta é o funcionário.
+    expect((await drafts.statuses(conversation.id))[first.id]).toBe("replaced");
     await expect(drafts.confirm(first.id, "ana")).rejects.toMatchObject({ code: "draft_not_pending" });
     await drafts.confirm(revised.id, "ana");
     expect(ticketRepo.tickets.size).toBe(1);
@@ -124,5 +127,91 @@ describe("caso crítico", () => {
     expect(result.handedOff).toBe(true);
     expect(result.ticket.status).toBe("waiting_analyst");
     expect((await conversations.get(conversation.id)).status).toBe("waiting_analyst");
+  });
+});
+
+describe("alterar detalhes pelo card do rascunho", () => {
+  const companyWide: NewTicketFields = {
+    ...fields,
+    title: "Monitores sem sinal",
+    description: "Os monitores de vídeo não ligam desde hoje cedo, sem sinal.",
+    category: "hardware",
+    impact: "company",
+    urgency: "blocked",
+    priority: "critical",
+    priorityReason: "Impacto: toda a empresa · urgência: impede de trabalhar → Crítica",
+  };
+  const edit = { type: "INC", category: "hardware", title: companyWide.title, description: companyWide.description, impact: "company", urgency: "blocked" } as const;
+
+  it("troca o rascunho por um novo com a prioridade recalculada, sem criar chamado e sem chamar o modelo", async () => {
+    const { ticketRepo, messages, drafts, conversation } = await setup();
+    const original = await drafts.proposeNewTicket(conversation.id, "ana", companyWide);
+
+    await drafts.reviseFromForm(original.id, "ana", { ...edit, impact: "me" });
+
+    const [revised] = await drafts.pending(conversation.id);
+    expect(revised.kind === "create" && revised.fields.priority).toBe("high");
+    expect((await drafts.statuses(conversation.id))[original.id]).toBe("replaced");
+    expect(ticketRepo.tickets.size).toBe(0);
+
+    const reply = messages.items.at(-1)!;
+    expect(reply.role).toBe("agent");
+    expect(reply.text).toContain("Afetados: Toda a empresa → Somente você · Prioridade: Crítica → Alta");
+    expect(reply.cards).toContainEqual(expect.objectContaining({ kind: "draft", draft: expect.objectContaining({ id: revised.id }) }));
+    expect(reply.trace?.usage).toBeNull();
+    expect(reply.trace?.steps.map((step) => step.label)).toContain("classificou a prioridade");
+  });
+
+  it("recalcula a prioridade no servidor: a prévia do navegador não manda", async () => {
+    const { drafts, conversation } = await setup();
+    const original = await drafts.proposeNewTicket(conversation.id, "ana", companyWide);
+    await drafts.reviseFromForm(original.id, "ana", { ...edit, impact: "me", priority: "critical" } as never);
+    const [revised] = await drafts.pending(conversation.id);
+    expect(revised.kind === "create" && revised.fields.priority).toBe("high");
+  });
+
+  it("sem mudança, recusa", async () => {
+    const { drafts, conversation } = await setup();
+    const original = await drafts.proposeNewTicket(conversation.id, "ana", companyWide);
+    await expect(drafts.reviseFromForm(original.id, "ana", edit)).rejects.toMatchObject({ code: "invalid_input" });
+    expect((await drafts.statuses(conversation.id))[original.id]).toBe("pending");
+  });
+
+  it("não altera rascunho já confirmado nem o de outra pessoa", async () => {
+    const { drafts, conversation } = await setup();
+    const original = await drafts.proposeNewTicket(conversation.id, "ana", companyWide);
+    await expect(drafts.reviseFromForm(original.id, "bruno", { ...edit, impact: "me" })).rejects.toMatchObject({ code: "not_found" });
+    await drafts.confirm(original.id, "ana");
+    await expect(drafts.reviseFromForm(original.id, "ana", { ...edit, impact: "me" })).rejects.toMatchObject({ code: "draft_not_pending" });
+  });
+
+  it("campos que não são deste tipo de rascunho são recusados", async () => {
+    const { drafts, conversation } = await setup();
+    const original = await drafts.proposeNewTicket(conversation.id, "ana", companyWide);
+    await expect(drafts.reviseFromForm(original.id, "ana", { comment: "outra coisa qualquer" })).rejects.toMatchObject({ code: "invalid_input" });
+  });
+
+  it("rascunho de atualização: troca o comentário", async () => {
+    const { ticketRepo, messages, drafts, conversation } = await setup();
+    await ticketRepo.insert(makeTicket({ code: "INC-20311", status: "open" }));
+    const original = await drafts.proposeUpdate(conversation.id, "ana", { ticketCode: "INC-20311", comment: "Continua lento." });
+
+    await drafts.reviseFromForm(original.id, "ana", { comment: "Continua lento, inclusive depois de reiniciar." });
+
+    const [revised] = await drafts.pending(conversation.id);
+    expect(revised.kind === "update" && revised.fields.comment).toBe("Continua lento, inclusive depois de reiniciar.");
+    expect(messages.items.at(-1)!.text).toContain("INC-20311");
+  });
+
+  it("se a mudança deixar o rascunho parecido com um chamado aberto, mostra o parecido para escolher (sem duplicidade)", async () => {
+    const { ticketRepo, messages, drafts, conversation } = await setup();
+    await ticketRepo.insert(makeTicket({ code: "INC-20400", title: "Monitor da direita não liga", status: "open" }));
+    const original = await drafts.proposeNewTicket(conversation.id, "ana", { ...companyWide, category: "other", title: "Tela sem imagem" });
+
+    await drafts.reviseFromForm(original.id, "ana", { ...edit, category: "hardware", title: "Monitor da direita sem sinal" });
+
+    const reply = messages.items.at(-1)!;
+    expect(reply.cards).toContainEqual(expect.objectContaining({ kind: "ticket_choice", tickets: [expect.objectContaining({ code: "INC-20400" })] }));
+    expect(reply.text).toContain("INC-20400");
   });
 });

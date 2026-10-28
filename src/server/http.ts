@@ -12,6 +12,7 @@ export class HttpError extends Error {
 }
 
 const STATUS_BY_DOMAIN_ERROR: Record<DomainErrorCode, number> = {
+  invalid_input: 400,
   not_found: 404,
   forbidden: 403,
   invalid_transition: 409,
