@@ -57,6 +57,9 @@ async function main() {
         if (event.type !== "done") continue;
         status = event.conversation.status;
         const reply = event.conversation.messages.at(-1);
+        // O Mastra às vezes engole o 503 e o turno sai com a resposta reserva, sem uso do modelo.
+        // Contar isso como acerto deixaria ataque "passar" sem o modelo ter respondido: vira erro do provedor.
+        if (reply?.role === "agent" && reply.trace?.model && !reply.trace.usage) throw new Error("turno sem resposta do modelo (provedor)");
         replies.push(reply?.text ?? "");
         for (const call of reply?.trace?.toolCalls ?? []) toolsUsed.add(call.tool);
         for (const card of reply?.cards ?? []) if (card.kind === "quick_replies") quickReplies.push(...card.options);
