@@ -1,5 +1,8 @@
 # CI no CircleCI (plano Free para projeto open source: sem cartão, status aparece no GitHub).
-# Os mesmos passos do .github/workflows/ci.yml, que fica valendo se o GitHub Actions voltar.
+# checks e e2e: os mesmos passos do .github/workflows/ci.yml (se mudar um, mude o outro).
+# image: builda a imagem Docker e roda a prova de fumaça (scripts/docker-smoke.sh) em todo push;
+# só no main, depois de checks e e2e, publica no Docker Hub (latest + sha curto), de onde o
+# Komodo local puxa sozinho (fluxo em docs/DEPLOY.md). Segredos só no contexto "dockerhub".
 # A imagem oficial do Playwright já traz Node 24 e o Chromium da mesma versão do @playwright/test:
 # ao atualizar o Playwright, atualize a tag junto.
 version: 2.1
@@ -45,8 +48,68 @@ jobs:
           path: test-results
           destination: playwright-traces
 
+  image:
+    parameters:
+      publish:
+        type: boolean
+        default: false
+        description: Publica no Docker Hub depois da prova de fumaça (só no main, com o contexto dockerhub).
+    docker:
+      - image: cimg/base:2026.10
+    resource_class: medium
+    steps:
+      - checkout
+      # Docker remoto: a porta do contêiner não chega aqui, por isso a prova roda via docker exec.
+      - setup_remote_docker
+      - run:
+          name: Build da imagem
+          command: docker build --pull -t nexo-assist:ci .
+          no_output_timeout: 20m
+      - run:
+          name: Prova de fumaça (migra, seed, /login 200, login real, sem root, restart mantém os dados)
+          command: bash scripts/docker-smoke.sh nexo-assist:ci
+      - when:
+          condition: << parameters.publish >>
+          steps:
+            - run:
+                name: Publicar no Docker Hub (latest e sha curto)
+                command: |
+                  set -euo pipefail
+                  # O Docker exige o nome da imagem em minúsculas; o usuário do Hub pode ter sido digitado com maiúsculas.
+                  OWNER="$(printf '%s' "$DOCKERHUB_USERNAME" | tr '[:upper:]' '[:lower:]')"
+                  IMAGE="docker.io/${OWNER}/nexo-assist"
+                  SHA="${CIRCLE_SHA1:0:7}"
+                  echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+                  docker tag nexo-assist:ci "$IMAGE:$SHA"
+                  docker tag nexo-assist:ci "$IMAGE:latest"
+                  # O sha primeiro: o latest só muda quando a versão fixa já existe (rollback garantido).
+                  docker push "$IMAGE:$SHA"
+                  docker push "$IMAGE:latest"
+                  docker logout
+                  echo "publicado: $IMAGE:$SHA e $IMAGE:latest"
+
 workflows:
   ci:
     jobs:
       - checks
       - e2e
+      # Fora do main: prova a imagem sem segredo nenhum (PRs de fork, se habilitados, também rodam sem segredo).
+      - image:
+          name: image-smoke
+          filters:
+            branches:
+              ignore: main
+      # No main: só publica se tipos, lint, testes e E2E passaram.
+      # serial-group: dois merges seguidos não publicam em paralelo; o CircleCI pula o pipeline
+      # mais antigo que ainda espera, então a latest nunca volta para uma versão velha.
+      - image:
+          name: image-publish
+          publish: true
+          context: dockerhub
+          serial-group: << pipeline.project.slug >>/image-publish
+          requires:
+            - checks
+            - e2e
+          filters:
+            branches:
+              only: main
