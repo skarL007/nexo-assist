@@ -80,7 +80,7 @@ async function main() {
           handedOff = event.conversation.status !== "with_agent";
           const reply = event.conversation.messages.at(-1);
           // Resposta reserva sem uso do modelo = o provedor falhou (o Mastra engole o 503): repete a conversa.
-          if (reply?.role === "agent" && reply.trace?.model && !reply.trace.usage) throw new Error("turno sem resposta do modelo (provedor)");
+          if (reply?.role === "agent" && reply.trace?.model && !reply.trace.usage?.inputTokens) throw new Error("turno sem resposta do modelo (provedor)");
           agentTokens = { input: agentTokens.input + (reply?.trace?.usage?.inputTokens ?? 0), output: agentTokens.output + (reply?.trace?.usage?.outputTokens ?? 0) };
         }
       } else if (conversation) {
