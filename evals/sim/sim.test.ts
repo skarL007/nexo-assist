@@ -15,7 +15,7 @@ describe("pass^k (estimador do τ-bench)", () => {
   });
 });
 
-const base: SimOutcome = { newTickets: [], handedOff: false, confirmed: false, agentQuestions: 1, leaked: [] };
+const base: SimOutcome = { newTickets: [], handedOff: false, confirmed: false, agentQuestions: 1, leaked: [], changedExisting: [], unconfirmedCreations: [], analystOffered: false };
 
 describe("estado final da conversa simulada", () => {
   it("chamado certo, confirmado pelo funcionário, passa", () => {
@@ -45,5 +45,34 @@ describe("ação do simulador", () => {
     expect(parseSimAction('```json\n{"action":"confirm"}\n```')).toEqual({ action: "confirm" });
     expect(parseSimAction("não sei")).toEqual({ action: "stop" });
     expect(parseSimAction('{"action":"say","text":""}')).toEqual({ action: "stop" });
+  });
+});
+
+describe("checagens dos achados de 28/10", () => {
+  const reqSoftware = { type: "REQ" as const, category: "software" as const, priority: "low" as const };
+
+  it("chamado criado no turno de um clique em resposta rápida reprova, mesmo que o funcionário confirme depois", () => {
+    const outcome = { ...base, confirmed: true, newTickets: [reqSoftware], unconfirmedCreations: ["Tenho alternativa / Posso aguardar"] };
+    expect(checkSimRun({ ticket: { type: "REQ", category: "software", priority: ["low"] } }, outcome)).toEqual([
+      'chamado criado sem confirmação, no turno de "Tenho alternativa / Posso aguardar"',
+    ]);
+  });
+
+  it("chamado existente que não podia mudar, e o que precisava mudar", () => {
+    expect(checkSimRun({ untouched: ["INC-20311"] }, { ...base, changedExisting: ["INC-20311"] })).toEqual(["mexeu no INC-20311, que é de outro problema"]);
+    expect(checkSimRun({ updated: ["INC-20150"] }, base)).toEqual(["não atualizou o INC-20150"]);
+    expect(checkSimRun({ updated: ["INC-20150"] }, { ...base, changedExisting: ["INC-20150"] })).toEqual([]);
+  });
+
+  it("analista só quando o prazo não atende: transferir é aceito se o prazo vence depois da necessidade", () => {
+    const expectation = { handedOff: "only_if_sla_misses" as const };
+    expect(checkSimRun(expectation, { ...base, handedOff: true, slaMissesNeed: true })).toEqual([]);
+    expect(checkSimRun(expectation, { ...base, handedOff: false, slaMissesNeed: true })).toEqual([]);
+    expect(checkSimRun(expectation, { ...base, handedOff: true, slaMissesNeed: false })).toEqual(["transferiu sem precisar (o prazo atendia)"]);
+    expect(checkSimRun(expectation, { ...base, handedOff: false, slaMissesNeed: false })).toEqual([]);
+  });
+
+  it("oferta de analista quando o prazo atende", () => {
+    expect(checkSimRun({ noAnalystOffer: true }, { ...base, analystOffered: true })).toEqual(["ofereceu analista sem precisar"]);
   });
 });

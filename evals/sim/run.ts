@@ -10,7 +10,7 @@
  */
 import { execSync } from "node:child_process";
 import { assertModelResponded, retryOnProviderError } from "../provider-errors";
-import { checkSimRun, parseSimAction, type SimAction, type SimOutcome } from "./checks";
+import { ANALYST_INVITE, checkSimRun, LOOKS_LIKE_CONFIRMATION, parseSimAction, type SimAction, type SimOutcome } from "./checks";
 import { passHatK } from "./pass-k";
 import type { Persona } from "./personas";
 
@@ -46,6 +46,7 @@ async function main() {
   const { resetSimState } = await import("./reset");
   const { env } = await import("@/config/env");
   const { personas: all } = await import("./personas");
+  const { parseNeededBy } = await import("@/domain/sla-need");
 
   const args = process.argv.slice(2);
   const k = Math.max(1, Number(args.find((a) => a.startsWith("--k="))?.split("=")[1] ?? 3));
@@ -65,7 +66,13 @@ async function main() {
     const employee = await services.employees.findByEmail(persona.employee);
     if (!employee) throw new Error(`${persona.employee} não está no seed`);
     await services.conversations.closeOpen(employee.id);
-    const before = new Set((await services.tickets.listMine(employee.id)).map((t) => t.code));
+    const runStart = new Date();
+    const fingerprint = (t: { status: string; updatedAt: Date }) => `${t.status}|${t.updatedAt.toISOString()}`;
+    const seeded = new Map((await services.tickets.listMine(employee.id)).map((t) => [t.code, fingerprint(t)]));
+    const before = new Set(seeded.keys());
+    const ticketCount = async () => (await services.tickets.listMine(employee.id)).length;
+    const unconfirmedCreations: string[] = [];
+    let analystOffered = false;
 
     const transcript: string[] = [];
     const replies: string[] = [];
@@ -81,6 +88,7 @@ async function main() {
       const conversation = await services.conversations.findOpen(employee.id);
       if (action.action === "say" || action.action === "click") {
         transcript.push(`Funcionário: ${action.text}`);
+        const ticketsBefore = await ticketCount();
         for await (const event of runAgentTurn(employee, action.text)) {
           if (event.type === "error") throw new Error(event.message);
           if (event.type !== "done") continue;
@@ -90,6 +98,8 @@ async function main() {
           assertModelResponded(reply);
           agentTokens = { input: agentTokens.input + (reply?.trace?.usage?.inputTokens ?? 0), output: agentTokens.output + (reply?.trace?.usage?.outputTokens ?? 0) };
         }
+        // Chamado nascido no turno de uma mensagem ou clique que não confirma: o agent abriu sem confirmação.
+        if ((await ticketCount()) > ticketsBefore && !LOOKS_LIKE_CONFIRMATION.test(action.text)) unconfirmedCreations.push(action.text);
       } else if (conversation) {
         const pending = (await services.drafts.pending(conversation.id)).at(-1);
         if (pending) {
@@ -108,6 +118,8 @@ async function main() {
       if (last && last.role !== "employee") {
         transcript.push(`Nexo Assist: ${last.text}`);
         replies.push(last.text);
+        const offeredButton = last.cards.some((c) => c.kind === "quick_replies" && c.options.some((o) => /analista/i.test(o)));
+        analystOffered ||= offeredButton || ANALYST_INVITE.test(last.text);
       }
       if (handedOff) break;
 
@@ -125,8 +137,15 @@ async function main() {
     }
 
     const after = await services.tickets.listMine(employee.id);
+    const created = after.filter((t) => !before.has(t.code));
+    const need = persona.expect.neededBy ? parseNeededBy(persona.expect.neededBy, runStart) : null;
+    const deadline = created[0] ? services.tickets.snapshot(created[0]).deadline : null;
     const outcome: SimOutcome = {
-      newTickets: after.filter((t) => !before.has(t.code)).map((t) => ({ type: t.type, category: t.category, priority: t.priority })),
+      newTickets: created.map((t) => ({ type: t.type, category: t.category, priority: t.priority })),
+      changedExisting: after.filter((t) => seeded.has(t.code) && seeded.get(t.code) !== fingerprint(t)).map((t) => t.code),
+      unconfirmedCreations,
+      analystOffered,
+      slaMissesNeed: need && deadline ? new Date(deadline) > need : undefined,
       handedOff,
       confirmed,
       agentQuestions: replies.filter((r) => r.trim().endsWith("?")).length,
