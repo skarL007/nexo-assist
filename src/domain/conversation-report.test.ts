@@ -103,6 +103,22 @@ describe("relatório da conversa para o analista", () => {
     expect(report.pending).toEqual([]);
   });
 
+  it("depois que o analista devolve a conversa, ainda mostra a última transferência (vem do card no histórico)", () => {
+    // Achado na validação em produção: ao devolver, a conversa limpa a transferência e o relatório perdia o motivo.
+    const report = buildConversationReport({
+      ...base,
+      status: "with_analyst",
+      handoff: null,
+      messages: [
+        msg("employee", "Posso instalar um plugin no Figma?", 0),
+        msg("system", "Transferido para o service desk", 2, { cards: [{ kind: "handoff", reason: "low_confidence", summary: "Bruno quer um plugin de IA no Figma." }] }),
+        msg("system", "Rafael devolveu a conversa ao Nexo Assist", 30),
+      ],
+    });
+    expect(report.need).toBe("Bruno quer um plugin de IA no Figma.");
+    expect(report.handoff).toEqual({ reason: "low_confidence", summary: "Bruno quer um plugin de IA no Figma.", confidence: null, at: "2026-10-27T13:02:00.000Z" });
+  });
+
   it("sem trace nem transferência, a necessidade é a primeira mensagem do funcionário", () => {
     const report = buildConversationReport({ ...base, messages: [msg("employee", "O Wi-Fi da sala 3 voltou a cair.", 0)] });
     expect(report.need).toBe("O Wi-Fi da sala 3 voltou a cair.");
