@@ -17,6 +17,8 @@ const schema = z.object({
   OPENROUTER_REASONING_EFFORT: z.enum(REASONING_EFFORTS).default("minimal"),
   /** Formato "provedor/modelo" do roteador de modelos do Mastra. */
   LLM_MODEL: z.string().default("google/gemini-3.5-flash"),
+  /** Modelo de embeddings do Gemini para a busca híbrida na central (usa a mesma chave do Google). */
+  EMBEDDING_MODEL: z.string().default("gemini-embedding-2"),
   DATABASE_URL: z.string().default("file:local.db"),
   DATABASE_AUTH_TOKEN: z.string().optional(),
   AUTH_SECRET: z.string().min(32).default(DEV_SECRET),

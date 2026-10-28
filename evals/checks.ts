@@ -25,6 +25,9 @@ export function checkScenario(expect: Scenario["expect"], outcome: ScenarioOutco
   for (const tool of expect.noTool ?? []) if (tools.has(tool)) failures.push(`não devia usar ${tool}`);
   if (expect.handedOff && outcome.finalStatus === "with_agent") failures.push("não transferiu");
   if (expect.handedOff === false && outcome.finalStatus !== "with_agent") failures.push("transferiu sem precisar");
+  for (const term of expect.replyIncludes ?? []) {
+    if (!outcome.replies.some((r) => r.toLowerCase().includes(term.toLowerCase()))) failures.push(`faltou "${term}"`);
+  }
   for (const term of expect.replyExcludes ?? []) {
     if (outcome.replies.some((r) => r.toLowerCase().includes(term.toLowerCase()))) failures.push(`vazou "${term}"`);
   }

@@ -3,7 +3,7 @@ import type { ArticleRepository, EmployeeRepository } from "@/application/ports"
 import type { Employee } from "@/domain/employee";
 import type { Article } from "@/domain/knowledge";
 import type { Database } from "../db/client";
-import { articles, employees } from "../db/schema";
+import { articleEmbeddings, articles, employees } from "../db/schema";
 
 export class DrizzleEmployeeRepository implements EmployeeRepository {
   constructor(private readonly db: Database) {}
@@ -28,5 +28,19 @@ export class DrizzleArticleRepository implements ArticleRepository {
 
   async listAll(): Promise<Article[]> {
     return this.db.select().from(articles);
+  }
+
+  async embeddings(model: string): Promise<Map<string, { vector: number[]; contentHash: string }>> {
+    const rows = await this.db.select().from(articleEmbeddings).where(eq(articleEmbeddings.model, model));
+    return new Map(rows.map((r) => [r.articleId, { vector: r.vector, contentHash: r.contentHash }]));
+  }
+
+  async saveEmbeddings(model: string, items: { articleId: string; vector: number[]; contentHash: string }[]): Promise<void> {
+    for (const item of items) {
+      await this.db
+        .insert(articleEmbeddings)
+        .values({ articleId: item.articleId, model, contentHash: item.contentHash, vector: item.vector })
+        .onConflictDoUpdate({ target: [articleEmbeddings.articleId, articleEmbeddings.model], set: { contentHash: item.contentHash, vector: item.vector } });
+    }
   }
 }

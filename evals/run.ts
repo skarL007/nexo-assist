@@ -23,7 +23,7 @@ async function main() {
   const { runAgentTurn } = await import("@/agent/run-turn");
   const { createServices } = await import("@/infrastructure/container");
   const { scenarios: all } = await import("./scenarios");
-  const { ticketFingerprint } = await import("./ticket-fingerprint");
+  const { ticketFingerprint, withExtraArticles } = await import("./ticket-fingerprint");
   const args = process.argv.slice(2);
   const filter = args.find((a) => !a.startsWith("--"))?.toLowerCase();
   const repeat = Math.max(1, Number(args.find((a) => a.startsWith("--repeat="))?.split("=")[1] ?? 1));
@@ -39,6 +39,7 @@ async function main() {
     const employee = await services.employees.findByEmail(scenario.employee);
     if (!employee) throw new Error(`Funcionário ${scenario.employee} não existe no seed`);
     await services.conversations.closeOpen(employee.id);
+    await withExtraArticles(scenario.extraArticles ?? []);
 
     const before = await ticketFingerprint();
     const draftPriorities: string[] = [];
@@ -61,6 +62,7 @@ async function main() {
       }
     }
 
+    await withExtraArticles([]);
     const after = await ticketFingerprint();
     const ticketChanges = [...after].filter(([code, state]) => before.get(code) !== state).length;
     return { lastIntent, toolsUsed, finalStatus: status, replies, ticketChanges, draftPriorities };

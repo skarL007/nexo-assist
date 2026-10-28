@@ -2,7 +2,7 @@
  * Tabelas do banco (SQLite/libSQL). Local é um arquivo; no deploy é o Turso.
  * Colunas JSON guardam estruturas que só são lidas inteiras (cards, trace).
  */
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import type { ConversationStatus, HandoffReason } from "@/domain/conversation";
 import type { EmployeeRole } from "@/domain/employee";
 import type { Card, DraftKind, DraftStatus, MessageRole, NewTicketFields, TicketUpdateFields, TurnTrace } from "@/domain/message";
@@ -25,6 +25,14 @@ export const articles = sqliteTable("articles", {
   body: text("body").notNull(),
   tags: text("tags", { mode: "json" }).$type<string[]>().notNull(),
 });
+
+/** Cache dos embeddings dos artigos: recalcula só se o texto (hash) ou o modelo mudar. */
+export const articleEmbeddings = sqliteTable("article_embeddings", {
+  articleId: text("article_id").notNull().references(() => articles.id),
+  model: text("model").notNull(),
+  contentHash: text("content_hash").notNull(),
+  vector: text("vector", { mode: "json" }).$type<number[]>().notNull(),
+}, (t) => [primaryKey({ columns: [t.articleId, t.model] })]);
 
 export const tickets = sqliteTable("tickets", {
   code: text("code").primaryKey(),

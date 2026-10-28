@@ -19,7 +19,7 @@ mensagem → limites → salva → (conversa com analista? para aqui)
 | Tool | Faz | Passos visíveis |
 |---|---|---|
 | `recordUnderstanding` | Registra intenção, entendimento, confiança, motivo. Confiança < 0,5 → na primeira vez, uma pergunta de esclarecimento; se a resposta anterior do agent também foi sem segurança, transfere (`shouldHandOffForLowConfidence`) | "chamou um analista" (se transferir) |
-| `searchHelpCenter` | Busca artigos por palavras-chave | "buscou na central de ajuda" |
+| `searchHelpCenter` | Busca híbrida: sentido (embeddings `gemini-embedding-2`, vetores dos artigos em cache no banco) + bônus de palavras-chave. Nenhum artigo quando o 1º não se destaca do 2º (margem < 0,02). Sem embeddings, só palavras ([validação](../validacao/BUSCA.md)) | "buscou na central de ajuda" (com termos e sentido de cada artigo) |
 | `listMyTickets` | Lista chamados do funcionário; `showAsChoice` mostra seleção | "consultou seus chamados" |
 | `getTicket` | Um chamado + prazo | "consultou o INC-…", "calculou o prazo" |
 | `draftNewTicket` | Duplicidade → prioridade → SLA → rascunho | "verificou duplicidade", "classificou a prioridade", "consultou o SLA", "montou o rascunho" |
