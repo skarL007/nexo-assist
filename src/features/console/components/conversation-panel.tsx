@@ -74,7 +74,13 @@ export function ConversationPanel({ conversation, analystId }: { conversation: C
             </div>
           )}
           {conversation.messages.map((message) => (
-            <MessageItem key={message.id} message={message} viewer="analyst" draftStatuses={conversation.draftStatuses} />
+            <MessageItem
+              key={message.id}
+              message={message}
+              viewer="analyst"
+              draftStatuses={conversation.draftStatuses}
+              feedback={{ value: conversation.feedback[message.id] }}
+            />
           ))}
           <div ref={bottom} />
         </div>

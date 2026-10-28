@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { apiKeyVarFor, missingApiKey, missingKeyMessage, providerOptionsFor } from "./model-config";
+import { apiKeyVarFor, missingApiKey, missingKeyMessage, pricePerToken, providerOptionsFor } from "./model-config";
 
 describe("configuração por provedor do modelo", () => {
   it("Gemini direto (padrão de produção) continua com thinkingLevel mínimo e chave do Google", () => {
@@ -41,5 +41,12 @@ describe("mensagem quando falta a chave", () => {
 
   it("rodando local, diz ao avaliador o que configurar", () => {
     expect(missingKeyMessage("GOOGLE_GENERATIVE_AI_API_KEY", false)).toContain("defina GOOGLE_GENERATIVE_AI_API_KEY no .env");
+  });
+});
+
+describe("preço para estimar custo nos indicadores", () => {
+  it("Gemini 3.5 Flash: US$ 1,50 e US$ 9,00 por milhão de tokens; modelo sem tabela fica sem estimativa", () => {
+    expect(pricePerToken("google/gemini-3.5-flash")).toEqual({ input: 1.5e-6, output: 9e-6 });
+    expect(pricePerToken("openrouter/qualquer/modelo")).toBeNull();
   });
 });

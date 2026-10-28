@@ -7,6 +7,7 @@ import type {
   ConversationRepository,
   Draft,
   DraftRepository,
+  FeedbackRepository,
   MessageRepository,
   NewMessage,
   TicketRepository,
@@ -99,6 +100,9 @@ export class InMemoryMessageRepository implements MessageRepository {
     this.items.push(saved);
     return saved;
   }
+  async findById(id: string) {
+    return this.items.find((m) => m.id === id) ?? null;
+  }
   async listByConversation(conversationId: string) {
     return this.items.filter((m) => m.conversationId === conversationId);
   }
@@ -149,5 +153,17 @@ export class InMemoryDraftRepository implements DraftRepository {
     for (const d of this.items) {
       if (d.conversationId === conversationId && d.status === "pending" && (!since || d.createdAt >= since)) d.status = "cancelled";
     }
+  }
+}
+
+export class InMemoryFeedbackRepository implements FeedbackRepository {
+  readonly items = new Map<string, { employeeId: string; helpful: boolean; conversationId?: string }>();
+  constructor(private readonly messages?: InMemoryMessageRepository) {}
+  async upsert(feedback: { messageId: string; employeeId: string; helpful: boolean }) {
+    this.items.set(feedback.messageId, { employeeId: feedback.employeeId, helpful: feedback.helpful });
+  }
+  async byConversation(conversationId: string) {
+    const ids = this.messages ? new Set(this.messages.items.filter((m) => m.conversationId === conversationId).map((m) => m.id)) : null;
+    return Object.fromEntries([...this.items].filter(([id]) => !ids || ids.has(id)).map(([id, f]) => [id, f.helpful]));
   }
 }

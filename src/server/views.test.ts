@@ -18,6 +18,7 @@ const services = {
   employees: { listByIds: async () => [{ id: "emp-carla", name: "Carla Mendes", email: "carla.mendes@nexo.com.br", role: "employee", department: "Comercial" }] },
   messages: { listByConversation: async () => [] },
   drafts: { statuses: async () => ({ 7: "pending" }) },
+  feedback: { byConversation: async () => ({ m1: false }) },
   tickets: {
     listMine: async () => {
       throw new DomainError("legacy_unavailable", "O sistema de chamados está indisponível no momento.");
@@ -39,5 +40,6 @@ describe("detalhe da conversa no console", () => {
   it("traz o status atual dos rascunhos, para o relatório saber o que ainda espera confirmação", async () => {
     const detail = await consoleDetail(services, conversation);
     expect(detail.draftStatuses).toEqual({ 7: "pending" });
+    expect(detail.feedback).toEqual({ m1: false });
   });
 });

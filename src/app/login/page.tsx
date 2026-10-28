@@ -1,11 +1,28 @@
 import { redirect } from "next/navigation";
 import { Brand } from "@/components/nexo/brand";
+import type { Insights } from "@/domain/insights";
 import { LoginForm } from "@/features/auth/login-form";
+import { createServices } from "@/infrastructure/container";
+import { formatSeconds, percent } from "@/lib/format";
+import { logError } from "@/server/http";
 import { currentUser, homeFor } from "@/server/session";
+
+export const dynamic = "force-dynamic";
+
+/** Números de verdade deste ambiente (antes eram os do protótipo, fixos). Se o banco falhar, o login abre mesmo assim. */
+async function loginStats(): Promise<Insights | null> {
+  try {
+    return await createServices().insights.lastDays(30);
+  } catch (error) {
+    logError(error);
+    return null;
+  }
+}
 
 export default async function LoginPage() {
   const user = await currentUser();
   if (user) redirect(homeFor(user.role));
+  const stats = await loginStats();
 
   return (
     <main className="grid min-h-screen lg:grid-cols-2">
@@ -22,11 +39,14 @@ export default async function LoginPage() {
           <ChatPreview />
         </div>
 
-        <dl className="grid grid-cols-3 gap-6 border-t border-white/10 pt-6">
-          <Stat value="8 s" label="primeira resposta, em média" />
-          <Stat value="72%" label="resolvido sem fila" />
-          <Stat value="6" label="analistas online agora" />
-        </dl>
+        <div className="space-y-3 border-t border-white/10 pt-6">
+          <dl className="grid grid-cols-3 gap-6">
+            <Stat value={stats?.avgLatencyMs != null ? formatSeconds(stats.avgLatencyMs) : "—"} label="resposta do agent, em média" />
+            <Stat value={stats?.resolvedWithoutHuman != null ? percent(stats.resolvedWithoutHuman) : "—"} label="resolvido sem analista" />
+            <Stat value={stats ? String(stats.analysts) : "—"} label="analistas no service desk" />
+          </dl>
+          <p className="text-xs text-navy-foreground/50">Números deste ambiente nos últimos 30 dias.</p>
+        </div>
       </section>
 
       <section className="flex flex-col bg-surface p-6 sm:p-12">

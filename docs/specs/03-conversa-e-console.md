@@ -20,6 +20,13 @@ with_agent ──handoff──▶ waiting_analyst ──assume──▶ with_ana
 - Senha vazia mostra "Informe uma senha (na demonstração, qualquer uma funciona)". "Esqueci minha senha" explica o mesmo.
 - "Manter conectado neste computador" (Tela 1 do protótipo): marcado, a sessão dura 7 dias; desmarcado, o cookie some quando o navegador fecha (e a sessão vence em 8 horas de qualquer jeito).
 - "Meu perfil" mostra o e-mail com o selo "Gerenciado pela TI", como no protótipo.
+- Os números do painel do login são **deste ambiente**, dos últimos 30 dias: tempo médio de resposta do agent, % resolvido sem analista e analistas no service desk (antes eram os do protótipo, fixos). Sem dados, aparece "—". Se o banco falhar, o login abre mesmo assim.
+
+## "Isso resolveu?"
+
+- Embaixo da última resposta do agent (as que passaram pelo modelo) aparece "Isso resolveu? Sim / Não". "Não" oferece "Falar com um analista" (manda o pedido como mensagem) e "Na verdade, resolveu". Avaliar de novo troca a anterior.
+- A avaliação fica gravada (`message_feedback`): recarregar mantém, e o analista vê "Funcionário: resolveu / não resolveu" na resposta.
+- Só a dona da conversa avalia, e só respostas do agent; mensagem de outra pessoa responde 404, igual a uma que não existe.
 
 ## Rascunho
 
@@ -50,6 +57,7 @@ with_agent ──handoff──▶ waiting_analyst ──assume──▶ with_ana
 - **Linha de estado:** "Agent pediu ajuda · confiança 41%", "Transferida há 25 minutos", "Agent atendendo", "Você está atendendo".
 - **Conversa:** resumo da transferência no topo e histórico com o trace do agent. Ações: Assumir; Devolver ao agent; Encerrar. Só quem assumiu pode responder.
 - **Painel:** chamados do funcionário, com o da transferência em destaque.
+- **Indicadores** (ícone de gráfico na barra do console, `/console/indicadores`, só analista): últimos 30 dias de % resolvido sem analista, tempo de resposta do agent (média e p95), "Isso resolveu?", custo estimado (tokens × preço do modelo), respostas do agent, confiança média, rascunhos confirmados e transferências por motivo. Só turnos do modelo entram em tempo e custo; as respostas do próprio sistema (Confirmar, Alterar detalhes) não. Sem dados, "—".
 - **Relatório da conversa:** o botão "Relatório" no cabeçalho abre, acima do histórico, um resumo para o analista não precisar ler a conversa inteira: o que a pessoa precisa, por que foi transferida, o que o agent já fez (passos, artigos da central de ajuda, falhas), os chamados citados com status e prazo atuais e o que está pendente (espera por atendente, rascunho sem confirmar, chamado com prazo vencido). É montado do histórico e dos traces, sem chamar o modelo (não gasta o teto nem inventa nada). "Copiar" leva o relatório em texto, para colar no chamado.
 - Aceite: conversa do Bruno (seed) → Relatório mostra o resumo da transferência, "Agent sem segurança para decidir · confiança 41%" e a pendência "Bruno espera um atendente desde…"; Copiar põe o mesmo conteúdo em texto na área de transferência. Chamados citados aparecem com o status de agora (teste unitário em `domain/conversation-report.test.ts`).
 

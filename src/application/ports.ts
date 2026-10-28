@@ -51,6 +51,7 @@ export interface ConversationRepository {
 
 export interface MessageRepository {
   add(message: NewMessage): Promise<ChatMessage>;
+  findById(id: string): Promise<ChatMessage | null>;
   listByConversation(conversationId: string): Promise<ChatMessage[]>;
   listRecent(conversationId: string, limit: number): Promise<ChatMessage[]>;
   /** Última mensagem de cada conversa, sem o trace (lista do console). */
@@ -86,6 +87,21 @@ export interface DraftRepository {
   replacePending(conversationId: string): Promise<void>;
   /** Descarta os pendentes da conversa (opcionalmente só os criados desde `since`). */
   cancelPending(conversationId: string, since?: Date): Promise<void>;
+}
+
+export interface FeedbackRepository {
+  /** Uma avaliação por mensagem: avaliar de novo troca a anterior. */
+  upsert(feedback: { messageId: string; employeeId: string; helpful: boolean; at: Date }): Promise<void>;
+  /** messageId → helpful, das mensagens da conversa. */
+  byConversation(conversationId: string): Promise<Record<string, boolean>>;
+}
+
+/** Leitura agregada para os indicadores (não muda nada). */
+export interface InsightsSource {
+  messagesSince(since: Date): Promise<ChatMessage[]>;
+  feedbackSince(since: Date): Promise<{ helpful: boolean }[]>;
+  draftStatusesSince(since: Date): Promise<{ status: DraftStatus }[]>;
+  countAnalysts(): Promise<number>;
 }
 
 /** Contadores globais com teto (custo do deploy). */

@@ -14,6 +14,7 @@ import {
   conversationRefreshed,
   dismissError,
   loadConversation,
+  rateReply,
   resolveDraft,
   sendMessage,
   startNewConversation,
@@ -114,6 +115,16 @@ export function ChatScreen({ firstName }: { firstName: string }) {
               draftStatuses={conversation.draftStatuses}
               // Escolhas só valem na última resposta; rascunhos pendentes valem sempre, mas travam enquanto o Nexo responde.
               actions={index === lastAgentIndex && !sending ? actions : { draftActions: actions.draftActions }}
+              // "Isso resolveu?" só na última resposta de verdade do agent (com trace), enquanto ele atende.
+              feedback={
+                index === lastAgentIndex && message.trace && !sending && conversation.status === "with_agent"
+                  ? {
+                      value: conversation.feedback[message.id],
+                      onRate: (helpful) => void dispatch(rateReply({ messageId: message.id, helpful })),
+                      onEscalate: () => send("Quero falar com um analista"),
+                    }
+                  : undefined
+              }
             />
           ))}
 

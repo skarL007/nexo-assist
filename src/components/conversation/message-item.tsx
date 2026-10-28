@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { AgentSteps } from "./agent-steps";
 import { DecisionDetails } from "./decision-details";
 import { MessageCards, type CardActions } from "./message-cards";
+import { ReplyFeedback, type ReplyFeedbackProps } from "./reply-feedback";
 
 /** Quem está olhando a conversa: muda o lado de cada balão. */
 export type Viewer = "employee" | "analyst";
@@ -17,9 +18,11 @@ interface MessageItemProps {
   viewer: Viewer;
   actions?: CardActions;
   draftStatuses?: Record<number, DraftStatus>;
+  /** "Isso resolveu?" (só em respostas do agent). */
+  feedback?: ReplyFeedbackProps;
 }
 
-export function MessageItem({ message, viewer, actions, draftStatuses }: MessageItemProps) {
+export function MessageItem({ message, viewer, actions, draftStatuses, feedback }: MessageItemProps) {
   const time = formatClock(message.createdAt);
 
   switch (message.role) {
@@ -60,6 +63,7 @@ export function MessageItem({ message, viewer, actions, draftStatuses }: Message
           time={time}
           actions={actions}
           draftStatuses={draftStatuses}
+          feedback={feedback}
         />
       );
   }
@@ -76,6 +80,7 @@ export function AgentReply({
   working = false,
   actions,
   draftStatuses,
+  feedback,
 }: {
   text: string;
   steps: TraceStep[];
@@ -86,6 +91,7 @@ export function AgentReply({
   working?: boolean;
   actions?: CardActions;
   draftStatuses?: Record<number, DraftStatus>;
+  feedback?: ReplyFeedbackProps;
 }) {
   const [open, setOpen] = useState(false);
   const right = viewer === "analyst";
@@ -112,6 +118,7 @@ export function AgentReply({
       <div className="w-full">
         <MessageCards cards={cards} actions={actions} draftStatuses={draftStatuses} />
       </div>
+      {feedback && !working && <ReplyFeedback {...feedback} />}
     </div>
   );
 }
