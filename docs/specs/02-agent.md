@@ -55,6 +55,7 @@ Ver `evals/scenarios.ts`. Exemplos:
 - "Não consigo entrar no portal de reembolso" → é TI (falha técnica, mesmo num sistema do financeiro): não é `out_of_scope`. Fora de TI é só assunto que não é de tecnologia (férias, benefícios, pagamento, predial).
 - Rascunho na tela + resposta rápida que não confirma ("Tenho alternativa / Posso aguardar") → nenhum chamado criado.
 - "Outlook não abre" com o INC-20311 (notebook lento) aberto → rascunho de chamado novo de E-mail, nunca atualização do INC-20311. O mesmo depois de uma mensagem vaga ("tudo travado aqui").
+- Incidente "sem urgência" sem nada dito sobre alternativa → o `draftNewTicket` não monta o rascunho e mostra "Tenho alternativa / Não tenho alternativa" (regra em `domain/workaround.ts`, ver [01](./01-regras-do-service-desk.md#alternativa-antes-da-prioridade)); com "Tenho alternativa", o rascunho sai Média, não Baixa.
 
 ### Como os runners de eval lidam com limites, falhas e bancos
 
