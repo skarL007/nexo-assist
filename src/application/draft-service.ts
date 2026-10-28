@@ -20,6 +20,8 @@ export interface ConfirmResult {
   ticket: Ticket;
   draft: DraftSnapshot;
   handedOff: boolean;
+  /** Caso crítico em que o chamado foi criado, mas chamar o analista falhou: a resposta avisa. */
+  escalationFailed?: boolean;
 }
 
 export class DraftService {
@@ -156,6 +158,7 @@ export class DraftService {
    * - O rascunho é "reservado" de forma atômica: dois cliques (ou Ctrl+Enter repetido) criam um chamado só.
    * - Pelo agent (`fromTurn`), o rascunho precisa ser desta conversa e ter sido mostrado num turno anterior.
    * - Se criar o chamado falhar, o rascunho volta a ficar pendente para tentar de novo.
+   * - Depois que o chamado existe, nenhuma falha desfaz a confirmação: o próximo Confirmar duplicaria.
    */
   async confirm(
     draftId: number,
@@ -170,36 +173,53 @@ export class DraftService {
     }
     const draft = await this.claim(draftId, employeeId, "confirmed");
 
+    let ticket: Ticket;
     try {
-      const { ticket, handedOff } = await this.apply(draft, employeeId);
-      return { conversationId: draft.conversationId, ticket, draft: this.snapshot({ ...draft, status: "confirmed" }), handedOff };
+      ticket = await this.commit(draft, employeeId);
     } catch (error) {
+      // Nada foi gravado: o rascunho volta a ficar pendente para tentar de novo.
       await this.drafts.setStatus(draft.id, "pending");
       throw error;
     }
+    const escalation =
+      draft.kind === "create" && (draft.fields as NewTicketFields).priority === "critical"
+        ? await this.escalate(draft, ticket, employeeId)
+        : { ticket, handedOff: false, escalationFailed: false };
+    return { conversationId: draft.conversationId, draft: this.snapshot({ ...draft, status: "confirmed" }), ...escalation };
   }
 
-  private async apply(draft: Draft, employeeId: string): Promise<{ ticket: Ticket; handedOff: boolean }> {
+  /** Grava o chamado ou o comentário. Se falhar, nada ficou gravado. */
+  private async commit(draft: Draft, employeeId: string): Promise<Ticket> {
     if (draft.kind === "update") {
       const fields = draft.fields as TicketUpdateFields;
-      return { ticket: await this.tickets.addComment(employeeId, fields.ticketCode, fields.comment, fields.reopen), handedOff: false };
+      return this.tickets.addComment(employeeId, fields.ticketCode, fields.comment, fields.reopen);
     }
+    return this.tickets.create(employeeId, draft.fields as NewTicketFields);
+  }
 
+  /**
+   * Crítico vai para um analista, se a conversa ainda estiver com o agent. O chamado já existe,
+   * então uma falha aqui não desfaz nada: a transferência vem primeiro (é a regra que importa)
+   * e marcar o chamado como "aguardando analista" é só tentativa.
+   */
+  private async escalate(draft: Draft, ticket: Ticket, employeeId: string): Promise<{ ticket: Ticket; handedOff: boolean; escalationFailed: boolean }> {
     const fields = draft.fields as NewTicketFields;
-    let ticket = await this.tickets.create(employeeId, fields);
-    if (fields.priority !== "critical") return { ticket, handedOff: false };
-
-    // Crítico vai para um analista — se a conversa ainda estiver com o agent.
-    const conversation = await this.conversations.get(draft.conversationId);
-    if (conversation.status !== "with_agent") return { ticket, handedOff: false };
-    ticket = await this.tickets.markTransferred(employeeId, ticket.code);
-    await this.conversations.handoff(draft.conversationId, {
-      reason: "critical",
-      summary: `${ticket.code} · ${fields.title}. ${fields.description}`,
-      ticketCode: ticket.code,
-      confidence: null,
-    });
-    return { ticket, handedOff: true };
+    try {
+      const conversation = await this.conversations.get(draft.conversationId);
+      if (conversation.status !== "with_agent") return { ticket, handedOff: false, escalationFailed: false };
+      await this.conversations.handoff(draft.conversationId, {
+        reason: "critical",
+        summary: `${ticket.code} · ${fields.title}. ${fields.description}`,
+        ticketCode: ticket.code,
+        confidence: null,
+      });
+    } catch {
+      // Ex.: um analista assumiu nesse meio-tempo (então já há alguém), ou o banco falhou.
+      const now = await this.conversations.get(draft.conversationId).catch(() => null);
+      return { ticket, handedOff: false, escalationFailed: !now || now.status === "with_agent" };
+    }
+    const marked = await this.tickets.markTransferred(employeeId, ticket.code).catch(() => ticket);
+    return { ticket: marked, handedOff: true, escalationFailed: false };
   }
 
   async cancel(draftId: number, employeeId: string): Promise<Draft> {
@@ -214,11 +234,13 @@ export class DraftService {
   /** Confirmação pelo botão: confirma e registra a resposta do agent, sem chamar o modelo. */
   async confirmFromButton(draftId: number, employeeId: string): Promise<void> {
     const startedAt = Date.now();
-    const { conversationId, ticket, draft, handedOff } = await this.confirm(draftId, employeeId);
+    const { conversationId, ticket, draft, handedOff, escalationFailed } = await this.confirm(draftId, employeeId);
     const verb = draft.kind === "create" ? "Abri o" : ticket.status === "open" ? "Reabri e atualizei o" : "Atualizei o";
     const tail = handedOff
       ? " Como é um caso crítico, já chamei um analista para você."
-      : " Você pode acompanhar por aqui quando quiser.";
+      : escalationFailed
+        ? " É um caso crítico, mas não consegui chamar o analista agora: peça \"falar com um analista\" que eu tento de novo."
+        : " Você pode acompanhar por aqui quando quiser.";
 
     await this.messages.add({
       conversationId,

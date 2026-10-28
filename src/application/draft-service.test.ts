@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DomainError } from "@/domain/errors";
 import type { NewTicketFields } from "@/domain/message";
 import { ConversationService } from "./conversation-service";
 import { DraftService } from "./draft-service";
@@ -213,5 +214,68 @@ describe("alterar detalhes pelo card do rascunho", () => {
     const reply = messages.items.at(-1)!;
     expect(reply.cards).toContainEqual(expect.objectContaining({ kind: "ticket_choice", tickets: [expect.objectContaining({ code: "INC-20400" })] }));
     expect(reply.text).toContain("INC-20400");
+  });
+});
+
+describe("sistema de chamados instável depois de gravar (sem duplicidade)", () => {
+  const down = () => Promise.reject(new DomainError("legacy_unavailable", "O sistema de chamados está indisponível no momento."));
+
+  it("crítico: se marcar o chamado falhar depois de criá-lo, o rascunho fica confirmado e não dá para criar de novo", async () => {
+    // Achado da auditoria: o rascunho voltava a "pendente" e o segundo Confirmar criava outro chamado.
+    const { ticketRepo, drafts, conversations, conversation } = await setup();
+    ticketRepo.update = down;
+    const draft = await drafts.proposeNewTicket(conversation.id, "ana", { ...fields, priority: "critical", impact: "team" });
+
+    const result = await drafts.confirm(draft.id, "ana");
+
+    expect(ticketRepo.tickets.size).toBe(1);
+    expect(result.handedOff).toBe(true);
+    expect((await conversations.get(conversation.id)).status).toBe("waiting_analyst");
+    expect((await drafts.statuses(conversation.id))[draft.id]).toBe("confirmed");
+    await expect(drafts.confirm(draft.id, "ana")).rejects.toMatchObject({ code: "draft_not_pending" });
+    expect(ticketRepo.tickets.size).toBe(1);
+  });
+
+  it("crítico: se a transferência falhar, o chamado continua criado e a resposta avisa", async () => {
+    const { ticketRepo, messages, drafts, conversations, conversation } = await setup();
+    conversations.handoff = down;
+    const draft = await drafts.proposeNewTicket(conversation.id, "ana", { ...fields, priority: "critical", impact: "team" });
+
+    await drafts.confirmFromButton(draft.id, "ana");
+
+    expect(ticketRepo.tickets.size).toBe(1);
+    expect((await drafts.statuses(conversation.id))[draft.id]).toBe("confirmed");
+    expect(messages.items.at(-1)!.text).toContain("não consegui chamar o analista");
+  });
+
+  it("atualização: falha no meio não grava o comentário pela metade, e tentar de novo não duplica", async () => {
+    const { ticketRepo, drafts, conversation } = await setup();
+    await ticketRepo.insert(makeTicket({ code: "INC-20311", status: "open" }));
+    const draft = await drafts.proposeUpdate(conversation.id, "ana", { ticketCode: "INC-20311", comment: "Continua lento." });
+    const update = ticketRepo.update.bind(ticketRepo);
+    ticketRepo.update = down;
+
+    await expect(drafts.confirm(draft.id, "ana")).rejects.toMatchObject({ code: "legacy_unavailable" });
+    expect(ticketRepo.comments).toHaveLength(0);
+
+    ticketRepo.update = update;
+    await drafts.confirm(draft.id, "ana");
+    expect(ticketRepo.comments).toHaveLength(1);
+  });
+});
+
+describe("crítico com o banco fora do ar na transferência", () => {
+  it("se nem a conversa puder ser lida, avisa que não chamou o analista (não diz que está tudo bem)", async () => {
+    const { ticketRepo, messages, drafts, conversations, conversation } = await setup();
+    const draft = await drafts.proposeNewTicket(conversation.id, "ana", { ...fields, priority: "critical", impact: "team" });
+    conversations.handoff = () => Promise.reject(new Error("banco fora do ar"));
+    const get = conversations.get.bind(conversations);
+    let calls = 0;
+    conversations.get = (id: string) => (++calls > 1 ? Promise.reject(new Error("banco fora do ar")) : get(id));
+
+    await drafts.confirmFromButton(draft.id, "ana");
+
+    expect(ticketRepo.tickets.size).toBe(1);
+    expect(messages.items.at(-1)!.text).toContain("não consegui chamar o analista");
   });
 });

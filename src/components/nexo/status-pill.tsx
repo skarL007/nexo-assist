@@ -48,5 +48,10 @@ export const ticketTone = (status: TicketStatus, overdue = false): Tone => {
 };
 
 export function TicketStatus({ status, overdue }: { status: TicketStatus; overdue?: boolean }) {
-  return <StatusDot tone={ticketTone(status, overdue)}>{STATUS_LABEL[status]}</StatusDot>;
+  return (
+    <StatusDot tone={ticketTone(status, overdue)} className="whitespace-nowrap">
+      {STATUS_LABEL[status]}
+      {overdue && " · prazo vencido"}
+    </StatusDot>
+  );
 }

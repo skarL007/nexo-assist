@@ -6,6 +6,7 @@ import { StatusDot, type Tone } from "@/components/nexo/status-pill";
 import type { DraftSnapshot, DraftStatus } from "@/domain/message";
 import { CATEGORY_LABEL, IMPACT_LABEL, PRIORITY_LABEL, TICKET_TYPE_LABEL } from "@/domain/ticket";
 import { formatDayTime, formatDeadline } from "@/lib/format";
+import { messageOf } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { CardShell, Field } from "./card-shell";
 import { DraftEditor, PRIORITY_TONE, type DraftEditFields } from "./draft-editor";
@@ -32,13 +33,18 @@ export interface DraftActions {
 export function DraftCard({ draft, status, actions }: { draft: DraftSnapshot; status: DraftStatus; actions?: DraftActions }) {
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const pending = status === "pending" && !!actions;
   const disabled = busy || !!actions?.locked;
 
+  // O erro aparece no próprio card: criar o chamado passa pelo sistema legado, que às vezes cai.
   const run = async (fn: () => Promise<unknown>) => {
     setBusy(true);
+    setError(null);
     try {
       await fn();
+    } catch (failure) {
+      setError(messageOf(failure, "Não foi possível concluir. Tente de novo."));
     } finally {
       setBusy(false);
     }
@@ -73,6 +79,11 @@ export function DraftCard({ draft, status, actions }: { draft: DraftSnapshot; st
         Cancelar
       </Button>
       {actions.locked && <span className="text-xs text-muted-foreground">Aguarde o Nexo responder para confirmar.</span>}
+      {error && (
+        <span role="alert" className="text-xs text-danger">
+          {error}
+        </span>
+      )}
     </>
   ) : undefined;
 

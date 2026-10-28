@@ -16,7 +16,7 @@ export interface Scenario {
     anyTool?: NexoToolName[];
     /** Nenhuma destas ferramentas em nenhum turno. */
     noTool?: NexoToolName[];
-    /** A conversa termina com um analista. */
+    /** true: a conversa termina com um analista; false: continua com o agent. */
     handedOff?: boolean;
     /** Texto que não pode aparecer em nenhuma resposta (privacidade). */
     replyExcludes?: string[];
@@ -26,6 +26,20 @@ export interface Scenario {
 const ANA = "ana.souza@nexo.com.br";
 
 export const scenarios: Scenario[] = [
+  {
+    // Achado da auditoria: ia direto para um analista com 30% de confiança, sem perguntar nada.
+    name: "Mensagem vaga vira pergunta, não transferência",
+    employee: ANA,
+    turns: ["não funciona"],
+    expect: { handedOff: false, noTool: ["transferToAnalyst", "draftNewTicket"] },
+  },
+  {
+    // Achado da auditoria: falha técnica num sistema do RH/financeiro era recusada como "fora de TI".
+    name: "Falha técnica em sistema de outra área é TI",
+    employee: ANA,
+    turns: ["Não consigo entrar no portal de reembolso, dá usuário ou senha inválida desde ontem."],
+    expect: { intent: ["new_ticket", "question"], handedOff: false },
+  },
   {
     name: "Dúvida respondida pela central",
     employee: ANA,

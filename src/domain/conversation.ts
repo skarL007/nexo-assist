@@ -40,6 +40,22 @@ export const MESSAGE_LIMIT_PER_SESSION = 30;
 export const EMPLOYEE_MESSAGES_PER_HOUR = 40;
 export const EMPLOYEE_MESSAGES_PER_DAY = 120;
 
+/** Abaixo disto o agent não está seguro do que fazer. */
+export const LOW_CONFIDENCE = 0.5;
+
+/**
+ * Transferência por baixa confiança (Anexo A: "quando o agent não tem segurança").
+ * Na primeira dúvida ele pergunta (o PDF pede perguntar quando falta informação);
+ * se continuar sem segurança depois da pergunta, um analista assume.
+ */
+export function shouldHandOffForLowConfidence(
+  current: { intent: string; confidence: number },
+  previousAgentDecision: { confidence: number } | null,
+): boolean {
+  if (current.intent === "greeting" || current.confidence >= LOW_CONFIDENCE) return false;
+  return previousAgentDecision !== null && previousAgentDecision.confidence < LOW_CONFIDENCE;
+}
+
 export interface Handoff {
   reason: HandoffReason;
   summary: string;

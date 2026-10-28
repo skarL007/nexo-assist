@@ -18,7 +18,6 @@ export function TicketCard({ ticket }: { ticket: TicketSnapshot }) {
       <Field label="Aberto em">{formatDayTime(ticket.createdAt)}</Field>
       <Field label="Última atualização">
         <span className={cn(ticket.overdue && "font-semibold text-danger")}>{formatRelative(ticket.updatedAt)}</span>
-        {ticket.overdue && <span className="text-muted-foreground"> · prazo vencido</span>}
       </Field>
     </CardShell>
   );

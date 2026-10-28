@@ -8,7 +8,7 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { ChatStreamEvent, ConversationView, DraftAction } from "@/contracts/chat";
 import type { Card, ChatMessage, TraceStep } from "@/domain/message";
-import { apiFetch, readNdjson } from "@/lib/api-client";
+import { apiFetch, fetchOrOffline, readNdjson } from "@/lib/api-client";
 
 export interface LiveReply {
   steps: TraceStep[];
@@ -23,9 +23,11 @@ interface ChatState {
   live: LiveReply | null;
   sending: boolean;
   error: string | null;
+  /** Texto que não chegou a ser gravado (o envio falhou): volta para o campo de mensagem. */
+  unsentText: string | null;
 }
 
-const initialState: ChatState = { conversation: null, optimisticText: null, live: null, sending: false, error: null };
+const initialState: ChatState = { conversation: null, optimisticText: null, live: null, sending: false, error: null, unsentText: null };
 
 export const loadConversation = createAsyncThunk("chat/load", () => apiFetch<ConversationView>("/api/chat"));
 
@@ -39,7 +41,7 @@ export const resolveDraft = createAsyncThunk("chat/draft", ({ draftId, ...body }
 
 /** Envia a mensagem e repassa cada evento do stream para o reducer. */
 export const sendMessage = createAsyncThunk("chat/send", async (text: string, { dispatch }) => {
-  const response = await fetch("/api/chat", {
+  const response = await fetchOrOffline("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text }),
@@ -80,11 +82,17 @@ const chatSlice = createSlice({
         case "error":
           state.error = event.message;
           state.live = null;
+          // Falhou antes de gravar a mensagem: devolve o texto ao campo em vez de perdê-lo.
+          if (state.optimisticText !== null) state.unsentText = state.optimisticText;
+          state.optimisticText = null;
           break;
       }
     },
     dismissError(state) {
       state.error = null;
+    },
+    unsentRestored(state) {
+      state.unsentText = null;
     },
     /** Atualização vinda do polling enquanto um analista atende. */
     conversationRefreshed(state, { payload }: PayloadAction<ConversationView>) {
@@ -108,8 +116,9 @@ const chatSlice = createSlice({
         state.sending = false;
         state.optimisticText = null;
       })
-      .addCase(sendMessage.rejected, (state, { error }) => {
+      .addCase(sendMessage.rejected, (state, { error, meta }) => {
         state.sending = false;
+        if (state.optimisticText !== null) state.unsentText = meta.arg;
         state.optimisticText = null;
         state.live = null;
         state.error = error.message ?? "Não foi possível enviar.";
@@ -117,10 +126,8 @@ const chatSlice = createSlice({
       .addCase(resolveDraft.fulfilled, (state, { payload }) => {
         state.conversation = payload;
       })
-      .addCase(resolveDraft.rejected, (state, { error, meta }) => {
-        if (meta.arg.action === "edit") return; // o próprio card mostra o erro
-        state.error = error.message ?? "Não foi possível concluir o rascunho.";
-      })
+      // Erro de rascunho aparece no próprio card (o aviso no fim da página ficava atrás do campo de mensagem).
+      .addCase(resolveDraft.rejected, () => {})
       .addCase(startNewConversation.fulfilled, (state, { payload }) => {
         state.conversation = payload;
         state.error = null;
@@ -135,5 +142,5 @@ function appendMessage(state: ChatState, message: ChatMessage) {
   state.conversation.remainingMessages = Math.max(0, state.conversation.remainingMessages - 1);
 }
 
-export const { dismissError, conversationRefreshed } = chatSlice.actions;
+export const { dismissError, conversationRefreshed, unsentRestored } = chatSlice.actions;
 export const chatReducer = chatSlice.reducer;

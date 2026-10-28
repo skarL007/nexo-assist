@@ -9,7 +9,19 @@ import { cn } from "@/lib/utils";
 const DOT: Record<string, string> = { danger: "bg-danger", warning: "bg-warning", info: "bg-primary", success: "bg-success", neutral: "bg-muted-foreground/50" };
 
 /** Painel lateral: chamados do funcionário, destacando o que motivou a transferência. */
-export function TicketsPanel({ employeeName, tickets, ticketCode }: { employeeName: string; tickets: TicketSnapshot[]; ticketCode: string | null }) {
+export function TicketsPanel({ employeeName, tickets, ticketCode }: { employeeName: string; tickets: TicketSnapshot[] | null; ticketCode: string | null }) {
+  if (!tickets) {
+    return (
+      <aside className="hidden w-80 shrink-0 flex-col border-l bg-surface xl:flex">
+        <header className="border-b px-5 py-4">
+          <h2 className="font-semibold">Chamados de {firstName(employeeName)}</h2>
+        </header>
+        <p role="status" className="p-5 text-sm text-muted-foreground">
+          O sistema de chamados não respondeu agora. Tentando de novo em instantes…
+        </p>
+      </aside>
+    );
+  }
   const current = tickets.find((t) => t.code === ticketCode);
   const others = tickets.filter((t) => t.code !== ticketCode);
   const open = tickets.filter((t) => t.status !== "resolved").length;
@@ -19,7 +31,7 @@ export function TicketsPanel({ employeeName, tickets, ticketCode }: { employeeNa
       <header className="border-b px-5 py-4">
         <h2 className="font-semibold">Chamados de {firstName(employeeName)}</h2>
         <p className="text-xs text-muted-foreground">
-          {open} abertos · {tickets.length - open} encerrados
+          {plural(open, "aberto", "abertos")} · {plural(tickets.length - open, "encerrado", "encerrados")}
         </p>
       </header>
 
@@ -35,7 +47,6 @@ export function TicketsPanel({ employeeName, tickets, ticketCode }: { employeeNa
               <p className="text-sm font-semibold">{current.title}</p>
               <p className="text-xs text-muted-foreground">
                 {CATEGORY_LABEL[current.category]} · prioridade {PRIORITY_LABEL[current.priority].toLowerCase()}
-                {current.overdue && <span className="font-medium text-danger"> · prazo vencido</span>}
               </p>
               <p className="flex items-center gap-1.5 border-t pt-2 text-xs text-muted-foreground">
                 <ArrowLeftRight className="size-3.5" /> Transferido para um analista
@@ -66,3 +77,5 @@ export function TicketsPanel({ employeeName, tickets, ticketCode }: { employeeNa
     </aside>
   );
 }
+
+const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;

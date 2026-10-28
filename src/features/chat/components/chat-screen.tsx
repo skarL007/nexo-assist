@@ -17,6 +17,7 @@ import {
   resolveDraft,
   sendMessage,
   startNewConversation,
+  unsentRestored,
 } from "../chat-slice";
 import { Composer, type ComposerHandle } from "./composer";
 import { WelcomeMessage } from "./welcome-message";
@@ -25,7 +26,7 @@ const POLL_MS = 4000;
 
 export function ChatScreen({ firstName }: { firstName: string }) {
   const dispatch = useAppDispatch();
-  const { conversation, live, optimisticText, sending, error } = useAppSelector((state) => state.chat);
+  const { conversation, live, optimisticText, sending, error, unsentText } = useAppSelector((state) => state.chat);
   const composer = useRef<ComposerHandle>(null);
   const bottom = useRef<HTMLDivElement>(null);
 
@@ -44,10 +45,17 @@ export function ChatScreen({ firstName }: { firstName: string }) {
     return () => clearInterval(timer);
   }, [paused, dispatch]);
 
+  // Envio que falhou antes de gravar: o texto volta para o campo, pronto para tentar de novo.
+  useEffect(() => {
+    if (unsentText === null) return;
+    composer.current?.prefill(unsentText);
+    dispatch(unsentRestored());
+  }, [unsentText, dispatch]);
+
   const messageCount = conversation?.messages.length ?? 0;
   useEffect(() => {
     bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messageCount, live?.text, live?.steps.length, live?.cards.length, optimisticText]);
+  }, [messageCount, live?.text, live?.steps.length, live?.cards.length, optimisticText, error]);
 
   const send = useCallback((text: string) => void dispatch(sendMessage(text)), [dispatch]);
   const shortcutDraftId = useMemo(() => latestPendingDraftId(conversation), [conversation]);
@@ -56,9 +64,9 @@ export function ChatScreen({ firstName }: { firstName: string }) {
     () => ({
       onSend: send,
       draftActions: (draftId) => ({
-        onConfirm: () => dispatch(resolveDraft({ draftId, action: "confirm" })),
-        onCancel: () => dispatch(resolveDraft({ draftId, action: "cancel" })),
-        // unwrap: o erro volta para o card mostrar ali mesmo, sem a faixa de erro da página.
+        // unwrap: o erro volta para o card mostrar ali mesmo.
+        onConfirm: () => dispatch(resolveDraft({ draftId, action: "confirm" })).unwrap(),
+        onCancel: () => dispatch(resolveDraft({ draftId, action: "cancel" })).unwrap(),
         onSave: (fields) => dispatch(resolveDraft({ draftId, action: "edit", fields })).unwrap(),
         shortcut: draftId === shortcutDraftId,
         locked: sending,

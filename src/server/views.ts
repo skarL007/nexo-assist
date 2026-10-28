@@ -4,6 +4,7 @@ import { MESSAGE_LIMIT_PER_SESSION, type Conversation } from "@/domain/conversat
 import type { Employee } from "@/domain/employee";
 import type { ChatMessage } from "@/domain/message";
 import type { Services } from "@/infrastructure/container";
+import { logError } from "./http";
 
 export async function conversationView(services: Services, conversation: Conversation | null): Promise<ConversationView> {
   if (!conversation) {
@@ -69,12 +70,16 @@ export async function consoleDetail(services: Services, conversation: Conversati
   const [people, messages, tickets] = await Promise.all([
     peopleOf(services, [conversation]),
     services.messages.listByConversation(conversation.id),
-    services.tickets.listMine(conversation.employeeId),
+    // Os chamados vêm do sistema legado, que às vezes cai: a conversa (banco local) abre mesmo assim.
+    services.tickets.listMine(conversation.employeeId).catch((error: unknown) => {
+      logError(error);
+      return null;
+    }),
   ]);
   return {
     ...summary(conversation, people, messages.at(-1)),
     handoffSummary: conversation.handoff?.summary ?? null,
     messages,
-    tickets: tickets.map((t) => services.tickets.snapshot(t)),
+    tickets: tickets ? tickets.map((t) => services.tickets.snapshot(t)) : null,
   };
 }

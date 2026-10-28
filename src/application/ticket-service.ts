@@ -102,8 +102,9 @@ export class TicketService {
     }
 
     const updated: Ticket = { ...ticket, status, resolvedAt, updatedAt: now };
-    await this.call(() => this.repo.addComment(code, "employee", comment, now));
+    // Primeiro o chamado, depois o comentário: se o comentário falhar, tentar de novo não duplica nada.
     await this.call(() => this.repo.update(updated));
+    await this.call(() => this.repo.addComment(code, "employee", comment, now));
     return updated;
   }
 

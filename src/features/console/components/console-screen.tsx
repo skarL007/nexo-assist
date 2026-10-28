@@ -4,6 +4,7 @@ import { MessagesSquare } from "lucide-react";
 import { useState } from "react";
 import { BrandMark } from "@/components/nexo/brand";
 import { PersonAvatar } from "@/components/nexo/person-avatar";
+import { Button } from "@/components/ui/button";
 import { LogoutButton } from "@/features/shell/employee-sidebar";
 import { useGetConversationQuery, useListConversationsQuery } from "../console-api";
 import { ConversationList } from "./conversation-list";
@@ -47,15 +48,32 @@ export function ConsoleScreen({ analyst }: { analyst: { id: string; name: string
       {list.isLoading ? (
         <Centered>Carregando conversas…</Centered>
       ) : list.isError ? (
-        <Centered>Não foi possível carregar as conversas.</Centered>
+        <Centered>
+          <span role="alert" className="flex flex-col items-center gap-3">
+            Não foi possível carregar as conversas.
+            <Button size="sm" variant="outline" onClick={() => void list.refetch()}>
+              Tentar de novo
+            </Button>
+          </span>
+        </Centered>
       ) : (
         <>
           <ConversationList conversations={list.data ?? []} analystId={analyst.id} selectedId={activeId} onSelect={setSelectedId} />
           {detail.data && detail.data.id === activeId ? (
             <>
-              <ConversationPanel conversation={detail.data} analystId={analyst.id} />
+              {/* key: trocar de conversa zera o texto digitado e o erro da anterior (senão iriam para outra pessoa). */}
+              <ConversationPanel key={detail.data.id} conversation={detail.data} analystId={analyst.id} />
               <TicketsPanel employeeName={detail.data.employee.name} tickets={detail.data.tickets} ticketCode={detail.data.ticketCode} />
             </>
+          ) : detail.isError ? (
+            <Centered>
+              <span role="alert" className="flex flex-col items-center gap-3">
+                Não foi possível abrir esta conversa.
+                <Button size="sm" variant="outline" onClick={() => void detail.refetch()}>
+                  Tentar de novo
+                </Button>
+              </span>
+            </Centered>
           ) : (
             <Centered>{activeId ? "Carregando conversa…" : "Selecione uma conversa."}</Centered>
           )}

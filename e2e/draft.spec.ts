@@ -1,4 +1,4 @@
-import { test } from "@playwright/test";
+import { test, type Page } from "@playwright/test";
 import type { ConversationView } from "@/contracts/chat";
 import { ANA, expect, login } from "./helpers";
 
@@ -7,7 +7,7 @@ import { ANA, expect, login } from "./helpers";
  * mensagem fica segurado para simular o Nexo respondendo. Confirmar no meio
  * da resposta deixava a resposta desatualizada ("o rascunho ainda está pronto").
  */
-test("rascunho fica travado enquanto o Nexo responde", async ({ page }) => {
+async function withPendingDraft(page: Page) {
   await page.route("**/api/chat", async (route) => {
     if (route.request().method() !== "GET") return; // POST segurado: o Nexo "está respondendo"
     const response = await route.fetch();
@@ -44,7 +44,10 @@ test("rascunho fica travado enquanto o Nexo responde", async ({ page }) => {
     });
     await route.fulfill({ response, json: view });
   });
+}
 
+test("rascunho fica travado enquanto o Nexo responde", async ({ page }) => {
+  await withPendingDraft(page);
   await login(page, ANA);
   const confirm = page.getByRole("button", { name: /^Confirmar/ });
   await expect(confirm).toBeEnabled();
@@ -54,4 +57,16 @@ test("rascunho fica travado enquanto o Nexo responde", async ({ page }) => {
 
   await expect(confirm).toBeDisabled();
   await expect(page.getByText("Aguarde o Nexo responder para confirmar.")).toBeVisible();
+});
+
+test("erro ao confirmar aparece no próprio card (não escondido no fim da página)", async ({ page }) => {
+  await withPendingDraft(page);
+  await page.route("**/api/chat/drafts/900", (route) =>
+    route.fulfill({ status: 503, json: { error: "O sistema de chamados está indisponível no momento.", code: "legacy_unavailable" } }),
+  );
+  await login(page, ANA);
+  await page.getByRole("button", { name: /^Confirmar/ }).click();
+  const alert = page.getByTestId("draft-card").getByRole("alert");
+  await expect(alert).toHaveText("O sistema de chamados está indisponível no momento.");
+  await expect(alert).toBeInViewport();
 });

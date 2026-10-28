@@ -22,6 +22,7 @@ const STATUS_BY_DOMAIN_ERROR: Record<DomainErrorCode, number> = {
   message_limit: 429,
   daily_limit: 429,
   legacy_unavailable: 503,
+  agent_unavailable: 503,
 };
 
 /** Só aceita JSON de verdade: um formulário de outro site não consegue montar este pedido. */

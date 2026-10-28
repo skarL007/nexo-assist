@@ -32,25 +32,27 @@ export function ConversationPanel({ conversation, analystId }: { conversation: C
 
   return (
     <section className="flex min-w-0 flex-1 flex-col bg-background">
-      <header className="flex items-center gap-3 border-b bg-surface px-5 py-3">
+      <header className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b bg-surface px-5 py-3">
         <PersonAvatar name={conversation.employee.name} online={conversation.status !== "closed"} />
-        <div className="min-w-0 flex-1">
-          <p className="font-semibold">{conversation.employee.name}</p>
-          <p className="truncate text-xs text-muted-foreground">
-            {conversation.employee.department}
-            {conversation.ticketCode && ` · ${conversation.ticketCode}`}
-          </p>
+        <div className="min-w-40 flex-1">
+          <p className="truncate font-semibold">{conversation.employee.name}</p>
+          <div className="flex min-w-0 items-center gap-2">
+            <StatusPill tone={STATUS_TONE[conversation.status]}>{STATUS_LABEL[conversation.status]}</StatusPill>
+            <p className="truncate text-xs text-muted-foreground">
+              {conversation.employee.department}
+              {conversation.ticketCode && ` · ${conversation.ticketCode}`}
+            </p>
+          </div>
         </div>
-        <StatusPill tone={STATUS_TONE[conversation.status]}>{STATUS_LABEL[conversation.status]}</StatusPill>
         {mine && (
-          <>
+          <div className="flex shrink-0 gap-2">
             <Button size="sm" variant="outline" disabled={actState.isLoading} onClick={() => run("release")}>
               <Undo2 className="size-4" /> Devolver ao agent
             </Button>
             <Button size="sm" variant="outline" className="text-danger" disabled={actState.isLoading} onClick={() => run("close")}>
               <LogOut className="size-4" /> Encerrar atendimento
             </Button>
-          </>
+          </div>
         )}
       </header>
 
