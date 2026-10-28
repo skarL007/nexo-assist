@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { Brand } from "@/components/nexo/brand";
-import type { Insights } from "@/domain/insights";
+import type { InsightsReport } from "@/domain/insights";
 import { LoginForm } from "@/features/auth/login-form";
 import { createServices } from "@/infrastructure/container";
 import { formatSeconds, percent } from "@/lib/format";
@@ -17,7 +17,7 @@ const SSO_ERRORS: Record<string, string> = {
 export const dynamic = "force-dynamic";
 
 /** Números de verdade deste ambiente (antes eram os do protótipo, fixos). Se o banco falhar, o login abre mesmo assim. */
-async function loginStats(): Promise<Insights | null> {
+async function loginStats(): Promise<InsightsReport | null> {
   try {
     return await createServices().insights.lastDays(30);
   } catch (error) {

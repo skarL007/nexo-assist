@@ -7,7 +7,9 @@
  */
 import { HANDOFF_REASONS, LOW_CONFIDENCE, type HandoffReason } from "./conversation";
 import type { ChatMessage, DraftStatus } from "./message";
+import type { KnowledgeGap } from "./knowledge-gaps";
 import type { SuggestionOutcome } from "./reply-suggestion";
+import type { ResolutionSummary } from "./resolution";
 
 export interface InsightsInput {
   messages: Pick<ChatMessage, "conversationId" | "role" | "cards" | "trace" | "createdAt">[];
@@ -39,6 +41,9 @@ export interface Insights {
   /** Sugestões geradas e quantas foram enviadas sem editar (fração das enviadas). */
   suggestions: { generated: number; sentAsIs: number; sentEdited: number; asIsRate: number | null };
 }
+
+/** Indicadores + resolução honesta e lacunas da central (montados no InsightsService). */
+export type InsightsReport = Insights & { resolution: ResolutionSummary; knowledgeGaps: KnowledgeGap[] };
 
 export function computeInsights(input: InsightsInput): Insights {
   const byConversation = Map.groupBy(input.messages, (m) => m.conversationId);

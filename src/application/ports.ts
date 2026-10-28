@@ -136,8 +136,10 @@ export interface ChangeFeed {
 
 export interface InsightsSource {
   messagesSince(since: Date): Promise<ChatMessage[]>;
-  feedbackSince(since: Date): Promise<{ helpful: boolean }[]>;
-  draftStatusesSince(since: Date): Promise<{ status: DraftStatus }[]>;
+  feedbackSince(since: Date): Promise<{ helpful: boolean; messageId: string; conversationId: string }[]>;
+  draftStatusesSince(since: Date): Promise<{ status: DraftStatus; conversationId: string }[]>;
+  /** Dono de cada conversa (resolução honesta: "voltou com o mesmo problema" é da mesma pessoa). */
+  conversationOwners(ids: string[]): Promise<{ id: string; employeeId: string }[]>;
   countAnalysts(): Promise<number>;
   /** Chamados abertos de todo mundo, com o nome de quem abriu (fila de prazos do console). */
   openTickets(): Promise<{ code: string; title: string; priority: Priority; status: TicketStatus; updatedAt: Date; ownerName: string }[]>;

@@ -7,7 +7,7 @@ test("analista abre os indicadores pelo console", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Indicadores" })).toBeVisible();
 
   const main = page.getByRole("region", { name: "Principais indicadores" });
-  await expect(main.getByText("Resolvido sem analista")).toBeVisible();
+  await expect(main.getByText("Resolvido pelo agent")).toBeVisible();
   // O valor depende do que os outros testes já fizeram no banco; aqui basta ser uma porcentagem.
   await expect(main.getByText(/^\d+%$/).first()).toBeVisible();
   await expect(page.getByRole("region", { name: "Mais indicadores" }).getByText("Analistas no service desk")).toBeVisible();
@@ -15,6 +15,21 @@ test("analista abre os indicadores pelo console", async ({ page }) => {
   const handoffs = page.getByRole("region", { name: "Transferências por motivo" });
   await expect(handoffs.getByText("Funcionário pediu um analista")).toBeVisible();
   await expect(handoffs.getByText("Agent sem segurança para decidir")).toBeVisible();
+
+  // Resolução honesta: os grupos e as definições, que abrem pelo teclado.
+  const resolution = page.getByRole("region", { name: "Resolução honesta" });
+  for (const label of ["Confirmadas", "Presumidas", "Viraram chamado", "Reabertas", "Abandonadas", "Com analista"]) {
+    await expect(resolution.getByRole("listitem").filter({ hasText: label })).toBeVisible();
+  }
+  await resolution.getByText("Como contamos").focus();
+  await page.keyboard.press("Enter");
+  await expect(resolution.getByText(/voltou com o mesmo assunto em até 7 dias/)).toBeVisible();
+
+  // Lacunas: as 3 buscas do seed sobre a impressora do 3º andar, sem artigo; o CPF do exemplo não aparece.
+  const gaps = page.getByRole("region", { name: "Lacunas da central" });
+  await expect(gaps.getByText("impressora, andar")).toBeVisible();
+  await expect(gaps.getByText(/3 buscas sem artigo · 100% viraram chamado ou analista/)).toBeVisible();
+  await expect(page.getByText(/123.456.789-09/)).toHaveCount(0);
 
   await page.getByRole("link", { name: "Conversas" }).click();
   await expect(page.getByText("Conversas", { exact: true }).first()).toBeVisible();
