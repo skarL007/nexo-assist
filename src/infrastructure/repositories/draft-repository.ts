@@ -33,6 +33,13 @@ export class DrizzleDraftRepository implements DraftRepository {
     return row ?? null;
   }
 
+  async replacePending(conversationId: string): Promise<void> {
+    await this.db
+      .update(drafts)
+      .set({ status: "replaced" })
+      .where(and(eq(drafts.conversationId, conversationId), eq(drafts.status, "pending")));
+  }
+
   async cancelPending(conversationId: string, since?: Date): Promise<void> {
     await this.db
       .update(drafts)

@@ -47,7 +47,7 @@ Qualquer senha funciona para os usuários de exemplo (regra do desafio). Na tela
 Outros comandos:
 
 ```bash
-npm test              # 135 testes unitários (domínio, serviços, HTTP, benchmark) — sem LLM
+npm test              # 148 testes unitários (domínio, serviços, HTTP, benchmark) — sem LLM
 npm run test:e2e      # Playwright contra o build de produção — sem LLM
 npm run eval          # 12 cenários de decisão do agent com o modelo real
 npm run db:seed       # volta os dados ao estado inicial
@@ -211,7 +211,8 @@ O modelo decide **o que fazer**. As regras do service desk ficam em código test
 | Prioridade = impacto × urgência (o modelo informa os dois, o código calcula) | [`domain/priority.ts`](src/domain/priority.ts) |
 | Prazo em horas/dias úteis (seg–sex, 8h–18h; crítico 1h corrida) | [`domain/business-time.ts`](src/domain/business-time.ts) |
 | Só cria/atualiza depois da confirmação. O agent monta rascunho; `confirmDraft` só aceita rascunho mostrado num turno anterior da mesma conversa, e a confirmação é atômica (clique duplo não cria dois chamados) | [`application/draft-service.ts`](src/application/draft-service.ts) |
-| Sem duplicidade: antes do rascunho, procura chamado aberto ou resolvido há até 7 dias da mesma categoria | `TicketService.findPossibleDuplicates` |
+| Sem duplicidade: antes do rascunho, procura chamado aberto ou resolvido há até 7 dias do mesmo tipo, da mesma categoria e com palavra relevante em comum no título | `TicketService.findPossibleDuplicates` |
+| "Alterar detalhes" no próprio card: o funcionário corrige campos (ex.: afetados "Toda a empresa" → "Somente você"), a prévia mostra a prioridade e o prazo novos, e o servidor troca o rascunho por um novo com a prioridade recalculada (nunca a do navegador), sem chamar o modelo. Continua exigindo Confirmar, e a duplicidade é conferida de novo | [`domain/draft-revision.ts`](src/domain/draft-revision.ts), `DraftService.reviseFromForm` |
 | Reabrir só até 7 dias | [`domain/ticket.ts`](src/domain/ticket.ts) (`canReopen`) |
 | Confiança abaixo de 50% → transfere sozinho | [`agent/tools/understanding.ts`](src/agent/tools/understanding.ts) |
 | Chamado crítico confirmado → transfere sozinho | `DraftService.confirm` |
@@ -226,8 +227,8 @@ O prompt ([`agent/instructions.ts`](src/agent/instructions.ts)) cuida só da con
 
 | Camada | O que cobre | Comando |
 |---|---|---|
-| **Testes unitários** (Vitest, 135) | prazos com fim de semana, matriz de prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado, confirmação obrigatória, clique duplo, transferência em caso crítico, bloqueio de CSRF | `npm test` |
-| **E2E** (Playwright, 11) | login (inclusive o botão de demonstração que entra com um clique), permissões (funcionário não acessa o console nem a API do analista) e o ciclo da transferência de ponta a ponta, contra o build de produção | `npm run test:e2e` |
+| **Testes unitários** (Vitest, 148) | prazos com fim de semana, matriz de prioridade, alteração de rascunho com prioridade recalculada, máquina de estados, privacidade, reabertura, duplicidade, retry do legado, confirmação obrigatória, clique duplo, transferência em caso crítico, bloqueio de CSRF | `npm test` |
+| **E2E** (Playwright, 14) | login (inclusive o botão de demonstração que entra com um clique), permissões (funcionário não acessa o console nem a API do analista), "Alterar detalhes" no card do rascunho, a página 404 e o ciclo da transferência de ponta a ponta, contra o build de produção | `npm run test:e2e` |
 | **Evals** (12 cenários, modelo real) | intenção, tools esperadas e proibidas, transferência, caso crítico, reabertura e vazamento de dados de outra pessoa | `npm run eval` |
 | **Trace em toda resposta** | qualquer decisão pode ser auditada na própria interface e no console do analista | — |
 

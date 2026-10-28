@@ -10,6 +10,7 @@ export class DomainError extends Error {
 }
 
 export type DomainErrorCode =
+  | "invalid_input"
   | "not_found"
   | "forbidden"
   | "invalid_transition"

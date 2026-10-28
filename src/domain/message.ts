@@ -6,6 +6,7 @@
  * Datas viram string ISO porque tudo aqui é salvo como JSON e enviado ao browser.
  */
 import type { HandoffReason } from "./conversation";
+import type { Urgency } from "./priority";
 import type { Category, Impact, Priority, TicketStatus, TicketType } from "./ticket";
 
 export type MessageRole = "employee" | "agent" | "analyst" | "system";
@@ -26,7 +27,8 @@ export interface TicketSnapshot {
 }
 
 export type DraftKind = "create" | "update";
-export type DraftStatus = "pending" | "confirmed" | "cancelled";
+/** "replaced": trocado por um rascunho novo (correção); "cancelled": o funcionário descartou. */
+export type DraftStatus = "pending" | "confirmed" | "cancelled" | "replaced";
 
 export interface NewTicketFields {
   type: TicketType;
@@ -35,6 +37,8 @@ export interface NewTicketFields {
   category: Category;
   priority: Priority;
   impact: Impact;
+  /** Guardada para o "Alterar detalhes" recalcular a prioridade (rascunhos antigos não têm). */
+  urgency?: Urgency;
   priorityReason: string;
 }
 

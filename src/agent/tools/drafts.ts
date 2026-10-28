@@ -54,6 +54,7 @@ export const draftNewTicket = createTool({
         title: input.title,
         description: input.description,
         impact: input.impact,
+        urgency: input.urgency,
         priority,
         priorityReason: reason,
       });

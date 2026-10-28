@@ -58,7 +58,8 @@ export function ChatScreen({ firstName }: { firstName: string }) {
       draftActions: (draftId) => ({
         onConfirm: () => dispatch(resolveDraft({ draftId, action: "confirm" })),
         onCancel: () => dispatch(resolveDraft({ draftId, action: "cancel" })),
-        onEdit: () => composer.current?.prefill(`Quero mudar no rascunho D-${draftId}: `),
+        // unwrap: o erro volta para o card mostrar ali mesmo, sem a faixa de erro da página.
+        onSave: (fields) => dispatch(resolveDraft({ draftId, action: "edit", fields })).unwrap(),
         shortcut: draftId === shortcutDraftId,
         locked: sending,
       }),

@@ -23,8 +23,16 @@ with_agent ──handoff──▶ waiting_analyst ──assume──▶ with_ana
 
 ## Rascunho
 
-- Um rascunho novo (de chamado ou de atualização) substitui o pendente anterior da conversa, que aparece como "Descartado". Sem isso, ao corrigir um detalhe, o rascunho antigo continuava confirmável e dava para criar dois chamados do mesmo problema.
+- Um rascunho novo (de chamado ou de atualização) substitui o pendente anterior da conversa, que aparece como "Substituído" ("Descartado" fica só para o que o funcionário cancelou). Sem isso, ao corrigir um detalhe, o rascunho antigo continuava confirmável e dava para criar dois chamados do mesmo problema.
+- **Alterar detalhes no próprio card.** O botão abre o rascunho para edição ali mesmo: título, descrição, tipo, categoria, quem é afetado e urgência (no rascunho de atualização, o comentário). A prioridade e o prazo são recalculados ao vivo pela matriz do Anexo A, e o card mostra o que muda antes de salvar. Salvar troca o rascunho por um novo, e o Nexo responde com o resumo das mudanças, sem chamar o modelo (não gasta o teto). Continua sendo rascunho: nada é criado sem Confirmar. Ainda dá para pedir a mudança escrevendo na conversa.
+- A prioridade é sempre recalculada no servidor; o navegador só mostra a prévia. Se a mudança de tipo, categoria ou título deixar o rascunho parecido com um chamado aberto, a resposta lista os parecidos para escolher (regra de duplicidade).
+- Aceite: rascunho com Afetados "Toda a empresa" e urgência "impede de trabalhar" (Crítica) → em Alterar detalhes, Afetados "Somente você" → a prévia mostra "Alta · 4 horas úteis"; salvar → card novo com Alta, o anterior "Substituído", e o Nexo responde "Afetados: Toda a empresa → Somente você · Prioridade: Crítica → Alta".
 - Enquanto o Nexo responde, os botões do rascunho (e o Ctrl+Enter) ficam travados, com o aviso "Aguarde o Nexo responder para confirmar". A resposta em andamento foi montada com os rascunhos de antes; confirmar no meio dela deixava a resposta desatualizada ("o rascunho ainda está pronto").
+
+## Páginas de erro
+
+- Endereço que não existe mostra "Página não encontrada", em português e no visual do app, com link para voltar ao início (status 404).
+- Erro inesperado numa tela mostra "Algo deu errado" com "Tentar de novo", sem detalhes técnicos.
 
 ## Sessão
 
@@ -48,7 +56,7 @@ with_agent ──handoff──▶ waiting_analyst ──assume──▶ with_ana
 | GET | `/api/chat` | funcionário | conversa aberta (ou vazia) |
 | POST | `/api/chat` | funcionário | `{ text }` → stream NDJSON |
 | POST | `/api/chat/new` | funcionário | encerra a conversa atual |
-| POST | `/api/chat/drafts/:id` | funcionário | `{ action: confirm \| cancel }` |
+| POST | `/api/chat/drafts/:id` | funcionário | `{ action: confirm \| cancel }` ou `{ action: edit, fields }` |
 | GET | `/api/console/conversations` | analista | lista |
 | GET | `/api/console/conversations/:id` | analista | detalhe + chamados |
 | POST | `/api/console/conversations/:id` | analista | `{ action: assume \| release \| close }` |
