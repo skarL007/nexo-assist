@@ -67,15 +67,38 @@ describe("rascunho antes de criar", () => {
     const { drafts, conversation } = await setup();
     const draft = await drafts.proposeNewTicket(conversation.id, "ana", fields);
     // turno que começou antes (ou no mesmo instante) da criação do rascunho
-    const sameTurn = { conversationId: conversation.id, startedAt: clock.now() };
+    const sameTurn = { conversationId: conversation.id, startedAt: clock.now(), employeeText: "pode criar" };
     await expect(drafts.confirm(draft.id, "ana", sameTurn)).rejects.toMatchObject({ code: "draft_not_pending" });
   });
 
   it("o agent não confirma rascunho de outra conversa", async () => {
     const { drafts, conversation } = await setup();
     const draft = await drafts.proposeNewTicket(conversation.id, "ana", fields);
-    const otherTurn = { conversationId: "outra-conversa", startedAt: new Date("2099-01-01") };
+    const otherTurn = { conversationId: "outra-conversa", startedAt: new Date("2099-01-01"), employeeText: "pode criar" };
     await expect(drafts.confirm(draft.id, "ana", otherTurn)).rejects.toMatchObject({ code: "draft_not_pending" });
+  });
+
+  it("pelo agent, só confirma quando a mensagem do funcionário confirma de forma explícita", async () => {
+    // Achado do funcionário simulado (power-bi): a resposta rápida de urgência virou "sim" e o REQ foi criado.
+    const { ticketRepo, drafts, conversation } = await setup();
+    const draft = await drafts.proposeNewTicket(conversation.id, "ana", fields);
+    const nextTurn = { conversationId: conversation.id, startedAt: new Date("2026-10-27T13:05:00Z") };
+
+    await expect(drafts.confirm(draft.id, "ana", { ...nextTurn, employeeText: "Tenho alternativa / Posso aguardar" })).rejects.toMatchObject({
+      code: "confirmation_required",
+    });
+    expect(ticketRepo.tickets.size).toBe(0);
+    expect((await drafts.statuses(conversation.id))[draft.id]).toBe("pending");
+
+    await drafts.confirm(draft.id, "ana", { ...nextTurn, employeeText: "pode criar" });
+    expect(ticketRepo.tickets.size).toBe(1);
+  });
+
+  it("o botão Confirmar não depende de texto", async () => {
+    const { ticketRepo, drafts, conversation } = await setup();
+    const draft = await drafts.proposeNewTicket(conversation.id, "ana", fields);
+    await drafts.confirmFromButton(draft.id, "ana");
+    expect(ticketRepo.tickets.size).toBe(1);
   });
 
   it("dois cliques ao mesmo tempo criam um chamado só", async () => {
@@ -293,5 +316,24 @@ describe("limite de alterações pelo card (achado A1 da auditoria de segurança
     }
     await expect(drafts.reviseFromForm(current, "ana", { ...base, urgency: "none" })).rejects.toMatchObject({ code: "message_limit" });
     expect((await drafts.statuses(conversation.id))[current]).toBe("pending");
+  });
+});
+
+describe("atualização só para o mesmo problema", () => {
+  it("problema de outra categoria não vira comentário no chamado existente (Outlook no INC-20311 de Hardware)", async () => {
+    // Achado do funcionário simulado (vago-outlook): "Outlook não abre" foi parar no chamado de notebook lento.
+    const { ticketRepo, drafts, conversation } = await setup();
+    await ticketRepo.insert(makeTicket({ code: "INC-20311", status: "open" }));
+    await expect(
+      drafts.proposeUpdate(conversation.id, "ana", { ticketCode: "INC-20311", comment: "O Outlook não abre desde ontem.", category: "email" }),
+    ).rejects.toMatchObject({ code: "different_problem" });
+    expect(await drafts.pending(conversation.id)).toEqual([]);
+  });
+
+  it("mesmo assunto continua permitido (Excel travando no notebook lento)", async () => {
+    const { ticketRepo, drafts, conversation } = await setup();
+    await ticketRepo.insert(makeTicket({ code: "INC-20311", status: "open" }));
+    const draft = await drafts.proposeUpdate(conversation.id, "ana", { ticketCode: "INC-20311", comment: "Agora trava ao abrir o Excel.", category: "software" });
+    expect(draft.kind).toBe("update");
   });
 });

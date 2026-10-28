@@ -3,11 +3,12 @@
  * Ele propõe um rascunho; o chamado só nasce quando o funcionário confirma
  * (pelo botão ou respondendo "pode criar" na conversa).
  */
+import { isExplicitConfirmation } from "@/domain/confirmation";
 import { describeChanges, MAX_DRAFTS_PER_CONVERSATION, reviseNewTicket, type NewTicketEdit } from "@/domain/draft-revision";
 import { DomainError } from "@/domain/errors";
 import type { Card, DraftSnapshot, DraftStatus, NewTicketFields, TicketUpdateFields, TraceStep, TurnTrace } from "@/domain/message";
 import { SLA_LABEL, slaDeadline } from "@/domain/priority";
-import { canReopen, type Ticket } from "@/domain/ticket";
+import { canReopen, CATEGORY_LABEL, sameSubject, type Category, type Ticket } from "@/domain/ticket";
 import type { ConversationService } from "./conversation-service";
 import { systemClock, type Clock, type Draft, type DraftRepository, type MessageRepository } from "./ports";
 import type { TicketService } from "./ticket-service";
@@ -50,8 +51,9 @@ export class DraftService {
   async proposeUpdate(
     conversationId: string,
     employeeId: string,
-    input: { ticketCode: string; comment: string },
+    input: { ticketCode: string; comment: string; category?: Category },
   ): Promise<DraftSnapshot> {
+    if (input.category) await this.assertSameProblem(employeeId, input.ticketCode, input.category);
     const fields = await this.updateFields(employeeId, input.ticketCode, input.comment);
     await this.drafts.replacePending(conversationId);
     const draft = await this.drafts.insert({
@@ -146,6 +148,16 @@ export class DraftService {
     };
   }
 
+  /** Problema de outro assunto vira chamado novo, não comentário no chamado existente. */
+  private async assertSameProblem(employeeId: string, ticketCode: string, reported: Category): Promise<void> {
+    const ticket = await this.tickets.getMine(employeeId, ticketCode);
+    if (sameSubject(ticket.category, reported)) return;
+    throw new DomainError(
+      "different_problem",
+      `O ${ticket.code} é sobre ${CATEGORY_LABEL[ticket.category]} ("${ticket.title}"), e o problema relatado é de ${CATEGORY_LABEL[reported]}. É outro problema: proponha um chamado novo em vez de atualizar este.`,
+    );
+  }
+
   /** Campos de uma atualização: o chamado precisa ser do funcionário e, se resolvido, estar na janela de 7 dias. */
   private async updateFields(employeeId: string, ticketCode: string, comment: string): Promise<TicketUpdateFields> {
     const ticket = await this.tickets.getMine(employeeId, ticketCode);
@@ -159,19 +171,26 @@ export class DraftService {
   /**
    * Confirma um rascunho.
    * - O rascunho é "reservado" de forma atômica: dois cliques (ou Ctrl+Enter repetido) criam um chamado só.
-   * - Pelo agent (`fromTurn`), o rascunho precisa ser desta conversa e ter sido mostrado num turno anterior.
+   * - Pelo agent (`fromTurn`), o rascunho precisa ser desta conversa, ter sido mostrado num turno anterior
+   *   e a mensagem do funcionário precisa confirmar de forma explícita (o botão não passa por aqui).
    * - Se criar o chamado falhar, o rascunho volta a ficar pendente para tentar de novo.
    * - Depois que o chamado existe, nenhuma falha desfaz a confirmação: o próximo Confirmar duplicaria.
    */
   async confirm(
     draftId: number,
     employeeId: string,
-    fromTurn?: { conversationId: string; startedAt: Date },
+    fromTurn?: { conversationId: string; startedAt: Date; employeeText: string },
   ): Promise<ConfirmResult> {
     if (fromTurn) {
       const draft = await this.getPending(draftId, employeeId);
       if (draft.conversationId !== fromTurn.conversationId || draft.createdAt >= fromTurn.startedAt) {
         throw new DomainError("draft_not_pending", "O funcionário ainda não viu este rascunho. Mostre e espere a confirmação.");
+      }
+      if (!isExplicitConfirmation(fromTurn.employeeText)) {
+        throw new DomainError(
+          "confirmation_required",
+          'A última mensagem do funcionário não confirma o rascunho de forma explícita. Não diga que o chamado foi criado: responda ao que ele disse e peça para clicar em Confirmar no rascunho (ou responder "pode criar").',
+        );
       }
     }
     const draft = await this.claim(draftId, employeeId, "confirmed");

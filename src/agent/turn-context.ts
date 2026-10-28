@@ -6,6 +6,7 @@
  * modelo preenche — assim nenhum prompt consegue ler chamados de outra pessoa.
  */
 import type { Employee } from "@/domain/employee";
+import { OFFER_ANALYST_OPTION } from "@/domain/frustration";
 import type { Card, Decision, TraceStep } from "@/domain/message";
 import type { Services } from "@/infrastructure/container";
 
@@ -40,8 +41,37 @@ export class TurnRecorder {
     this.pending.push({ type: "step", step });
   }
 
-  /** Regra de frustração: o turno termina oferecendo um analista (botão), sem transferir. */
+  /** Regra do código (frustração, prazo que não atende): o turno termina oferecendo um analista (botão), sem transferir. */
   offerAnalyst = false;
+  /** O prazo de um chamado consultado neste turno atende a necessidade informada: sem oferta de analista por prazo. */
+  deadlineCoversNeed = false;
+
+  /**
+   * Fecha a oferta de analista do turno. Com motivo do código, o botão aparece mesmo que a
+   * resposta esqueça de oferecer. Com o prazo atendendo e nenhum outro motivo, o botão de
+   * analista sai das respostas rápidas (pedido explícito do funcionário continua transferindo).
+   */
+  finishAnalystOffer() {
+    if (this.handedOff) return;
+    if (this.offerAnalyst) {
+      const replies = this.cards.find((c) => c.kind === "quick_replies");
+      if (!replies) this.card({ kind: "quick_replies", options: [OFFER_ANALYST_OPTION] });
+      else if (!replies.options.includes(OFFER_ANALYST_OPTION)) replies.options.push(OFFER_ANALYST_OPTION);
+      return;
+    }
+    if (!this.deadlineCoversNeed) return;
+    let removed = false;
+    for (let i = this.cards.length - 1; i >= 0; i--) {
+      const card = this.cards[i];
+      if (card.kind !== "quick_replies") continue;
+      const kept = card.options.filter((option) => !/analista/i.test(option));
+      if (kept.length === card.options.length) continue;
+      removed = true;
+      if (kept.length) card.options = kept;
+      else this.cards.splice(i, 1);
+    }
+    if (removed) this.guardrail("O prazo do chamado atende a necessidade informada: o botão de analista saiu das respostas rápidas.");
+  }
 
   card(card: Card) {
     this.cards.push(card);
@@ -62,6 +92,8 @@ export class TurnRecorder {
 
 export interface TurnContext {
   employee: Employee;
+  /** Texto da mensagem do funcionário neste turno (vem do pedido, nunca de argumento de tool). */
+  employeeText: string;
   conversationId: string;
   startedAt: Date;
   services: Services;

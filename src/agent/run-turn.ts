@@ -7,7 +7,6 @@
  *   3. roda o agent com as últimas mensagens; o 1º passo é sempre recordUnderstanding
  *   4. salva a resposta com o trace (decisão, passos, tools, tokens, tempo)
  */
-import { OFFER_ANALYST_OPTION } from "@/domain/frustration";
 import { RequestContext } from "@mastra/core/request-context";
 import type { ChatStreamEvent } from "@/contracts/chat";
 import { env } from "@/config/env";
@@ -65,7 +64,7 @@ export async function* runAgentTurn(employee: Employee, text: string, abortSigna
   await assertWithinBudget(services);
 
   try {
-    yield* replyWithAgent({ employee, conversationId: conversation.id, startedAt, services, recorder }, abortSignal);
+    yield* replyWithAgent({ employee, employeeText: text, conversationId: conversation.id, startedAt, services, recorder }, abortSignal);
   } catch (error) {
     // Rascunho criado num turno que falhou nunca foi mostrado: não pode ser confirmado depois.
     await services.drafts.cancelPending(conversation.id, startedAt);
@@ -96,12 +95,9 @@ async function* replyWithAgent(turn: TurnContext, abortSignal?: AbortSignal): As
     yield* streamAgent(turn, messages, system, 1, run, abortSignal);
   }
 
-  // Oferta por frustração é do código, não do modelo: o botão aparece mesmo que a resposta esqueça de oferecer.
-  if (recorder.offerAnalyst && !recorder.handedOff) {
-    const replies = recorder.cards.find((c) => c.kind === "quick_replies");
-    if (!replies) recorder.card({ kind: "quick_replies", options: [OFFER_ANALYST_OPTION] });
-    else if (!replies.options.includes(OFFER_ANALYST_OPTION)) replies.options.push(OFFER_ANALYST_OPTION);
-  }
+  // Oferta de analista é do código, não do modelo: por frustração ou prazo que não atende, o botão aparece;
+  // com o prazo atendendo a necessidade, o botão de analista sai.
+  recorder.finishAnalystOffer();
 
   if (run.fallbackModel) recorder.guardrail(fallbackNote(env().LLM_MODEL, run.fallbackModel));
   if (recorder.repeatedUnderstandings) {

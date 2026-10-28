@@ -13,7 +13,10 @@ export const offerQuickReplies = createTool({
     options: z.array(z.string().min(1).max(40)).min(2).max(4),
   }),
   execute: async ({ options }, context) => {
-    turnFrom(context).recorder.card({ kind: "quick_replies", options });
+    const { recorder } = turnFrom(context);
+    recorder.card({ kind: "quick_replies", options });
+    // Prazo que atende a necessidade: o botão de analista sai já aqui (e de novo no fim do turno).
+    recorder.finishAnalystOffer();
     return { ok: true };
   },
 });

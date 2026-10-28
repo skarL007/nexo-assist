@@ -1,9 +1,13 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 import { classifyPriority, SLA_LABEL, URGENCIES } from "@/domain/priority";
-import { CATEGORIES, CATEGORY_LABEL, IMPACTS, TICKET_TYPES } from "@/domain/ticket";
+import { CATEGORIES, CATEGORY_LABEL, categoryForTitle, IMPACTS, TICKET_TYPES } from "@/domain/ticket";
 import { turnFrom } from "../turn-context";
-import { attempt, formatDateTime } from "./shared";
+import { attempt, formatDateTime, judgeDeadline, NEEDED_BY_DESCRIPTION } from "./shared";
+
+const CATEGORY_DESCRIPTION =
+  "access = login, senha, permissão; network = rede, Wi-Fi, VPN; hardware = equipamento; " +
+  "software = programa (exceto e-mail); email = Outlook, webmail, caixa de entrada, calendário do e-mail; other = o resto";
 
 export const draftNewTicket = createTool({
   id: "draftNewTicket",
@@ -14,7 +18,7 @@ export const draftNewTicket = createTool({
     "Se houver chamado parecido aberto, a tool devolve os possíveis duplicados em vez do rascunho.",
   inputSchema: z.object({
     type: z.enum(TICKET_TYPES).describe("INC = algo parou ou não funciona; REQ = pedido de acesso, equipamento ou software"),
-    category: z.enum(CATEGORIES),
+    category: z.enum(CATEGORIES).describe(CATEGORY_DESCRIPTION),
     title: z.string().min(5).max(80).describe("Título curto e específico"),
     description: z
       .string()
@@ -24,12 +28,19 @@ export const draftNewTicket = createTool({
     impact: z.enum(IMPACTS).describe("me = só o funcionário; team = a equipe dele; company = a empresa"),
     urgency: z.enum(URGENCIES).describe("blocked = não consegue trabalhar; deadline_today = compromisso hoje; has_workaround = há alternativa; none = sem urgência"),
     ignoreDuplicates: z.boolean().default(false).describe("true só depois que o funcionário disse que não é nenhum dos chamados parecidos"),
+    neededBy: z.string().max(11).optional().describe(NEEDED_BY_DESCRIPTION),
   }),
-  execute: async (input, context) => {
+  execute: async (raw, context) => {
     const turn = turnFrom(context);
     const { tickets, drafts } = turn.services;
 
     return attempt(turn, "não conseguiu montar o rascunho", async () => {
+      // Programa de e-mail é E-mail, não Software: muda a fila de quem atende (regra de código, não do prompt).
+      const category = categoryForTitle(raw.title, raw.category);
+      if (category !== raw.category) {
+        turn.recorder.guardrail(`Categoria corrigida de ${CATEGORY_LABEL[raw.category]} para ${CATEGORY_LABEL[category]}: programa de e-mail vai para a fila de E-mail.`);
+      }
+      const input = { ...raw, category };
       if (!input.ignoreDuplicates) {
         const duplicates = await tickets.findPossibleDuplicates(turn.employee.id, input);
         if (duplicates.length > 0) {
@@ -74,12 +85,14 @@ export const draftNewTicket = createTool({
       turn.recorder.step("consultou o SLA", `${SLA_LABEL[priority]} → resposta até ${formatDateTime(draft.deadline)}`);
       turn.recorder.step("montou o rascunho", `D-${draft.id}`);
       turn.recorder.card({ kind: "draft", draft });
+      const need = judgeDeadline(turn, new Date(draft.deadline), input.neededBy);
 
       return {
         draftId: draft.id,
         priority,
         priorityReason: reason,
         responseDeadline: formatDateTime(draft.deadline),
+        ...(need ? { deadlineMeetsNeed: need.deadlineMeetsNeed, deadlineInstruction: need.instruction } : {}),
         ...(issue
           ? {
               knownIssue: { category: CATEGORY_LABEL[issue.category], people: issue.people, since: formatDateTime(issue.since) },
@@ -96,16 +109,18 @@ export const draftTicketUpdate = createTool({
   id: "draftTicketUpdate",
   description:
     "Monta o RASCUNHO de uma atualização (comentário) num chamado existente do funcionário. " +
-    "Se o chamado foi resolvido há até 7 dias, a confirmação o reabre. Não altera nada até a confirmação.",
+    "Se o chamado foi resolvido há até 7 dias, a confirmação o reabre. Não altera nada até a confirmação. " +
+    "Só para o MESMO problema do chamado: problema de outra categoria é recusado (proponha um chamado novo).",
   inputSchema: z.object({
     code: z.string().regex(/^(INC|REQ)-\d+$/i),
     comment: z.string().min(5).max(600).describe("Informação nova, escrita para o analista"),
+    category: z.enum(CATEGORIES).describe(`Categoria do problema que o comentário descreve (${CATEGORY_DESCRIPTION})`),
   }),
-  execute: async ({ code, comment }, context) => {
+  execute: async ({ code, comment, category }, context) => {
     const turn = turnFrom(context);
 
     return attempt(turn, `não conseguiu preparar a atualização do ${code.toUpperCase()}`, async () => {
-      const draft = await turn.services.drafts.proposeUpdate(turn.conversationId, turn.employee.id, { ticketCode: code, comment });
+      const draft = await turn.services.drafts.proposeUpdate(turn.conversationId, turn.employee.id, { ticketCode: code, comment, category });
       if (draft.kind !== "update") throw new Error("rascunho inesperado");
 
       turn.recorder.step(`montou a atualização do ${draft.fields.ticketCode}`, draft.fields.reopen ? "Confirmar vai reabrir o chamado" : undefined);
@@ -119,7 +134,8 @@ export const confirmDraft = createTool({
   id: "confirmDraft",
   description:
     "Confirma um rascunho que o funcionário JÁ VIU, criando ou atualizando o chamado. " +
-    "Use somente quando a última mensagem dele confirmar explicitamente (ex.: 'pode criar', 'confirmo').",
+    "Use somente quando a última mensagem dele confirmar explicitamente (ex.: 'pode criar', 'confirmo'). " +
+    "Resposta a outra pergunta (ex.: clique numa resposta rápida de urgência) não é confirmação, e o sistema recusa.",
   inputSchema: z.object({ draftId: z.number().int() }),
   execute: async ({ draftId }, context) => {
     const turn = turnFrom(context);
@@ -130,6 +146,7 @@ export const confirmDraft = createTool({
       const result = await drafts.confirm(draftId, turn.employee.id, {
         conversationId: turn.conversationId,
         startedAt: turn.startedAt,
+        employeeText: turn.employeeText,
       });
       const verb = result.draft.kind === "create" ? "criou" : "atualizou";
       turn.recorder.step(`${verb} o ${result.ticket.code}`, "Confirmado pelo funcionário na conversa");

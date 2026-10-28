@@ -14,3 +14,40 @@ describe("registro do entendimento", () => {
     expect(recorder.repeatedUnderstandings).toBe(2);
   });
 });
+
+describe("oferta de analista no fim do turno", () => {
+  const replies = (recorder: TurnRecorder) => recorder.cards.flatMap((c) => (c.kind === "quick_replies" ? c.options : []));
+
+  it("prazo não atende a necessidade: o código põe o botão de analista", () => {
+    const recorder = new TurnRecorder();
+    recorder.offerAnalyst = true;
+    recorder.finishAnalystOffer();
+    expect(replies(recorder)).toEqual(["Falar com um analista"]);
+  });
+
+  it("prazo atende a necessidade: o botão de analista sai das respostas rápidas e o trace explica", () => {
+    // Achado do funcionário simulado (vpn-reuniao): o chamado já atendia e o agent ofereceu analista mesmo assim.
+    const recorder = new TurnRecorder();
+    recorder.deadlineCoversNeed = true;
+    recorder.card({ kind: "quick_replies", options: ["Falar com um analista", "Adicionar informação", "Não, obrigado"] });
+    recorder.finishAnalystOffer();
+    expect(replies(recorder)).toEqual(["Adicionar informação", "Não, obrigado"]);
+    expect(recorder.guardrails.join(" ")).toMatch(/prazo/i);
+  });
+
+  it("só o botão de analista: o card some", () => {
+    const recorder = new TurnRecorder();
+    recorder.deadlineCoversNeed = true;
+    recorder.card({ kind: "quick_replies", options: ["Falar com um analista"] });
+    recorder.finishAnalystOffer();
+    expect(recorder.cards).toEqual([]);
+  });
+
+  it("frustração (ou outro motivo do código) continua oferecendo, mesmo com o prazo atendendo", () => {
+    const recorder = new TurnRecorder();
+    recorder.deadlineCoversNeed = true;
+    recorder.offerAnalyst = true;
+    recorder.finishAnalystOffer();
+    expect(replies(recorder)).toEqual(["Falar com um analista"]);
+  });
+});

@@ -2,7 +2,7 @@ import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 import { PRIORITY_LABEL, STATUS_LABEL } from "@/domain/ticket";
 import { turnFrom } from "../turn-context";
-import { attempt, formatDateTime } from "./shared";
+import { attempt, formatDateTime, judgeDeadline, NEEDED_BY_DESCRIPTION } from "./shared";
 
 export const listMyTickets = createTool({
   id: "listMyTickets",
@@ -48,9 +48,14 @@ export const listMyTickets = createTool({
 
 export const getTicket = createTool({
   id: "getTicket",
-  description: "Consulta um chamado do funcionário pelo código (ex.: INC-20311) e calcula se o prazo está vencido.",
-  inputSchema: z.object({ code: z.string().regex(/^(INC|REQ)-\d+$/i) }),
-  execute: async ({ code }, context) => {
+  description:
+    "Consulta um chamado do funcionário pelo código (ex.: INC-20311) e calcula se o prazo está vencido. " +
+    "Se ele disse até quando precisa (ex.: reunião às 15h), passe neededBy: o sistema diz se o prazo atende.",
+  inputSchema: z.object({
+    code: z.string().regex(/^(INC|REQ)-\d+$/i),
+    neededBy: z.string().max(11).optional().describe(NEEDED_BY_DESCRIPTION),
+  }),
+  execute: async ({ code, neededBy }, context) => {
     const turn = turnFrom(context);
     const { tickets } = turn.services;
 
@@ -61,13 +66,15 @@ export const getTicket = createTool({
         turn.recorder.step("calculou o prazo", `${snapshot.overdue ? "Vencido desde" : "Vence"} ${formatDateTime(snapshot.deadline)}`);
       }
       turn.recorder.card({ kind: "ticket", ticket: snapshot });
+      const need = snapshot.overdue ? undefined : judgeDeadline(turn, snapshot.deadline ? new Date(snapshot.deadline) : null, neededBy);
 
       return {
         ...snapshot,
         status: STATUS_LABEL[snapshot.status],
         lastUpdate: formatDateTime(snapshot.updatedAt),
         deadline: snapshot.deadline && formatDateTime(snapshot.deadline),
-        hint: snapshot.overdue ? "Prazo vencido: explique e ofereça chamar um analista." : undefined,
+        hint: snapshot.overdue ? "Prazo vencido: explique e ofereça chamar um analista." : need?.instruction,
+        ...(need ? { deadlineMeetsNeed: need.deadlineMeetsNeed } : {}),
       };
     });
   },
