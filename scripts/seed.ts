@@ -9,6 +9,10 @@ import type { Card } from "@/domain/message";
 
 const db = createDatabase();
 
+const CARLA_SUMMARY = "Carla precisa de perfil de aprovação no SAP para fechar pedidos ainda hoje (INC-20320). Pediu para falar com um analista.";
+const BRUNO_SUMMARY =
+  "Bruno quer instalar um plugin de IA no Figma usando a licença do time. Não está claro se é software homologado ou requisição com aprovação.";
+
 interface SeedMessage {
   role: "employee" | "agent" | "analyst" | "system";
   text: string;
@@ -61,7 +65,7 @@ async function main() {
     {
       status: "waiting_analyst",
       handoffReason: "employee_request",
-      handoffSummary: "Carla precisa de perfil de aprovação no SAP para fechar pedidos ainda hoje (INC-20320). Pediu para falar com um analista.",
+      handoffSummary: CARLA_SUMMARY,
       handoffTicketCode: "INC-20320",
       handoffAt: ago(25 * 60_000),
     },
@@ -69,7 +73,13 @@ async function main() {
       { role: "employee", text: "Preciso de acesso de aprovação no SAP ainda hoje, tenho pedidos para fechar.", minutesAgo: 32 },
       { role: "agent", text: "Encontrei o seu INC-20320, aberto há 3 horas com prioridade alta. O prazo de resposta ainda não venceu.", minutesAgo: 31 },
       { role: "employee", text: "Prefiro falar com alguém, é urgente.", minutesAgo: 26 },
-      { role: "system", text: "Transferido para o service desk · Funcionário pediu um analista", minutesAgo: 25 },
+      // Como numa transferência de verdade, o card fica no histórico (o relatório do console usa depois de devolver).
+      {
+        role: "system",
+        text: "Transferido para o service desk · Funcionário pediu um analista",
+        minutesAgo: 25,
+        cards: [{ kind: "handoff", reason: "employee_request", summary: CARLA_SUMMARY }],
+      },
     ],
   );
 
@@ -79,13 +89,18 @@ async function main() {
     {
       status: "waiting_analyst",
       handoffReason: "low_confidence",
-      handoffSummary: "Bruno quer instalar um plugin de IA no Figma usando a licença do time. Não está claro se é software homologado ou requisição com aprovação.",
+      handoffSummary: BRUNO_SUMMARY,
       handoffConfidence: 41,
       handoffAt: ago(50 * 60_000),
     },
     [
       { role: "employee", text: "Posso instalar um plugin de IA no Figma com a licença do time? Ele pede acesso aos arquivos.", minutesAgo: 52 },
-      { role: "system", text: "Transferido para o service desk · Agent sem segurança para decidir", minutesAgo: 50 },
+      {
+        role: "system",
+        text: "Transferido para o service desk · Agent sem segurança para decidir",
+        minutesAgo: 50,
+        cards: [{ kind: "handoff", reason: "low_confidence", summary: BRUNO_SUMMARY }],
+      },
       { role: "agent", text: "Vou chamar um analista para te ajudar com isso, ele já recebe o resumo da conversa.", minutesAgo: 50 },
     ],
   );
