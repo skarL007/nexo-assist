@@ -6,9 +6,11 @@ import { ConversationService } from "@/application/conversation-service";
 import { DraftService } from "@/application/draft-service";
 import { FeedbackService } from "@/application/feedback-service";
 import { InsightsService } from "@/application/insights-service";
+import { KnowledgeService } from "@/application/knowledge-service";
 import { TicketService } from "@/application/ticket-service";
 import { pricePerToken } from "@/agent/model-config";
 import { env } from "@/config/env";
+import { GeminiEmbedder } from "./ai/gemini-embedder";
 import { db } from "./db/client";
 import { FlakyTicketRepository } from "./legacy-ticket-system";
 import { DrizzleBudgetRepository } from "./repositories/budget-repository";
@@ -39,9 +41,12 @@ export function createServices(options: ServiceOptions = {}) {
   const drafts = new DraftService(new DrizzleDraftRepository(database), tickets, conversations, messages);
 
   const feedback = new FeedbackService(new DrizzleFeedbackRepository(database), messages, conversationRepository);
+  const config = env();
+  const embedder = config.GOOGLE_GENERATIVE_AI_API_KEY ? new GeminiEmbedder(config.EMBEDDING_MODEL, config.GOOGLE_GENERATIVE_AI_API_KEY) : null;
+  const knowledge = new KnowledgeService(articles, embedder, (error) => console.error("[embeddings]", error instanceof Error ? error.message : String(error)));
   const insights = new InsightsService(new DrizzleInsightsSource(database), pricePerToken(env().LLM_MODEL));
 
-  return { employees, articles, messages, budget, tickets, conversations, drafts, feedback, insights };
+  return { employees, articles, knowledge, messages, budget, tickets, conversations, drafts, feedback, insights };
 }
 
 export type Services = ReturnType<typeof createServices>;

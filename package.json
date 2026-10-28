@@ -17,7 +17,8 @@
     "db:setup": "npm run db:migrate && npm run db:seed",
     "eval": "tsx --env-file-if-exists=.env evals/run.ts",
     "benchmark": "tsx --env-file-if-exists=.env evals/benchmark/run.ts",
-    "access-link": "tsx --env-file=.env.deploy.local scripts/access-link.ts"
+    "access-link": "tsx --env-file=.env.deploy.local scripts/access-link.ts",
+    "eval:busca": "tsx --env-file-if-exists=.env evals/retrieval/run.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",

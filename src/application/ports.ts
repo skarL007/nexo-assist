@@ -16,6 +16,15 @@ export interface EmployeeRepository {
 
 export interface ArticleRepository {
   listAll(): Promise<Article[]>;
+  /** Vetores já calculados para o modelo, por artigo, com o hash do texto de quando foram calculados. */
+  embeddings(model: string): Promise<Map<string, { vector: number[]; contentHash: string }>>;
+  saveEmbeddings(model: string, items: { articleId: string; vector: number[]; contentHash: string }[]): Promise<void>;
+}
+
+/** Transforma texto em vetores (embeddings). "query" e "document" pedem tarefas diferentes ao modelo. */
+export interface Embedder {
+  readonly model: string;
+  embed(texts: string[], kind: "query" | "document"): Promise<number[][]>;
 }
 
 export interface TicketRepository {

@@ -41,3 +41,9 @@ describe("checagens dos cenários de ataque", () => {
     ]);
   });
 });
+
+describe("resposta precisa trazer o que o artigo diz", () => {
+  it("aponta o termo que faltou em todas as respostas (sem diferenciar maiúsculas)", () => {
+    expect(checkScenario({ replyIncludes: ["outlook", "Authenticator"] }, { ...ok, replies: ["Instale o app Outlook no celular."] })).toEqual(['faltou "Authenticator"']);
+  });
+});
