@@ -6,9 +6,11 @@ Cada resposta do agent mostra **o que ele entendeu, o que fez e por quê**: pass
 
 **Stack:** TypeScript estrito · Next.js 16 (App Router) · Mastra (agent) · Google Gemini 3.5 Flash · Drizzle + libSQL (SQLite local, Turso no deploy) · Redux Toolkit + RTK Query · Zod · shadcn/ui + Tailwind · Vitest · Playwright.
 
-[![Vídeo de demonstração do Nexo Assist (5:28)](docs/demo/poster.png)](docs/demo/nexo-assist-demo.mp4)
+[![Vídeo de demonstração do Nexo Assist (5:28)](docs/demo/poster.png)](https://skarl007.github.io/nexo-assist/#video)
 
-**Demonstração (5:28, com música original de fundo e efeitos sonoros, sem narração):** clique na imagem para abrir o vídeo. As partes do app são gravações reais com o Gemini: trechos longos aparecem acelerados no máximo 2× e sinalizados ("acelerado N×"), e as esperas pelo modelo foram cortadas, com um aviso do tempo real ("aguardando o modelo · N s"). Diagramas e números são animações, e cada número mostra a fonte no repositório. A música é original, gerada por código para este vídeo. Efeitos sonoros: Pixabay (licença de conteúdo do Pixabay).
+[baixar o mp4 (5:28)](docs/demo/nexo-assist-demo.mp4)
+
+**Demonstração (5:28, com música original de fundo e efeitos sonoros, sem narração):** clique na imagem para assistir no navegador (o GitHub não toca o mp4 do repositório na página). As partes do app são gravações reais com o Gemini: trechos longos aparecem acelerados no máximo 2× e sinalizados ("acelerado N×"), e as esperas pelo modelo foram cortadas, com um aviso do tempo real ("aguardando o modelo · N s"). Diagramas e números são animações, e cada número mostra a fonte no repositório. A música é original, gerada por código para este vídeo. Efeitos sonoros: Pixabay (licença de conteúdo do Pixabay).
 
 - 0:00 Abertura: o problema, a solução e o que há de novo
 - 0:25 1. O funcionário resolve sozinho: central de ajuda, "Isso resolveu?" e o painel "por quê?"
