@@ -20,7 +20,7 @@ https://github.com/user-attachments/assets/b8169f56-3f1e-414a-aadd-0796184bf93b
    - busca: 84% → 94%;
    - tempo real: ~1,6 s → ~0,4 s;
    - red-team: 21/21, mapeado ao OWASP.
-4. **Rode tudo sem LLM:** `npm run verify` (tipos, lint, 286 testes unitários e 39 E2E).
+4. **Rode tudo sem LLM:** `npm run verify` (tipos, lint, 289 testes unitários e 39 E2E).
 5. **Por que existe cada peça:** a [pesquisa de fronteira](docs/pesquisa/FRONTEIRA.md), com o que ServiceNow, Zendesk, Intercom e Atlassian fazem, e o que virou código aqui.
 
 ---
@@ -49,6 +49,8 @@ npm run db:setup              # cria o banco local (local.db) com os dados de ex
 npm run dev                   # http://localhost:3000 (outra porta: npm run dev -- -p 3001)
 ```
 
+Ou com Docker, sem instalar Node: `docker build -t nexo-assist . && docker run --rm -p 127.0.0.1:3000:3000 -e AUTH_SECRET=SEGREDO_COM_32_OU_MAIS_CARACTERES -e GOOGLE_GENERATIVE_AI_API_KEY=SUA_CHAVE -v nexo-data:/data nexo-assist` (o banco fica no volume e recebe os dados de exemplo no primeiro start; gere o segredo com o comando do `.env.example` e abra http://localhost:3000 no Chrome, Edge ou Firefox).
+
 Sem a chave, o login, o console do analista e os testes funcionam; o chat avisa que falta configurar `GOOGLE_GENERATIVE_AI_API_KEY`.
 
 Qualquer senha funciona para os usuários de exemplo (regra do desafio). Na tela de login há botões de acesso rápido.
@@ -62,7 +64,7 @@ Qualquer senha funciona para os usuários de exemplo (regra do desafio). Na tela
 Outros comandos:
 
 ```bash
-npm test                          # 286 testes unitários — sem LLM
+npm test                          # 289 testes unitários — sem LLM
 npx playwright install chromium   # só na primeira vez, antes do E2E
 npm run test:e2e                  # 39 testes E2E contra o build de produção — sem LLM
 npm run eval                      # 26 cenários de decisão do agent com o modelo real (8 de ataque)
@@ -236,19 +238,16 @@ O prompt ([`agent/instructions.ts`](src/agent/instructions.ts)) cuida só da con
 
 | Camada | O que cobre | Comando |
 |---|---|---|
-| **Testes unitários** (Vitest, 286) | prazos com fim de semana, matriz de prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, modelo reserva e o estimador pass^k | `npm test` |
+| **Testes unitários** (Vitest, 289) | prazos com fim de semana, matriz de prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, modelo reserva e o estimador pass^k | `npm test` |
 | **E2E** (Playwright, 39) | login (inclusive SSO contra um provedor OIDC falso), permissões, transferência de ponta a ponta, relatório, sugestão de resposta, indicadores, prazos em risco, incidente em massa, frustração, tempo real com latência medida, estados de erro e a página 404, contra o build de produção | `npm run test:e2e` |
 | **Evals** (26 cenários, modelo real) | intenção, tools esperadas e proibidas, transferência (e quando *não* transferir), caso crítico, reabertura, escopo de TI, vazamento de dados, incidente em massa, frustração e 8 ataques mapeados ao OWASP ([red-team](docs/validacao/RED-TEAM.md)) | `npm run eval` |
 | **Funcionário simulado** (pass^k) | um modelo faz o papel do funcionário, com fatos que só conta se perguntarem, e clica em Confirmar ou Descartar; o estado no banco é conferido em k execuções | `npm run eval:sim` |
 | **Provas de eficácia** | busca híbrida 84% → 94% ([BUSCA](docs/validacao/BUSCA.md)); tempo real ~0,4 s × ~1,6 s ([TEMPO-REAL](docs/validacao/TEMPO-REAL.md)); telemetria e SSO ([OBSERVABILIDADE-E-SSO](docs/validacao/OBSERVABILIDADE-E-SSO.md)) | `docs/validacao/` |
 | **Trace em toda resposta** | qualquer decisão pode ser auditada na própria interface e no console do analista | — |
 
-O CI roda tipos, lint, testes unitários e E2E, sem segredos. Os evals ficam fora porque chamam o modelo real. Há duas configurações equivalentes:
+O CI está configurado no [CircleCI](.circleci/config.yml) para cada push: tipos, lint, testes unitários, E2E e o build da imagem Docker com uma prova de fumaça (migra, cria os dados de exemplo, faz login e reinicia sem perder dados), sem segredos do app nem chave de LLM. Os evals ficam fora porque chamam o modelo real.
 
-- **[CircleCI](.circleci/config.yml):** plano Free para open source, sem cartão, com a imagem oficial do Playwright.
-- **[GitHub Actions](.github/workflows/ci.yml):** hoje está desativado na conta pelo GitHub.
-
-Localmente, `npm run verify` roda a mesma coisa antes de cada push.
+Localmente, `npm run verify` roda tipos, lint, testes e E2E antes de cada push.
 
 Os evals pagaram o próprio custo: pegaram o agent abrindo chamado repetido, a latência do "raciocínio" do Gemini (resolvida com `thinkingLevel: "minimal"`), a reabertura de chamado resolvido e o caso crítico que ele não tratava. Uma auditoria com conversas difíceis achou mais dois: mensagem vaga ia direto para um analista, e falha técnica num sistema do RH era recusada como "fora de TI". Cada achado virou regra e cenário novo.
 

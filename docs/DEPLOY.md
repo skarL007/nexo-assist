@@ -33,6 +33,53 @@ O deploy roda na **Vercel** com o banco no **Turso** (libSQL, compatível com o 
 powershell -ExecutionPolicy Bypass -File scripts\deploy-prod.ps1 -Seed   # sem -Seed, mantém as conversas de produção
 ```
 
+## Docker, CircleCI e Komodo
+
+Além da Vercel, o app roda numa imagem Docker no Komodo da minha máquina. A produção continua na Vercel, publicada à mão com `scripts/deploy-prod.ps1`; o CI nunca publica na Vercel. O `output: "standalone"` do Next só é ligado quando o build recebe `NEXT_OUTPUT=standalone`, o que só o `Dockerfile` faz, então o `npm run build` da Vercel não muda.
+
+### Como funciona
+
+1. A cada push, o CircleCI roda `checks` (tipos, lint, testes) e `e2e`. Em paralelo, fora do `main`, o job `image-smoke` builda a imagem e roda a prova de fumaça, sem segredo nenhum (PRs de fork, se habilitados no CircleCI, também rodam sem segredo).
+2. No `main`, o job `image-publish` só começa depois de `checks` e `e2e`. Ele builda, roda a mesma prova de fumaça e publica `docker.io/<usuário em minúsculas>/nexo-assist` com duas tags: o sha curto do commit (7 caracteres) e `latest`. O sha sobe primeiro, então toda `latest` tem uma versão fixa para onde voltar. As credenciais vêm do contexto `dockerhub` do CircleCI. O job usa `serial-group`: dois merges seguidos não publicam ao mesmo tempo, e o CircleCI descarta a publicação mais antiga que ainda espera, então a `latest` não volta para uma versão velha.
+3. No Komodo, a stack `nexo-assist` tem `auto_update = true`. O procedure `ci-auto-update` roda a cada 10 minutos, compara o digest da `latest` no Docker Hub com o do contêiner e, se mudou, faz pull e redeploy. O Komodo guarda o digest em cache por 10 minutos, então a checagem seguinte pode ainda usar o valor antigo: na prática a stack leva de **10 a 20 minutos** para atualizar depois que o `image-publish` fica verde. O CircleCI nunca fala com o Komodo: não há túnel, webhook público nem runner. O app fica só em `127.0.0.1:3300`.
+
+A imagem (`Dockerfile`) usa Node 24 em Debian slim, roda como o usuário `node` (sem root) e guarda o banco libSQL em `/data/nexo.db`, num volume. A cada start, `scripts/docker-init.ts` (empacotado com o esbuild, porque a imagem não tem `tsx`) aplica as migrações e cria os dados de exemplo só se a tabela `employees` estiver vazia. `SEED_IF_EMPTY=0` desliga o seed. Depois disso, `server.js` assume o processo. O `HEALTHCHECK` consulta `/login` e aceita qualquer status abaixo de 500, porque com `ACCESS_TOKEN` quem responde sem o link é a porta de acesso. Como `/login` não toca no banco, quem prova que o banco funciona é a prova de fumaça do CI, não o healthcheck.
+
+### O que o CI prova
+
+`scripts/docker-smoke.sh` sobe a imagem com um `AUTH_SECRET` descartável e um volume novo. Como o Docker do CircleCI é remoto, tudo roda por `docker exec`. O script confere, nesta ordem:
+
+- o log mostra as migrações aplicadas e o seed no banco vazio;
+- o contêiner fica `healthy` e o processo não é root;
+- `GET /login` responde 200, e a API do console responde 401 sem sessão;
+- o login pela rota real (`POST /api/auth/login`) funciona para uma funcionária (`GET /api/chat` 200, console 403) e para um analista (console 200, com as conversas do seed);
+- o analista assume a conversa da Carla e, depois de `docker restart`, o seed é ignorado e a conversa continua assumida.
+
+Nada disso chama o LLM. Para rodar o mesmo teste localmente: `docker build -t nexo-assist:local . && bash scripts/docker-smoke.sh nexo-assist:local`.
+
+### Passos do dono (uma vez, nesta ordem)
+
+Exigem login e criam credenciais, por isso ficam com o dono da conta. A ordem importa: o primeiro Deploy no Komodo só funciona depois que a imagem existe no Docker Hub.
+
+1. **CircleCI:** entrar com o GitHub e, em *Projects*, conectar o repositório `skarL007/nexo-assist` usando o `.circleci/config.yml` que já está no `main`.
+2. **Docker Hub:** criar a conta, o repositório `nexo-assist` como **Public** (o Komodo puxa a imagem e confere o digest sem login) e um *Personal Access Token* com permissão *Read & Write*. Um token pessoal vale para a conta toda (não dá para limitá-lo a um repositório), por isso ele fica só no CircleCI.
+3. **Contexto `dockerhub`** no CircleCI (*Organization Settings > Contexts*), com `DOCKERHUB_USERNAME` e `DOCKERHUB_TOKEN`. No mesmo contexto, adicione a restrição por expressão `pipeline.git.branch == "main"`: assim nenhuma outra branch recebe o token, mesmo que alguém acrescente `context: dockerhub` ao config. Em *Project Settings > Advanced*, deixe desligado *Pass secrets to builds from forked pull requests*.
+4. **Primeira imagem:** faça um push no `main` e espere o job `image-publish` ficar verde no CircleCI. Confira no Docker Hub que `nexo-assist` tem as tags `latest` e o sha curto. Sem isso, o primeiro Deploy no Komodo falha porque a imagem ainda não existe.
+5. **Variables do Komodo** (*Settings > Variables*): `DOCKERHUB_USERNAME` (em minúsculas, não é segredo), `NEXO_AUTH_SECRET` (32+ caracteres; gere com o comando do `.env.example`) e `GOOGLE_GENERATIVE_AI_API_KEY`, as duas últimas marcadas como secret. **As três precisam existir, mesmo que uma fique com valor vazio**: quando falta uma Variable, o Komodo não dá erro; ele deixa o texto `[[NOME]]` como valor no `.env` da stack. Sem a `GOOGLE_GENERATIVE_AI_API_KEY`, o app tentaria usar esse texto como chave do modelo e as chamadas falhariam, em vez de o agent responder "indisponível". Para ligar a porta de acesso, crie também `NEXO_ACCESS_TOKEN` e acrescente `ACCESS_TOKEN = [[NEXO_ACCESS_TOKEN]]` ao `environment` da stack.
+6. **Resource sync `circleci`** no Komodo. Se ainda não existir: *Resource Syncs > New*, modo *files on host*, `resource_path = ["circleci"]`, com *Delete* e *Managed* desligados (o sync só cria e atualiza, nunca apaga recurso). Depois: *Refresh*, conferir o diff (stack `nexo-assist` e procedure `ci-auto-update`) e *Execute*.
+7. **Primeiro Deploy** da stack pela interface do Komodo, à mão. Abra http://localhost:3300. A partir daí, cada push no `main` com o CircleCI verde atualiza a stack sozinha em 10 a 20 minutos.
+
+O primeiro Deploy pela interface é obrigatório. O compose monta o nome da imagem com `${DOCKERHUB_USERNAME}`. No código do Komodo v2.3.4, a checagem de atualização usa a imagem já interpolada do último deploy, obtida por `docker compose config`. Antes do primeiro deploy, ela só tem o texto cru do compose e não acha atualização. Um erro silencioso comum é deixar o repositório do Docker Hub como *Private*: o Komodo só registra um aviso e nunca atualiza.
+
+Os arquivos da stack (`compose.yaml` e `README.md`) e o TOML do sync (`nexo-assist.toml`) ficam fora deste repositório, na pasta de stacks do Komodo no host. O `.env` dessa pasta é gerado pelo Komodo a cada Deploy, com os segredos em texto puro: não edite nem copie esse arquivo.
+
+### Rollback
+
+1. Pegue o sha curto da última versão boa no Docker Hub ou no job `image-publish` do CircleCI.
+2. No `compose.yaml` da stack, troque `:latest` por `:<sha>` e desligue `auto_update` no TOML. Com a tag fixa, o digest dela não muda e a stack não sai sozinha da versão boa; desligar o `auto_update` só deixa explícito que ela está fixada.
+3. Aplique o sync e faça *Deploy*. O volume com o banco não muda. **Atenção:** as migrações só andam para frente. Se a versão ruim trouxe uma migração nova, o banco continua no esquema novo e a imagem antiga passa a rodar sobre ele. Isso só é seguro quando a migração foi aditiva (coluna ou tabela nova); se não foi, restaure uma cópia do volume ou recomece com os dados de exemplo.
+4. Quando a correção chegar ao `main` e a nova `latest` estiver boa, volte para `:latest` e religue `auto_update`.
+
 ## Links de acesso (só para o autor)
 
 `npm run access-link -- <minutos>` gera um link assinado (5 min por padrão, até 30 dias). Ele lê o segredo de `.env.deploy.local`, que não está no repositório, então só funciona na máquina de quem fez o deploy. O link vale até a data impressa; o cookie de acesso vence junto.
