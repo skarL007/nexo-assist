@@ -42,6 +42,8 @@ async function main() {
   const { runAgentTurn } = await import("@/agent/run-turn");
   const { pricePerToken } = await import("@/agent/model-config");
   const { createServices } = await import("@/infrastructure/container");
+  const { db } = await import("@/infrastructure/db/client");
+  const { freeMessageWindow } = await import("../message-window");
   const { env } = await import("@/config/env");
   const { personas: all } = await import("./personas");
 
@@ -60,6 +62,8 @@ async function main() {
     const employee = await services.employees.findByEmail(persona.employee);
     if (!employee) throw new Error(`${persona.employee} não está no seed`);
     await services.conversations.closeOpen(employee.id);
+    // O app limita mensagens por pessoa (40/h, 120/dia): sem isto as últimas conversas bateriam no limite.
+    await freeMessageWindow(db(), employee.id);
     const before = new Set((await services.tickets.listMine(employee.id)).map((t) => t.code));
 
     const transcript: string[] = [];

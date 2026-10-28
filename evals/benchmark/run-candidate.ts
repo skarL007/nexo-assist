@@ -48,6 +48,8 @@ function report(progress: Progress) {
 async function main() {
   const { runAgentTurn } = await import("@/agent/run-turn");
   const { createServices } = await import("@/infrastructure/container");
+  const { db } = await import("@/infrastructure/db/client");
+  const { freeMessageWindow } = await import("../message-window");
 
   const file = conversationsFile(job.candidate);
   const done = new Set(readJsonl(file, conversationRecordSchema).map(conversationKey));
@@ -76,6 +78,8 @@ async function main() {
       let attempt = 1;
       for (; ; attempt++) {
         await services.conversations.closeOpen(employee.id);
+        // O app limita mensagens por pessoa (40/h, 120/dia): sem isto os últimos cenários virariam "erro técnico".
+        await freeMessageWindow(db(), employee.id);
         record = await runScenario(job, scenario, rep, employee, runAgentTurn, meter);
         if (!wasRateLimited(record) || attempt === MAX_ATTEMPTS) break;
         discardedCostUsd += conversationCost(record);
