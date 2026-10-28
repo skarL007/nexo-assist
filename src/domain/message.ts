@@ -118,7 +118,10 @@ export interface TurnTrace {
   steps: TraceStep[];
   toolCalls: ToolCallLog[];
   guardrails: string[];
+  /** Modelo que respondeu (o reserva, se o principal falhou). */
   model: string | null;
+  /** Modelo principal que falhou neste turno (opcional: traces antigos não têm). */
+  fallbackFrom?: string | null;
   usage: { inputTokens: number; outputTokens: number } | null;
   latencyMs: number;
 }

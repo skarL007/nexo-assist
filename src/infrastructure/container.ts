@@ -50,7 +50,7 @@ export function createServices(options: ServiceOptions = {}) {
   const embedder = config.GOOGLE_GENERATIVE_AI_API_KEY ? new GeminiEmbedder(config.EMBEDDING_MODEL, config.GOOGLE_GENERATIVE_AI_API_KEY) : null;
   const knowledge = new KnowledgeService(articles, embedder, (error) => console.error("[embeddings]", error instanceof Error ? error.message : String(error)));
   const suggestionRepository = new DrizzleSuggestionRepository(database);
-  const insights = new InsightsService(new DrizzleInsightsSource(database), pricePerToken(config.LLM_MODEL), suggestionRepository);
+  const insights = new InsightsService(new DrizzleInsightsSource(database), pricePerToken, suggestionRepository);
   const writer = missingApiKey(config.LLM_MODEL, config) ? null : mastraReplyWriter;
   const replySuggestions = new ReplySuggestionService(conversations, budget, writer, suggestionRepository, config.TOTAL_AGENT_TURN_LIMIT);
 

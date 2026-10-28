@@ -96,3 +96,26 @@ describe("indicadores do atendimento", () => {
     });
   });
 });
+
+describe("custo com o modelo reserva", () => {
+  it("cada resposta usa o preço do modelo que respondeu", () => {
+    const lite = { ...trace(1000, 0.9), model: "google/gemini-3.5-flash-lite", fallbackFrom: "google/gemini-3.5-flash" };
+    const prices: Record<string, { input: number; output: number }> = {
+      "google/gemini-3.5-flash": { input: 1.5e-6, output: 9e-6 },
+      "google/gemini-3.5-flash-lite": { input: 0.3e-6, output: 2.5e-6 },
+    };
+    const insights = computeInsights({
+      messages: [
+        { conversationId: "c1", role: "employee", cards: [], trace: null, createdAt: at },
+        { conversationId: "c1", role: "agent", cards: [], trace: trace(1000, 0.9), createdAt: at },
+        { conversationId: "c1", role: "agent", cards: [], trace: lite, createdAt: at },
+      ],
+      feedback: [],
+      drafts: [],
+      analysts: 1,
+      price: (model) => prices[model] ?? null,
+    });
+    // 2000×1,5e-6 + 100×9e-6 (Flash) + 2000×0,3e-6 + 100×2,5e-6 (Lite)
+    expect(insights.costUsd).toBeCloseTo(0.0039 + 0.00085);
+  });
+});

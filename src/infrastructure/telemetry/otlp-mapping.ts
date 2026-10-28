@@ -81,6 +81,7 @@ export function turnToOtlp(turn: TurnTelemetry, options: { captureContent: boole
       ...attr("gen_ai.usage.output_tokens", trace.usage?.outputTokens),
       ...attr("langfuse.session.id", turn.conversationId),
       ...attr("langfuse.user.id", pseudonym(turn.employeeId)),
+      ...attr("nexo.fallback_from", trace.fallbackFrom),
       ...attr("nexo.intent", trace.decision?.intent),
       ...attr("nexo.confidence", trace.decision?.confidence),
       ...attr("nexo.guardrails", trace.guardrails.length),

@@ -19,7 +19,8 @@ import { createServices, type Services } from "@/infrastructure/container";
 import { conversationView } from "@/server/views";
 import { missingApiKey, missingKeyMessage, providerOptionsFor } from "./model-config";
 import { stripMarkdown, stripSystemNotes, toModelMessages } from "./model-history";
-import { nexoAgent } from "./nexo-agent";
+import { fallbackNote, readStepFinish, type StepFinishPayload } from "./model-fallback";
+import { agentModels, nexoAgent } from "./nexo-agent";
 import { needsContinuation, stepPolicy } from "./step-policy";
 import { turnBriefing } from "./turn-briefing";
 import { TURN_KEY, TurnRecorder, type TurnContext } from "./turn-context";
@@ -84,7 +85,7 @@ async function* replyWithAgent(turn: TurnContext, abortSignal?: AbortSignal): As
     services.drafts.pending(conversationId),
   ]);
 
-  const run: AgentRun = { reply: "", toolCalls: [], usage: null };
+  const run: AgentRun = { reply: "", toolCalls: [], usage: null, fallbackModel: null };
   const messages = toModelMessages(history);
   const system = turnBriefing(employee, startedAt, pendingDrafts);
 
@@ -102,12 +103,15 @@ async function* replyWithAgent(turn: TurnContext, abortSignal?: AbortSignal): As
     else if (!replies.options.includes(OFFER_ANALYST_OPTION)) replies.options.push(OFFER_ANALYST_OPTION);
   }
 
+  if (run.fallbackModel) recorder.guardrail(fallbackNote(env().LLM_MODEL, run.fallbackModel));
+
   const trace: TurnTrace = {
     decision: recorder.decision,
     steps: recorder.steps,
     toolCalls: run.toolCalls,
     guardrails: recorder.guardrails,
-    model: env().LLM_MODEL,
+    model: run.fallbackModel ?? env().LLM_MODEL,
+    fallbackFrom: run.fallbackModel ? env().LLM_MODEL : null,
     usage: run.usage,
     latencyMs: Date.now() - startedAt.getTime(),
   };
@@ -137,6 +141,8 @@ interface AgentRun {
   reply: string;
   toolCalls: ToolCallLog[];
   usage: TurnTrace["usage"];
+  /** Modelo reserva que assumiu (o principal falhou num passo), ou null. */
+  fallbackModel: string | null;
 }
 
 /** Uma chamada ao agent a partir de `firstStep`: repassa os eventos e acumula em `run`. */
@@ -179,18 +185,21 @@ async function* streamAgent(
         output: chunk.payload.result,
         durationMs: started ? Date.now() - started.at : 0,
       });
+    } else if (chunk.type === "step-finish") {
+      // Uso somado passo a passo (o total do stream perde os campos depois de uma nova tentativa)
+      // e o modelo reserva, se algum passo precisou dele.
+      const step = readStepFinish(chunk.payload as StepFinishPayload);
+      if (step.usage) {
+        run.usage = {
+          inputTokens: (run.usage?.inputTokens ?? 0) + step.usage.inputTokens,
+          outputTokens: (run.usage?.outputTokens ?? 0) + step.usage.outputTokens,
+        };
+      }
+      if (step.fallbackIndex !== null) run.fallbackModel = agentModels()[step.fallbackIndex]?.model ?? run.fallbackModel;
     } else if (chunk.type === "error") {
       throw chunk.payload.error;
     }
     yield* recorder.drain();
-  }
-
-  const usage = await stream.usage.catch(() => null);
-  if (usage) {
-    run.usage = {
-      inputTokens: (run.usage?.inputTokens ?? 0) + (usage.inputTokens ?? 0),
-      outputTokens: (run.usage?.outputTokens ?? 0) + (usage.outputTokens ?? 0),
-    };
   }
 }
 
