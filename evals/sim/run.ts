@@ -43,7 +43,7 @@ async function main() {
   const { pricePerToken } = await import("@/agent/model-config");
   const { createServices } = await import("@/infrastructure/container");
   const { db } = await import("@/infrastructure/db/client");
-  const { freeMessageWindow } = await import("../message-window");
+  const { resetSimState } = await import("./reset");
   const { env } = await import("@/config/env");
   const { personas: all } = await import("./personas");
 
@@ -59,11 +59,12 @@ async function main() {
   const simPrice = pricePerToken(SIM_MODEL);
 
   async function play(persona: Persona) {
+    // Toda execução parte do seed (pass^k = k tentativas da mesma tarefa): sem isto, o chamado
+    // aberto na execução anterior vira "duplicado" na seguinte. Também zera a janela de mensagens.
+    await resetSimState(db());
     const employee = await services.employees.findByEmail(persona.employee);
     if (!employee) throw new Error(`${persona.employee} não está no seed`);
     await services.conversations.closeOpen(employee.id);
-    // O app limita mensagens por pessoa (40/h, 120/dia): sem isto as últimas conversas bateriam no limite.
-    await freeMessageWindow(db(), employee.id);
     const before = new Set((await services.tickets.listMine(employee.id)).map((t) => t.code));
 
     const transcript: string[] = [];
