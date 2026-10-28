@@ -25,6 +25,14 @@ O deploy roda na **Vercel** com o banco no **Turso** (libSQL, compatível com o 
 4. Publiquei pela CLI (`vercel deploy --prod`) a partir de um `git archive` do último commit, para nunca subir arquivo que não está versionado. O [`.vercelignore`](../.vercelignore) também barra `.env` e bancos locais.
 5. As funções rodam em `iad1` (Washington), na mesma região do banco. A "Vercel Authentication" protege só os previews; a produção fica atrás do nosso token.
 
+## Atualizar a produção
+
+`scripts/deploy-prod.ps1` faz os passos 2 e 4 em ordem: migrações, seed opcional e publicação do último commit por `git archive`. Ele recusa rodar com mudanças não commitadas e não imprime segredo.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scriptsdeploy-prod.ps1 -Seed   # sem -Seed, mantém as conversas de produção
+```
+
 ## Links de acesso (só para o autor)
 
 `npm run access-link -- <minutos>` gera um link assinado (5 min por padrão, até 30 dias). Ele lê o segredo de `.env.deploy.local`, que não está no repositório, então só funciona na máquina de quem fez o deploy. O link vale até a data impressa; o cookie de acesso vence junto.
