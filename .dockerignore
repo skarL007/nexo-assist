@@ -1,0 +1,36 @@
+# Contexto do build da imagem: só o que o app precisa para compilar.
+# Segredos e bancos locais nunca entram na imagem.
+**/.env*
+!.env.example
+**/*.local
+**/*.pem
+**/*.db
+**/*.db-*
+**/.vercel
+
+# Gerados ou instalados dentro do build.
+node_modules
+.next
+out
+build
+coverage
+*.tsbuildinfo
+next-env.d.ts
+
+# Testes, evals e documentação não fazem parte do app publicado.
+test-results
+playwright-report
+evals
+e2e
+docs
+otel-local.jsonl
+
+# Ferramentas e CI.
+.git
+.github
+.circleci
+.claude
+.codegraph
+.mcp.json
+Dockerfile
+.dockerignore

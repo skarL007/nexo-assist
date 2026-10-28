@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:docker-init": "esbuild scripts/docker-init.ts --bundle --platform=node --target=node24 --format=cjs --external:@libsql/client --external:libsql --outfile=.next/docker-init.cjs",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
@@ -48,6 +49,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "drizzle-kit": "^0.31.11",
+    "esbuild": "^0.28.2",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
     "shadcn": "^4.23.0",
