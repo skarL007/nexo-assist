@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, FileText, Hand, Headset, Loader2, LogOut, Send, Undo2 } from "lucide-react";
+import { Bot, FileText, Hand, Headset, Loader2, LogOut, Send, Sparkles, Undo2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MessageItem } from "@/components/conversation/message-item";
@@ -10,7 +10,7 @@ import type { ConsoleConversationDetail } from "@/contracts/chat";
 import { HANDOFF_REASON_LABEL, STATUS_LABEL, type ConversationStatus } from "@/domain/conversation";
 import { firstName } from "@/domain/employee";
 import { formatClock, percent } from "@/lib/format";
-import { apiErrorMessage, useConversationActionMutation, useSendAnalystMessageMutation } from "../console-api";
+import { apiErrorMessage, useConversationActionMutation, useSendAnalystMessageMutation, useSuggestReplyMutation } from "../console-api";
 import { ConversationReportPanel } from "./conversation-report-panel";
 
 const STATUS_TONE: Record<ConversationStatus, Tone> = {
@@ -129,13 +129,30 @@ function FooterNotice({ conversation }: { conversation: ConsoleConversationDetai
 
 function AnalystComposer({ conversationId, employeeFirstName }: { conversationId: string; employeeFirstName: string }) {
   const [text, setText] = useState("");
+  // Texto sugerido que está no campo: ao enviar, o servidor registra se foi usado igual ou editado.
+  const [suggested, setSuggested] = useState<string | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
   const [send, { isLoading, isError, error }] = useSendAnalystMessageMutation();
+  const [suggest, suggestion] = useSuggestReplyMutation();
 
   const submit = async () => {
     const value = text.trim();
     if (!value) return;
-    const result = await send({ id: conversationId, text: value });
-    if (!("error" in result)) setText("");
+    const result = await send({ id: conversationId, text: value, suggested: suggested ?? undefined });
+    if (!("error" in result)) {
+      setText("");
+      setSuggested(null);
+      setWarnings([]);
+    }
+  };
+
+  const askSuggestion = async () => {
+    const result = await suggest(conversationId);
+    if ("data" in result && result.data) {
+      setText(result.data.text);
+      setSuggested(result.data.text);
+      setWarnings(result.data.warnings);
+    }
   };
 
   return (
@@ -146,6 +163,19 @@ function AnalystComposer({ conversationId, employeeFirstName }: { conversationId
         void submit();
       }}
     >
+      <div className="flex items-center justify-between gap-2">
+        <Button type="button" size="xs" variant="ghost" disabled={suggestion.isLoading} onClick={() => void askSuggestion()}>
+          {suggestion.isLoading ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+          {suggestion.isLoading ? "Escrevendo sugestão…" : "Sugerir resposta"}
+        </Button>
+        {suggested !== null && <span className="text-xs text-muted-foreground">Sugestão do Nexo: revise antes de enviar.</span>}
+      </div>
+      {warnings.map((warning) => (
+        <p key={warning} role="alert" className="text-xs text-amber-800">
+          {warning}
+        </p>
+      ))}
+      {suggestion.isError && <p className="text-xs text-danger">{apiErrorMessage(suggestion.error)}</p>}
       <div className="flex items-center gap-2 rounded-xl border px-2 py-1.5 focus-within:ring-2 focus-within:ring-ring/30">
         <input
           value={text}

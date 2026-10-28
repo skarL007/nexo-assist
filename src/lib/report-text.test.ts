@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ConversationReport } from "@/domain/conversation-report";
-import { reportAsText } from "./report-text";
+import { reportAsText } from "@/lib/report-text";
 
 const report: ConversationReport = {
   employee: { name: "Carla Mendes", department: "Comercial" },

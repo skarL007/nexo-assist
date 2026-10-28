@@ -4,9 +4,8 @@ import { Check, Copy, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { ConsoleConversationDetail } from "@/contracts/chat";
-import { buildConversationReport } from "@/domain/conversation-report";
 import { percent } from "@/lib/format";
-import { countsLine, handoffLine, pendingLine, reportAsText, ticketLine } from "../report-text";
+import { countsLine, handoffLine, pendingLine, reportAsText, reportOf, ticketLine } from "@/lib/report-text";
 
 /** Relatório da conversa no topo do histórico: o analista entende o caso sem ler tudo. */
 export function ConversationReportPanel({ conversation, onClose }: { conversation: ConsoleConversationDetail; onClose: () => void }) {
@@ -17,26 +16,7 @@ export function ConversationReportPanel({ conversation, onClose }: { conversatio
   useEffect(() => {
     panel.current?.scrollIntoView({ block: "start" });
   }, []);
-  const report = useMemo(
-    () =>
-      buildConversationReport({
-        employee: conversation.employee,
-        status: conversation.status,
-        handoff:
-          conversation.handoffReason && conversation.handoffAt
-            ? {
-                reason: conversation.handoffReason,
-                summary: conversation.handoffSummary ?? "",
-                confidence: conversation.handoffConfidence,
-                at: conversation.handoffAt,
-              }
-            : null,
-        messages: conversation.messages,
-        tickets: conversation.tickets,
-        draftStatuses: conversation.draftStatuses,
-      }),
-    [conversation],
-  );
+  const report = useMemo(() => reportOf(conversation), [conversation]);
 
   const copy = async () => {
     await navigator.clipboard.writeText(reportAsText(report));

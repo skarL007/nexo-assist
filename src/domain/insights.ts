@@ -7,6 +7,7 @@
  */
 import { HANDOFF_REASONS, LOW_CONFIDENCE, type HandoffReason } from "./conversation";
 import type { ChatMessage, DraftStatus } from "./message";
+import type { SuggestionOutcome } from "./reply-suggestion";
 
 export interface InsightsInput {
   messages: Pick<ChatMessage, "conversationId" | "role" | "cards" | "trace" | "createdAt">[];
@@ -15,6 +16,8 @@ export interface InsightsInput {
   analysts: number;
   /** Preço por token do modelo (US$), ou null se o modelo não tem preço conhecido. */
   price: { input: number; output: number } | null;
+  /** Sugestões de resposta do analista por resultado (null: não medido). */
+  suggestions?: Record<SuggestionOutcome, number> | null;
 }
 
 export interface Insights {
@@ -33,6 +36,8 @@ export interface Insights {
   feedback: { helpful: number; notHelpful: number; rate: number | null };
   drafts: { confirmed: number; cancelled: number; pending: number; confirmRate: number | null };
   analysts: number;
+  /** Sugestões geradas e quantas foram enviadas sem editar (fração das enviadas). */
+  suggestions: { generated: number; sentAsIs: number; sentEdited: number; asIsRate: number | null };
 }
 
 export function computeInsights(input: InsightsInput): Insights {
@@ -75,6 +80,12 @@ export function computeInsights(input: InsightsInput): Insights {
     feedback: { helpful, notHelpful, rate: ratio(helpful, input.feedback.length) },
     drafts: { confirmed, cancelled, pending, confirmRate: ratio(confirmed, confirmed + cancelled) },
     analysts: input.analysts,
+    suggestions: {
+      generated: input.suggestions?.generated ?? 0,
+      sentAsIs: input.suggestions?.sent_as_is ?? 0,
+      sentEdited: input.suggestions?.sent_edited ?? 0,
+      asIsRate: ratio(input.suggestions?.sent_as_is ?? 0, (input.suggestions?.sent_as_is ?? 0) + (input.suggestions?.sent_edited ?? 0)),
+    },
   };
 }
 

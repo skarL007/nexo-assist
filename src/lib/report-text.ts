@@ -3,10 +3,33 @@
  * As mesmas frases servem para o painel, então ficam aqui uma vez só.
  */
 import { HANDOFF_REASON_LABEL, STATUS_LABEL } from "@/domain/conversation";
-import type { ConversationReport, PendingItem } from "@/domain/conversation-report";
+import type { ConsoleConversationDetail } from "@/contracts/chat";
+import { buildConversationReport, type ConversationReport, type PendingItem } from "@/domain/conversation-report";
 import { firstName } from "@/domain/employee";
 import { PRIORITY_LABEL, STATUS_LABEL as TICKET_STATUS_LABEL } from "@/domain/ticket";
 import { formatDayTime, percent } from "@/lib/format";
+
+/** Relatório a partir do detalhe do console (a tela e a sugestão de resposta usam o mesmo). */
+export function reportOf(detail: ConsoleConversationDetail): ConversationReport {
+  return buildConversationReport({
+    employee: detail.employee,
+    status: detail.status,
+    handoff:
+      detail.handoffReason && detail.handoffAt
+        ? { reason: detail.handoffReason, summary: detail.handoffSummary ?? "", confidence: detail.handoffConfidence, at: detail.handoffAt }
+        : null,
+    messages: detail.messages,
+    tickets: detail.tickets,
+    draftStatuses: detail.draftStatuses,
+  });
+}
+
+/** Contexto da sugestão de resposta: o relatório e as últimas mensagens, sem traces nem cards. */
+export function suggestionContext(detail: ConsoleConversationDetail, lastMessages = 8): string {
+  const who = { employee: firstName(detail.employee.name), agent: "Nexo Assist", system: "Sistema" } as const;
+  const lines = detail.messages.slice(-lastMessages).map((m) => `${m.role === "analyst" ? `Analista (${m.authorName ?? "service desk"})` : who[m.role]}: ${m.text}`);
+  return `${reportAsText(reportOf(detail))}\n\nÚltimas mensagens:\n${lines.join("\n")}`;
+}
 
 export function handoffLine(handoff: NonNullable<ConversationReport["handoff"]>): string {
   return [

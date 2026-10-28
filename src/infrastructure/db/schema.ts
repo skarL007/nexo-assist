@@ -5,6 +5,7 @@
 import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import type { ConversationStatus, HandoffReason } from "@/domain/conversation";
 import type { EmployeeRole } from "@/domain/employee";
+import type { SuggestionOutcome } from "@/domain/reply-suggestion";
 import type { Card, DraftKind, DraftStatus, MessageRole, NewTicketFields, TicketUpdateFields, TurnTrace } from "@/domain/message";
 import type { Category, Impact, Priority, TicketStatus, TicketType } from "@/domain/ticket";
 
@@ -89,6 +90,15 @@ export const messageFeedback = sqliteTable("message_feedback", {
   helpful: integer("helpful", { mode: "boolean" }).notNull(),
   createdAt: timestamp("created_at").notNull(),
 }, (t) => [index("message_feedback_created_idx").on(t.createdAt)]);
+
+/** Sugestões de resposta do analista: geradas e o que foi feito com elas (mede se servem). */
+export const replySuggestions = sqliteTable("reply_suggestions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  conversationId: text("conversation_id").notNull().references(() => conversations.id),
+  analystId: text("analyst_id").notNull().references(() => employees.id),
+  outcome: text("outcome").$type<SuggestionOutcome>().notNull(),
+  createdAt: timestamp("created_at").notNull(),
+}, (t) => [index("reply_suggestions_created_idx").on(t.createdAt)]);
 
 /** Contadores globais com teto (ex.: respostas do modelo no total). Reservados de forma atômica. */
 export const usageCounters = sqliteTable("usage_counters", {
