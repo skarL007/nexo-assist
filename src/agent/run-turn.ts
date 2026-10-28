@@ -104,6 +104,9 @@ async function* replyWithAgent(turn: TurnContext, abortSignal?: AbortSignal): As
   }
 
   if (run.fallbackModel) recorder.guardrail(fallbackNote(env().LLM_MODEL, run.fallbackModel));
+  if (recorder.repeatedUnderstandings) {
+    recorder.guardrail(`O modelo registrou o entendimento ${recorder.repeatedUnderstandings + 1} vezes no mesmo passo; só o primeiro valeu.`);
+  }
 
   const trace: TurnTrace = {
     decision: recorder.decision,
