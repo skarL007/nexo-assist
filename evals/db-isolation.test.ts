@@ -7,16 +7,25 @@ function databaseOf(runner: string) {
   return /process\.env\.DATABASE_URL = "(file:[^"]+)"/.exec(source)?.[1];
 }
 
+/** Runners que recriam o banco antes de rodar (o benchmark tem um banco por candidato). */
+const RUNNERS = {
+  "npm run eval": { file: "./run.ts", database: "file:eval.db" },
+  "npm run eval:sim": { file: "./sim/run.ts", database: "file:eval-sim.db" },
+  "npm run eval:sugestao": { file: "./suggestion/run.ts", database: "file:eval-sugestao.db" },
+};
+
 describe("bancos dos evals", () => {
-  it("`npm run eval` e `npm run eval:sim` não compartilham arquivo de banco", () => {
-    const eval_ = databaseOf("./run.ts");
-    const sim = databaseOf("./sim/run.ts");
-    expect(eval_).toBe("file:eval.db");
-    expect(sim).toBe("file:eval-sim.db");
+  it.each(Object.entries(RUNNERS))("`%s` usa o próprio banco", (_command, { file, database }) => {
+    expect(databaseOf(file)).toBe(database);
   });
 
-  it("o .gitignore cobre os arquivos de banco local", () => {
+  it("nenhum runner compartilha arquivo de banco com outro", () => {
+    const databases = Object.values(RUNNERS).map(({ file }) => databaseOf(file));
+    expect(new Set(databases).size).toBe(databases.length);
+  });
+
+  it("o .gitignore cobre os arquivos de banco local (e os do modo WAL)", () => {
     const ignore = readFileSync(new URL("../.gitignore", import.meta.url), "utf8").split(/\r?\n/);
-    expect(ignore).toContain("*.db");
+    expect(ignore).toEqual(expect.arrayContaining(["*.db", "*.db-wal", "*.db-shm"]));
   });
 });

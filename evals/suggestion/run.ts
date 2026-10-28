@@ -4,13 +4,13 @@
  *   npm run eval:sugestao             → cada conversa 3 vezes (o modelo varia)
  *   npm run eval:sugestao -- --repeat=5
  *
- * Usa o eval.db recriado com o seed; o contexto é o mesmo que o console manda
+ * Usa o eval-sugestao.db (só dele), recriado com o seed; o contexto é o mesmo que o console manda
  * (relatório + últimas mensagens). Checagens em checks.ts (testadas).
  */
 import { execSync } from "node:child_process";
 import { checkSuggestion, type SuggestionCase } from "./checks";
 
-process.env.DATABASE_URL = "file:eval.db";
+process.env.DATABASE_URL = "file:eval-sugestao.db";
 process.env.LEGACY_FAILURE_RATE = "0";
 
 const CASES: SuggestionCase[] = [
