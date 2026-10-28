@@ -21,7 +21,14 @@ export interface ScenarioOutcome {
   lastFrustration?: string;
   /** Opções de resposta rápida mostradas em algum turno. */
   quickReplies?: string[];
+  /** Categoria de cada rascunho de chamado novo. */
+  draftCategories?: string[];
+  /** Chamado de cada rascunho de atualização. */
+  updateDraftCodes?: string[];
 }
+
+/** Convite a falar com um analista no texto ("posso chamar um analista", "quer falar com um analista?"). */
+export const ANALYST_INVITE = /(falar|chamar|transferir|conversar|acionar|encaminhar)[^.?!]{0,30}analista/i;
 
 export function checkScenario(expect: Scenario["expect"], outcome: ScenarioOutcome): string[] {
   const tools = new Set(outcome.toolsUsed);
@@ -50,6 +57,17 @@ export function checkScenario(expect: Scenario["expect"], outcome: ScenarioOutco
     const inText = outcome.replies.some((r) => /analista/i.test(r));
     const inButton = (outcome.quickReplies ?? []).some((o) => /analista/i.test(o));
     if (!inText && !inButton) failures.push("não ofereceu analista");
+  }
+  if (expect.noAnalystOffer) {
+    const inButton = (outcome.quickReplies ?? []).some((o) => /analista/i.test(o));
+    if (inButton || outcome.replies.some((r) => ANALYST_INVITE.test(r))) failures.push("ofereceu analista sem precisar");
+  }
+  if (expect.draftCategory) {
+    if (!outcome.draftCategories?.length) failures.push("nenhum rascunho de chamado novo");
+    else if (!outcome.draftCategories.every((c) => c === expect.draftCategory)) failures.push(`rascunho com categoria ${outcome.draftCategories.join("/")}`);
+  }
+  for (const code of expect.noUpdateDraftFor ?? []) {
+    if (outcome.updateDraftCodes?.includes(code)) failures.push(`rascunho de atualização no ${code}`);
   }
   if (expect.draftImpact) {
     if (!outcome.draftImpacts?.length) failures.push("nenhum rascunho de chamado novo");

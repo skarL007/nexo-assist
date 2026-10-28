@@ -5,7 +5,7 @@
 import type { Article } from "@/domain/knowledge";
 import type { Frustration } from "@/domain/frustration";
 import type { Intent } from "@/domain/message";
-import type { Impact, Priority } from "@/domain/ticket";
+import type { Category, Impact, Priority } from "@/domain/ticket";
 import type { NexoToolName } from "@/agent/tools";
 
 export interface Scenario {
@@ -37,10 +37,17 @@ export interface Scenario {
     frustration?: Frustration;
     /** Precisa oferecer um analista (no texto ou num botão), sem transferir. */
     offersAnalyst?: boolean;
+    /** Não pode oferecer analista (botão com "analista" ou convite no texto). */
+    noAnalystOffer?: boolean;
+    /** Todo rascunho de chamado novo precisa sair nesta categoria (e pelo menos um rascunho). */
+    draftCategory?: Category;
+    /** Nenhum rascunho de atualização destes chamados. */
+    noUpdateDraftFor?: string[];
   };
 }
 
 const ANA = "ana.souza@nexo.com.br";
+const ELISA = "elisa.prado@nexo.com.br";
 
 export const scenarios: Scenario[] = [
   {
@@ -223,5 +230,43 @@ export const scenarios: Scenario[] = [
     employee: ANA,
     turns: ["Qual o horário do service desk?"],
     expect: { frustration: "none", handedOff: false, noTool: ["transferToAnalyst"] },
+  },
+
+  // ── Achados do funcionário simulado de 28/10 (docs/validacao/SIMULACAO.md).
+  {
+    // power-bi: com o rascunho na tela, a resposta rápida de urgência virou "sim" e o REQ foi criado.
+    name: "Confirmação: resposta rápida de urgência não confirma o rascunho",
+    employee: ELISA,
+    turns: [
+      "Preciso do Power BI Desktop instalado no meu notebook da empresa. É só para mim e não é urgente, dá para esperar alguns dias.",
+      "Tenho alternativa / Posso aguardar",
+    ],
+    expect: { anyTool: ["draftNewTicket"], noTicketChanges: true },
+  },
+  {
+    // vago-outlook: Outlook foi parar no INC-20311 (notebook lento) e saiu como Software.
+    name: "Problema diferente do chamado aberto: Outlook vira chamado novo de e-mail",
+    employee: ANA,
+    turns: ["O Outlook não abre desde a atualização de ontem. Só comigo; o webmail funciona, então dá para trabalhar, e não tenho prazo hoje."],
+    expect: { anyTool: ["draftNewTicket"], draftCategory: "email", noUpdateDraftFor: ["INC-20311"], noTicketChanges: true },
+  },
+  {
+    name: "Mensagem vaga e depois o Outlook: não anexa ao chamado de notebook lento",
+    employee: ANA,
+    turns: ["tudo travado aqui", "É o Outlook, não abre desde ontem. Só comigo, uso o webmail enquanto isso, sem prazo hoje."],
+    expect: { noUpdateDraftFor: ["INC-20311"], noTicketChanges: true, handedOff: false },
+  },
+  {
+    // vpn-reuniao: o agent ofereceu analista mesmo quando o prazo do chamado já atendia.
+    name: "Prazo atende a necessidade: não oferece analista",
+    employee: ANA,
+    turns: ["Qual o prazo do INC-20298? Só vou precisar dessa pasta no fechamento do mês que vem, dia 30/11."],
+    expect: { anyTool: ["getTicket"], noAnalystOffer: true, handedOff: false, noTicketChanges: true },
+  },
+  {
+    name: "Prazo não atende a necessidade: oferece analista",
+    employee: ANA,
+    turns: ["Qual o prazo do INC-20298? Preciso dessa pasta liberada ainda hoje, até as 18h, para o fechamento."],
+    expect: { anyTool: ["getTicket"], offersAnalyst: true, handedOff: false, noTicketChanges: true },
   },
 ];

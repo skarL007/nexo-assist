@@ -23,6 +23,7 @@ async function main() {
   // Imports depois de configurar o ambiente: o banco é lido na primeira chamada.
   const { runAgentTurn } = await import("@/agent/run-turn");
   const { createServices } = await import("@/infrastructure/container");
+  const { pricePerToken } = await import("@/agent/model-config");
   const { db } = await import("@/infrastructure/db/client");
   const { freeMessageWindow } = await import("./message-window");
   const { scenarios: all } = await import("./scenarios");
@@ -37,6 +38,7 @@ async function main() {
   const services = createServices();
   let passed = 0;
   let tokens = 0;
+  let cost = 0;
 
   async function play(scenario: (typeof scenarios)[number]) {
     const employee = await services.employees.findByEmail(scenario.employee);
@@ -49,6 +51,8 @@ async function main() {
     const before = await ticketFingerprint();
     const draftPriorities: string[] = [];
     const draftImpacts: string[] = [];
+    const draftCategories: string[] = [];
+    const updateDraftCodes: string[] = [];
     const quickReplies: string[] = [];
     const toolsUsed = new Set<string>();
     const replies: string[] = [];
@@ -72,17 +76,22 @@ async function main() {
         for (const card of reply?.cards ?? []) if (card.kind === "draft" && card.draft.kind === "create") {
           draftPriorities.push(card.draft.fields.priority);
           draftImpacts.push(card.draft.fields.impact);
+          draftCategories.push(card.draft.fields.category);
         }
+        for (const card of reply?.cards ?? []) if (card.kind === "draft" && card.draft.kind === "update") updateDraftCodes.push(card.draft.fields.ticketCode);
         lastIntent = reply?.trace?.decision?.intent ?? lastIntent;
         lastFrustration = reply?.trace?.decision?.frustration ?? lastFrustration;
         tokens += (reply?.trace?.usage?.inputTokens ?? 0) + (reply?.trace?.usage?.outputTokens ?? 0);
+        // Custo pelo modelo que respondeu o turno (o reserva tem outro preço).
+        const price = reply?.trace?.model ? pricePerToken(reply.trace.model) : null;
+        if (price) cost += (reply?.trace?.usage?.inputTokens ?? 0) * price.input + (reply?.trace?.usage?.outputTokens ?? 0) * price.output;
       }
     }
 
     await withExtraArticles([]);
     const after = await ticketFingerprint();
     const ticketChanges = [...after].filter(([code, state]) => before.get(code) !== state).length;
-    return { lastIntent, toolsUsed, finalStatus: status, replies, ticketChanges, draftPriorities, draftImpacts, lastFrustration, quickReplies, fallbackTurns };
+    return { lastIntent, toolsUsed, finalStatus: status, replies, ticketChanges, draftPriorities, draftImpacts, draftCategories, updateDraftCodes, lastFrustration, quickReplies, fallbackTurns };
   }
 
   let providerErrors = 0;
@@ -116,7 +125,7 @@ async function main() {
     console.log(`\nTaxa de acerto em ${repeat} execuções:`);
     for (const { name } of selected) console.log(`  ${passesByName.get(name) ?? 0}/${repeat}  ${name}`);
   }
-  console.log(`\n${passed}/${scenarios.length} cenários ok · ${tokens} tokens no total${providerErrors ? ` · ${providerErrors} erro(s) do provedor repetido(s)` : ""}${fallbackTurnsTotal ? ` · ${fallbackTurnsTotal} turno(s) respondidos pelo modelo reserva` : ""}`);
+  console.log(`\n${passed}/${scenarios.length} cenários ok · ${tokens} tokens no total · US$ ${cost.toFixed(2)}${providerErrors ? ` · ${providerErrors} erro(s) do provedor repetido(s)` : ""}${fallbackTurnsTotal ? ` · ${fallbackTurnsTotal} turno(s) respondidos pelo modelo reserva` : ""}`);
   process.exit(passed === scenarios.length ? 0 : 1);
 }
 

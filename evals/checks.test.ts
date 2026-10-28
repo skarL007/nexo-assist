@@ -71,3 +71,19 @@ describe("oferta de analista", () => {
     expect(checkScenario({ offersAnalyst: true }, { ...ok, replies: ["Vamos ver isso."] })).toEqual(["não ofereceu analista"]);
   });
 });
+
+describe("achados do funcionário simulado", () => {
+  it("sem oferta de analista: botão ou convite no texto reprovam; citar o analista do chamado não", () => {
+    expect(checkScenario({ noAnalystOffer: true }, { ...ok, replies: ["O prazo atende: o analista responde até sexta."] })).toEqual([]);
+    expect(checkScenario({ noAnalystOffer: true }, { ...ok, quickReplies: ["Falar com um analista"] })).toEqual(["ofereceu analista sem precisar"]);
+    expect(checkScenario({ noAnalystOffer: true }, { ...ok, replies: ["Se quiser, posso chamar um analista."] })).toEqual(["ofereceu analista sem precisar"]);
+  });
+
+  it("categoria do rascunho e atualização no chamado errado", () => {
+    expect(checkScenario({ draftCategory: "email" }, { ...ok, draftCategories: ["email"] })).toEqual([]);
+    expect(checkScenario({ draftCategory: "email" }, { ...ok, draftCategories: ["software"] })).toEqual(["rascunho com categoria software"]);
+    expect(checkScenario({ draftCategory: "email" }, ok)).toEqual(["nenhum rascunho de chamado novo"]);
+    expect(checkScenario({ noUpdateDraftFor: ["INC-20311"] }, { ...ok, updateDraftCodes: ["INC-20311"] })).toEqual(["rascunho de atualização no INC-20311"]);
+    expect(checkScenario({ noUpdateDraftFor: ["INC-20311"] }, { ...ok, updateDraftCodes: ["INC-20150"] })).toEqual([]);
+  });
+});
