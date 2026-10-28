@@ -12,6 +12,8 @@ import { dirname } from "node:path";
 import type { Employee } from "@/domain/employee";
 import type { ChatMessage } from "@/domain/message";
 import { checkScenario } from "../checks";
+import { describeError } from "../describe-error";
+import { classifyEvalError, EvalHarnessError } from "../provider-errors";
 import type { Scenario } from "../scenarios";
 import { installCostMeter, type CostMeter } from "./cost-meter";
 import { conversationsFile, databaseFile, JOB_ENV, jobSchema, PROGRESS_PREFIX, scenariosForRep, type CandidateJob, type Progress } from "./job";
@@ -118,6 +120,11 @@ async function runScenario(job: CandidateJob, scenario: Scenario, rep: number, e
         }
       }
     } catch (caught) {
+      // Regra do app (ex.: message_limit) e banco não dizem nada sobre o modelo: parar, não gravar como "erro técnico" dele.
+      const kind = classifyEvalError(caught);
+      if (kind === "domain" || kind === "database") {
+        throw new EvalHarnessError(`${scenario.name} (rep ${rep}): ${kind === "domain" ? "erro de regra do app" : "erro de banco"}, não do modelo: ${describeError(caught)}`, { cause: caught });
+      }
       error = caught instanceof Error ? caught.message : String(caught);
     }
 

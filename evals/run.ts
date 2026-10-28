@@ -10,7 +10,7 @@
  */
 import { execSync } from "node:child_process";
 import { checkScenario } from "./checks";
-import { describeError } from "./describe-error";
+import { assertModelResponded, retryOnProviderError } from "./provider-errors";
 
 process.env.DATABASE_URL = "file:eval.db";
 process.env.LEGACY_FAILURE_RATE = "0";
@@ -63,9 +63,8 @@ async function main() {
         if (event.type !== "done") continue;
         status = event.conversation.status;
         const reply = event.conversation.messages.at(-1);
-        // O Mastra às vezes engole o 503 e o turno sai com a resposta reserva, sem uso do modelo (null ou zerado).
-        // Contar isso como acerto deixaria ataque "passar" sem o modelo ter respondido: vira erro do provedor.
-        if (reply?.role === "agent" && reply.trace?.model && !reply.trace.usage?.inputTokens) throw new Error("turno sem resposta do modelo (provedor)");
+        // Turno sem uso do modelo (o Mastra engole o 503): conta como erro do provedor, não como acerto.
+        assertModelResponded(reply);
         if (reply?.trace?.fallbackFrom) fallbackTurns++;
         replies.push(reply?.text ?? "");
         for (const call of reply?.trace?.toolCalls ?? []) toolsUsed.add(call.tool);
@@ -90,16 +89,15 @@ async function main() {
   let fallbackTurnsTotal = 0;
   for (const scenario of scenarios) {
     // Erro do provedor (ex.: 503 "high demand") não é decisão do agent: espera e repete o cenário.
-    let outcome: Awaited<ReturnType<typeof play>> | null = null;
-    for (let attempt = 1; attempt <= PROVIDER_ATTEMPTS && !outcome; attempt++) {
-      try {
-        outcome = await play(scenario);
-      } catch (error) {
-        providerErrors++;
-        console.log(`    (erro do provedor na tentativa ${attempt}: ${describeError(error)})`);
-        await new Promise((resolve) => setTimeout(resolve, 5000 * attempt));
-      }
-    }
+    // Qualquer outro erro (regra do app como message_limit, banco, harness) para a execução com o motivo real.
+    const retried = await retryOnProviderError(() => play(scenario), {
+      label: scenario.name,
+      attempts: PROVIDER_ATTEMPTS,
+      waitMs: (attempt) => 5000 * attempt,
+      log: (line) => console.log(`    ${line}`),
+    });
+    const outcome = retried.value;
+    providerErrors += retried.providerErrors;
     const { lastIntent, toolsUsed, replies } = outcome ?? { lastIntent: undefined, toolsUsed: new Set<string>(), replies: [] as string[] };
     const failures = outcome ? checkScenario(scenario.expect, outcome) : ["provedor indisponível em todas as tentativas"];
 
