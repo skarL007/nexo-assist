@@ -111,6 +111,17 @@ export interface ConsoleConversationDetail extends ConsoleConversationSummary {
   tickets: TicketSnapshot[] | null;
 }
 
+export const analystMessageSchema = z.strictObject({
+  text: z.string().trim().min(1, "Escreva uma mensagem").max(2000),
+  /** Texto sugerido que deu origem a esta mensagem (para medir se foi enviado igual ou editado). */
+  suggested: z.string().max(2000).optional(),
+});
+
+export interface SuggestionView {
+  text: string;
+  warnings: string[];
+}
+
 export const consoleActionSchema = z.object({
   action: z.enum(["assume", "release", "close"]),
 });

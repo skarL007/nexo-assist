@@ -3,7 +3,7 @@
  * e polling prontos. As mutações invalidam o cache e a lista se atualiza sozinha.
  */
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { ConsoleConversationDetail, ConsoleConversationSummary } from "@/contracts/chat";
+import type { ConsoleConversationDetail, ConsoleConversationSummary, SuggestionView } from "@/contracts/chat";
 
 export const consoleApi = createApi({
   reducerPath: "consoleApi",
@@ -22,15 +22,23 @@ export const consoleApi = createApi({
       query: ({ id, action }) => ({ url: `/conversations/${id}`, method: "POST", body: { action } }),
       invalidatesTags: ["Conversation"],
     }),
-    sendAnalystMessage: build.mutation<ConsoleConversationDetail, { id: string; text: string }>({
-      query: ({ id, text }) => ({ url: `/conversations/${id}/messages`, method: "POST", body: { text } }),
+    sendAnalystMessage: build.mutation<ConsoleConversationDetail, { id: string; text: string; suggested?: string }>({
+      query: ({ id, text, suggested }) => ({ url: `/conversations/${id}/messages`, method: "POST", body: { text, suggested } }),
       invalidatesTags: ["Conversation"],
+    }),
+    suggestReply: build.mutation<SuggestionView, string>({
+      query: (id) => ({ url: `/conversations/${id}/suggestion`, method: "POST" }),
     }),
   }),
 });
 
-export const { useListConversationsQuery, useGetConversationQuery, useConversationActionMutation, useSendAnalystMessageMutation } =
-  consoleApi;
+export const {
+  useListConversationsQuery,
+  useGetConversationQuery,
+  useConversationActionMutation,
+  useSendAnalystMessageMutation,
+  useSuggestReplyMutation,
+} = consoleApi;
 
 /** Mensagem de erro legível de uma resposta do RTK Query. */
 export function apiErrorMessage(error: unknown): string {

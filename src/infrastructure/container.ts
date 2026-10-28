@@ -7,8 +7,10 @@ import { DraftService } from "@/application/draft-service";
 import { FeedbackService } from "@/application/feedback-service";
 import { InsightsService } from "@/application/insights-service";
 import { KnowledgeService } from "@/application/knowledge-service";
+import { ReplySuggestionService } from "@/application/reply-suggestion-service";
 import { TicketService } from "@/application/ticket-service";
-import { pricePerToken } from "@/agent/model-config";
+import { missingApiKey, pricePerToken } from "@/agent/model-config";
+import { mastraReplyWriter } from "@/agent/reply-writer";
 import { env } from "@/config/env";
 import { GeminiEmbedder } from "./ai/gemini-embedder";
 import { db } from "./db/client";
@@ -19,6 +21,7 @@ import { DrizzleDraftRepository } from "./repositories/draft-repository";
 import { DrizzleArticleRepository, DrizzleEmployeeRepository } from "./repositories/employee-repository";
 import { DrizzleFeedbackRepository } from "./repositories/feedback-repository";
 import { DrizzleInsightsSource } from "./repositories/insights-source";
+import { DrizzleSuggestionRepository } from "./repositories/suggestion-repository";
 import { DrizzleMessageRepository } from "./repositories/message-repository";
 import { DrizzleTicketRepository } from "./repositories/ticket-repository";
 
@@ -44,9 +47,12 @@ export function createServices(options: ServiceOptions = {}) {
   const config = env();
   const embedder = config.GOOGLE_GENERATIVE_AI_API_KEY ? new GeminiEmbedder(config.EMBEDDING_MODEL, config.GOOGLE_GENERATIVE_AI_API_KEY) : null;
   const knowledge = new KnowledgeService(articles, embedder, (error) => console.error("[embeddings]", error instanceof Error ? error.message : String(error)));
-  const insights = new InsightsService(new DrizzleInsightsSource(database), pricePerToken(env().LLM_MODEL));
+  const suggestionRepository = new DrizzleSuggestionRepository(database);
+  const insights = new InsightsService(new DrizzleInsightsSource(database), pricePerToken(config.LLM_MODEL), suggestionRepository);
+  const writer = missingApiKey(config.LLM_MODEL, config) ? null : mastraReplyWriter;
+  const replySuggestions = new ReplySuggestionService(conversations, budget, writer, suggestionRepository, config.TOTAL_AGENT_TURN_LIMIT);
 
-  return { employees, articles, knowledge, messages, budget, tickets, conversations, drafts, feedback, insights };
+  return { employees, articles, knowledge, messages, budget, tickets, conversations, drafts, feedback, insights, replySuggestions };
 }
 
 export type Services = ReturnType<typeof createServices>;

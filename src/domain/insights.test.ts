@@ -40,6 +40,7 @@ const input: InsightsInput = {
   drafts: [{ status: "confirmed" }, { status: "confirmed" }, { status: "cancelled" }, { status: "replaced" }, { status: "pending" }],
   analysts: 2,
   price: { input: 1.5e-6, output: 9e-6 },
+  suggestions: { generated: 4, sent_as_is: 1, sent_edited: 3 },
 };
 
 describe("indicadores do atendimento", () => {
@@ -78,6 +79,7 @@ describe("indicadores do atendimento", () => {
     expect(insights.feedback).toEqual({ helpful: 2, notHelpful: 1, rate: 2 / 3 });
     expect(insights.drafts).toEqual({ confirmed: 2, cancelled: 1, pending: 1, confirmRate: 2 / 3 });
     expect(insights.analysts).toBe(2);
+    expect(insights.suggestions).toEqual({ generated: 4, sentAsIs: 1, sentEdited: 3, asIsRate: 0.25 });
   });
 
   it("sem dados, as taxas ficam null (a tela mostra \"—\" em vez de 0% ou NaN)", () => {

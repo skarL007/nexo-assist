@@ -65,7 +65,7 @@ export function InsightsScreen({
             />
           </section>
 
-          <section aria-label="Mais indicadores" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <section aria-label="Mais indicadores" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <Tile small label="Respostas do agent" value={String(insights.agentTurns)} detail={`${(insights.tokens.input + insights.tokens.output).toLocaleString("pt-BR")} tokens`} />
             <Tile
               small
@@ -78,6 +78,12 @@ export function InsightsScreen({
               label="Rascunhos confirmados"
               value={pct(insights.drafts.confirmRate)}
               detail={`${insights.drafts.confirmed} confirmados · ${insights.drafts.cancelled} descartados · ${insights.drafts.pending} pendentes`}
+            />
+            <Tile
+              small
+              label="Sugestões enviadas sem editar"
+              value={pct(insights.suggestions.asIsRate)}
+              detail={`${insights.suggestions.generated} geradas · ${insights.suggestions.sentAsIs} iguais · ${insights.suggestions.sentEdited} editadas`}
             />
             <Tile small label="Analistas no service desk" value={String(insights.analysts)} detail={`${totalHandoffs} transferência${totalHandoffs === 1 ? "" : "s"}`} />
           </section>

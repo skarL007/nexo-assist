@@ -4,6 +4,7 @@
  */
 import type { Conversation } from "@/domain/conversation";
 import type { Employee } from "@/domain/employee";
+import type { SuggestionOutcome } from "@/domain/reply-suggestion";
 import type { Article } from "@/domain/knowledge";
 import type { Card, ChatMessage, DraftKind, DraftStatus, MessageRole, NewTicketFields, TicketUpdateFields, TurnTrace } from "@/domain/message";
 import type { Priority, Ticket, TicketStatus, TicketType } from "@/domain/ticket";
@@ -113,6 +114,16 @@ export interface InsightsSource {
   countAnalysts(): Promise<number>;
   /** Chamados abertos de todo mundo, com o nome de quem abriu (fila de prazos do console). */
   openTickets(): Promise<{ code: string; title: string; priority: Priority; status: TicketStatus; updatedAt: Date; ownerName: string }[]>;
+}
+
+/** Escreve a sugestão de resposta do analista (o modelo). */
+export interface ReplyWriter {
+  write(input: { context: string; analystFirstName: string }): Promise<{ text: string; usage: { inputTokens: number; outputTokens: number } | null }>;
+}
+
+export interface SuggestionRepository {
+  record(event: { conversationId: string; analystId: string; outcome: SuggestionOutcome; at: Date }): Promise<void>;
+  countsSince(since: Date): Promise<Record<SuggestionOutcome, number>>;
 }
 
 /** Contadores globais com teto (custo do deploy). */
