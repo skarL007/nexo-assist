@@ -14,6 +14,8 @@ export type RecorderEvent = { type: "step"; step: TraceStep } | { type: "card"; 
 /** Junta o que o agent fez no turno: vira os passos visíveis e o trace salvo. */
 export class TurnRecorder {
   decision: Decision | null = null;
+  /** Chamadas extras de recordUnderstanding no mesmo turno (o Gemini às vezes manda várias em paralelo). */
+  repeatedUnderstandings = 0;
   handedOff = false;
   /** Baixa confiança pela primeira vez: o turno só pode fazer uma pergunta. */
   clarifying = false;
@@ -21,6 +23,16 @@ export class TurnRecorder {
   readonly cards: Card[] = [];
   readonly guardrails: string[] = [];
   private pending: RecorderEvent[] = [];
+
+  /** Registra o entendimento; devolve false (e conta) se o turno já tinha um. Sem await: chamadas paralelas não passam juntas. */
+  recordDecision(decision: Decision): boolean {
+    if (this.decision) {
+      this.repeatedUnderstandings++;
+      return false;
+    }
+    this.decision = decision;
+    return true;
+  }
 
   step(label: string, detail?: string, ok = true) {
     const step: TraceStep = { label, detail, ok };

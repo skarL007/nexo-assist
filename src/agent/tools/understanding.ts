@@ -29,7 +29,8 @@ export const recordUnderstanding = createTool({
   }),
   execute: async (input, context) => {
     const turn = turnFrom(context);
-    turn.recorder.decision = input;
+    // Só o primeiro registro do turno vale: chamadas repetidas não transferem nem avisam de novo.
+    if (!turn.recorder.recordDecision(input)) return { ok: true, note: "Entendimento já registrado neste turno; siga com a ação." };
 
     const lowConfidence = input.confidence < LOW_CONFIDENCE && input.intent !== "greeting";
     const frustrated = input.frustration !== "none";

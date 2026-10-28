@@ -12,6 +12,17 @@ https://github.com/user-attachments/assets/b8169f56-3f1e-414a-aadd-0796184bf93b
 
 **App no ar:** https://nexo-assist-puce.vercel.app, com um link de acesso temporário enviado junto com o repositório.
 
+### Comece por aqui (3 minutos)
+
+1. **Veja o agent decidir:** o [roteiro de 3 minutos](#roteiro-de-3-minutos) no app, com o painel "por quê?" em cada resposta.
+2. **Veja o que é regra em código, não prompt:** a tabela [O que é garantido em código](#o-que-é-garantido-em-código-não-depende-do-prompt).
+3. **Veja as provas:** [`docs/validacao/`](docs/validacao/README.md). Cada melhoria tem pergunta, método, números e limites:
+   - busca: 84% → 94%;
+   - tempo real: ~1,6 s → ~0,4 s;
+   - red-team: 21/21, mapeado ao OWASP.
+4. **Rode tudo sem LLM:** `npm run verify` (tipos, lint, 286 testes unitários e 39 E2E).
+5. **Por que existe cada peça:** a [pesquisa de fronteira](docs/pesquisa/FRONTEIRA.md), com o que ServiceNow, Zendesk, Intercom e Atlassian fazem, e o que virou código aqui.
+
 ---
 
 ## Sumário
@@ -51,7 +62,7 @@ Qualquer senha funciona para os usuários de exemplo (regra do desafio). Na tela
 Outros comandos:
 
 ```bash
-npm test                          # 279 testes unitários — sem LLM
+npm test                          # 286 testes unitários — sem LLM
 npx playwright install chromium   # só na primeira vez, antes do E2E
 npm run test:e2e                  # 39 testes E2E contra o build de produção — sem LLM
 npm run eval                      # 26 cenários de decisão do agent com o modelo real (8 de ataque)
@@ -211,6 +222,8 @@ O modelo decide **o que fazer**. As regras do service desk ficam em código test
 | Frustração alta (ou moderada duas vezes) → o botão "Falar com um analista" aparece; nunca transfere sozinho nem mexe na prioridade | [`domain/frustration.ts`](src/domain/frustration.ts), `run-turn.ts` |
 | Busca na central: híbrida (sentido + palavras), abstém quando o 1º não se destaca do 2º; sem chave, só palavras | [`domain/hybrid-search.ts`](src/domain/hybrid-search.ts) |
 | Aviso de prazo em risco (75% do prazo útil) com a conta explicada | [`domain/sla-risk.ts`](src/domain/sla-risk.ts) |
+| Modelo reserva: se o Gemini 3.5 Flash falhar (ex.: 503), o passo vai para o Flash Lite e o trace diz quem respondeu; o custo usa o preço de quem respondeu | [`agent/model-fallback.ts`](src/agent/model-fallback.ts) |
+| Entendimento registrado uma vez por turno: chamadas paralelas repetidas não transferem nem avisam de novo | [`agent/turn-context.ts`](src/agent/turn-context.ts) (`recordDecision`) |
 | Privacidade: o funcionário vem do cookie assinado, nunca de argumento do modelo; chamado de outra pessoa responde "não encontrado" | [`agent/turn-context.ts`](src/agent/turn-context.ts), `TicketService.getMine` |
 
 O [`step-policy.ts`](src/agent/step-policy.ts) segue o padrão *action-selector* da literatura de defesa contra injeção ([arXiv 2506.08837](https://arxiv.org/abs/2506.08837)): o código decide quais tools existem em cada passo, e o modelo só escolhe entre elas. Um texto malicioso pode mudar o que o modelo *quer* fazer, mas não o que ele *consegue* fazer.
@@ -223,14 +236,19 @@ O prompt ([`agent/instructions.ts`](src/agent/instructions.ts)) cuida só da con
 
 | Camada | O que cobre | Comando |
 |---|---|---|
-| **Testes unitários** (Vitest, 279) | prazos com fim de semana, matriz de prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados e o estimador pass^k | `npm test` |
+| **Testes unitários** (Vitest, 286) | prazos com fim de semana, matriz de prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, modelo reserva e o estimador pass^k | `npm test` |
 | **E2E** (Playwright, 39) | login (inclusive SSO contra um provedor OIDC falso), permissões, transferência de ponta a ponta, relatório, sugestão de resposta, indicadores, prazos em risco, incidente em massa, frustração, tempo real com latência medida, estados de erro e a página 404, contra o build de produção | `npm run test:e2e` |
 | **Evals** (26 cenários, modelo real) | intenção, tools esperadas e proibidas, transferência (e quando *não* transferir), caso crítico, reabertura, escopo de TI, vazamento de dados, incidente em massa, frustração e 8 ataques mapeados ao OWASP ([red-team](docs/validacao/RED-TEAM.md)) | `npm run eval` |
 | **Funcionário simulado** (pass^k) | um modelo faz o papel do funcionário, com fatos que só conta se perguntarem, e clica em Confirmar ou Descartar; o estado no banco é conferido em k execuções | `npm run eval:sim` |
 | **Provas de eficácia** | busca híbrida 84% → 94% ([BUSCA](docs/validacao/BUSCA.md)); tempo real ~0,4 s × ~1,6 s ([TEMPO-REAL](docs/validacao/TEMPO-REAL.md)); telemetria e SSO ([OBSERVABILIDADE-E-SSO](docs/validacao/OBSERVABILIDADE-E-SSO.md)) | `docs/validacao/` |
 | **Trace em toda resposta** | qualquer decisão pode ser auditada na própria interface e no console do analista | — |
 
-O [CI](.github/workflows/ci.yml) está configurado para rodar tipos, lint, testes unitários e E2E em todo push, sem segredos. Os evals ficam fora porque chamam o modelo real. Hoje o GitHub Actions está desativado na conta, então as mesmas verificações rodam localmente antes de cada push (`npm run typecheck && npm run lint && npm test && npm run test:e2e`).
+O CI roda tipos, lint, testes unitários e E2E, sem segredos. Os evals ficam fora porque chamam o modelo real. Há duas configurações equivalentes:
+
+- **[CircleCI](.circleci/config.yml):** plano Free para open source, sem cartão, com a imagem oficial do Playwright.
+- **[GitHub Actions](.github/workflows/ci.yml):** hoje está desativado na conta pelo GitHub.
+
+Localmente, `npm run verify` roda a mesma coisa antes de cada push.
 
 Os evals pagaram o próprio custo: pegaram o agent abrindo chamado repetido, a latência do "raciocínio" do Gemini (resolvida com `thinkingLevel: "minimal"`), a reabertura de chamado resolvido e o caso crítico que ele não tratava. Uma auditoria com conversas difíceis achou mais dois: mensagem vaga ia direto para um analista, e falha técnica num sistema do RH era recusada como "fora de TI". Cada achado virou regra e cenário novo.
 
@@ -245,6 +263,8 @@ O processo de desenvolvimento (SDD, TDD, skills, MCPs e uso de IA) está em [`do
 - **Tool calling confiável**, inclusive a escolha forçada de tool no primeiro passo, que é a base da transparência.
 - **Latência baixa** com `thinkingLevel: "minimal"`: atendimento precisa de resposta rápida, não de raciocínio longo.
 - **Cerca de 1 centavo de dólar por resposta**, o que permite um deploy aberto para avaliação com custo previsível.
+
+**Modelo reserva:** quando o Flash falha (no dia 28/10/2026 ele passou mais de uma hora devolvendo 503 "alta demanda" nas chamadas com tools), o passo vai para o **Gemini 3.5 Flash Lite** (`LLM_FALLBACK_MODEL`). O trace mostra quem respondeu, e os evals contam esses turnos à parte para não confundir a medição. O reserva é do mesmo fornecedor: para resistir a uma queda do Google inteiro, basta apontar `LLM_FALLBACK_MODEL` para um modelo do OpenRouter, com a chave dele.
 
 Trocar de modelo é uma variável (`LLM_MODEL`), graças ao roteador do Mastra; pelo OpenRouter, `LLM_MODEL=openrouter/<fornecedor>/<modelo>` com `OPENROUTER_API_KEY`. Os evals dizem se a troca piorou alguma decisão.
 
@@ -290,7 +310,7 @@ Houve quatro rodadas de revisão de segurança (antes do deploy, depois do deplo
 
 ## O que eu faria com mais tempo
 
-- **Corrigir o achado da telemetria:** no passo 0, o Gemini às vezes chama `recordUnderstanding` várias vezes em paralelo, o que gasta tokens à toa. Depois, medir de novo os tokens por turno.
+- **Terminar o achado da telemetria:** no passo 0, o Gemini às vezes chama `recordUnderstanding` várias vezes em paralelo. Hoje só a primeira chamada vale, e as outras aparecem como regra no trace. Mas elas ainda gastam tokens de saída; o próximo passo é testar um prompt ou parâmetro que evite chamadas paralelas e medir os tokens por turno.
 - Evals e simulação no CI com limiar mínimo (hoje rodam à mão porque chamam o modelo real).
 - Duplicidade por similaridade de sentido, reaproveitando os embeddings da busca.
 - Artigo da central gerado a partir de chamado resolvido, como rascunho para o analista revisar (fecha o ciclo com as lacunas).
