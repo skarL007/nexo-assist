@@ -67,9 +67,10 @@ export async function consoleList(services: Services, conversations: Conversatio
 }
 
 export async function consoleDetail(services: Services, conversation: Conversation): Promise<ConsoleConversationDetail> {
-  const [people, messages, tickets] = await Promise.all([
+  const [people, messages, draftStatuses, tickets] = await Promise.all([
     peopleOf(services, [conversation]),
     services.messages.listByConversation(conversation.id),
+    services.drafts.statuses(conversation.id),
     // Os chamados vêm do sistema legado, que às vezes cai: a conversa (banco local) abre mesmo assim.
     services.tickets.listMine(conversation.employeeId).catch((error: unknown) => {
       logError(error);
@@ -80,6 +81,7 @@ export async function consoleDetail(services: Services, conversation: Conversati
     ...summary(conversation, people, messages.at(-1)),
     handoffSummary: conversation.handoff?.summary ?? null,
     messages,
+    draftStatuses,
     tickets: tickets ? tickets.map((t) => services.tickets.snapshot(t)) : null,
   };
 }

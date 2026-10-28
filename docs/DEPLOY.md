@@ -21,7 +21,7 @@ O deploy roda na **Vercel** com o banco no **Turso** (libSQL, compatível com o 
      ```bash
      node -e "process.stdout.write(require('crypto').randomBytes(36).toString('base64url'))" | vercel env add AUTH_SECRET production --sensitive
      ```
-   - Completam a lista `LLM_MODEL`, `DAILY_AGENT_TURN_LIMIT` e `TOTAL_AGENT_TURN_LIMIT=100`.
+   - Completam a lista `LLM_MODEL`, `DAILY_AGENT_TURN_LIMIT=100` (mensagens em 24 horas, somando todo mundo) e `TOTAL_AGENT_TURN_LIMIT=1000` (trava final: 10 dias de avaliação a 100 por dia). Os dois são `Config`, não segredo, para dar para conferir o valor com `vercel env pull`.
 4. Publiquei pela CLI (`vercel deploy --prod`) a partir de um `git archive` do último commit, para nunca subir arquivo que não está versionado. O [`.vercelignore`](../.vercelignore) também barra `.env` e bancos locais.
 5. As funções rodam em `iad1` (Washington), na mesma região do banco. A "Vercel Authentication" protege só os previews; a produção fica atrás do nosso token.
 
@@ -48,4 +48,4 @@ O deploy roda na **Vercel** com o banco no **Turso** (libSQL, compatível com o 
    - o turno de esclarecimento só libera a tool de botões, em código, não só no prompt;
    - "Alterar detalhes" tem teto de 20 rascunhos por conversa, já que não passa pelos limites de mensagens.
 
-   Ficou como trade-off: uma pessoa com o link pode gastar o teto total de 100 turnos sozinha (o link é curto e só vai para quem avalia).
+   Ficou como trade-off: uma pessoa com o link pode gastar as 100 mensagens do dia sozinha (o link só vai para quem avalia; no dia seguinte a cota volta).
