@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { apiKeyVarFor, missingApiKey, providerOptionsFor } from "./model-config";
+import { apiKeyVarFor, missingApiKey, missingKeyMessage, providerOptionsFor } from "./model-config";
 
 describe("configuração por provedor do modelo", () => {
   it("Gemini direto (padrão de produção) continua com thinkingLevel mínimo e chave do Google", () => {
@@ -28,5 +28,18 @@ describe("chave do modelo ausente", () => {
     expect(missingApiKey("google/gemini-3.5-flash", {})).toBe("GOOGLE_GENERATIVE_AI_API_KEY");
     expect(missingApiKey("google/gemini-3.5-flash", { GOOGLE_GENERATIVE_AI_API_KEY: "x" })).toBeNull();
     expect(missingApiKey("openai/gpt-6-luna", {})).toBeNull();
+  });
+});
+
+describe("mensagem quando falta a chave", () => {
+  it("no deploy, não revela a configuração ao funcionário (achado N1 da auditoria de segurança)", () => {
+    const text = missingKeyMessage("GOOGLE_GENERATIVE_AI_API_KEY", true);
+    expect(text).not.toContain("GOOGLE_GENERATIVE_AI_API_KEY");
+    expect(text).not.toContain(".env");
+    expect(text).toContain("indisponível");
+  });
+
+  it("rodando local, diz ao avaliador o que configurar", () => {
+    expect(missingKeyMessage("GOOGLE_GENERATIVE_AI_API_KEY", false)).toContain("defina GOOGLE_GENERATIVE_AI_API_KEY no .env");
   });
 });

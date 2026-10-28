@@ -3,7 +3,7 @@
  * Ele propõe um rascunho; o chamado só nasce quando o funcionário confirma
  * (pelo botão ou respondendo "pode criar" na conversa).
  */
-import { describeChanges, reviseNewTicket, type NewTicketEdit } from "@/domain/draft-revision";
+import { describeChanges, MAX_DRAFTS_PER_CONVERSATION, reviseNewTicket, type NewTicketEdit } from "@/domain/draft-revision";
 import { DomainError } from "@/domain/errors";
 import type { Card, DraftSnapshot, DraftStatus, NewTicketFields, TicketUpdateFields, TraceStep, TurnTrace } from "@/domain/message";
 import { SLA_LABEL, slaDeadline } from "@/domain/priority";
@@ -73,6 +73,9 @@ export class DraftService {
   async reviseFromForm(draftId: number, employeeId: string, edit: DraftEdit): Promise<void> {
     const startedAt = Date.now();
     const current = await this.getPending(draftId, employeeId);
+    if ((await this.drafts.listByConversation(current.conversationId)).length >= MAX_DRAFTS_PER_CONVERSATION) {
+      throw new DomainError("message_limit", "Este rascunho já foi alterado muitas vezes. Confirme como está ou descreva o problema de novo no chat.");
+    }
     const revision =
       current.kind === "create" ? await this.reviseTicket(current, employeeId, edit) : await this.reviseComment(current, employeeId, edit);
 

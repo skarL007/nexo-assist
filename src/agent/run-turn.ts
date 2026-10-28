@@ -16,7 +16,7 @@ import { DomainError } from "@/domain/errors";
 import type { ToolCallLog, TurnTrace } from "@/domain/message";
 import { createServices, type Services } from "@/infrastructure/container";
 import { conversationView } from "@/server/views";
-import { missingApiKey, providerOptionsFor } from "./model-config";
+import { missingApiKey, missingKeyMessage, providerOptionsFor } from "./model-config";
 import { stripMarkdown, stripSystemNotes, toModelMessages } from "./model-history";
 import { nexoAgent } from "./nexo-agent";
 import { needsContinuation, stepPolicy } from "./step-policy";
@@ -44,7 +44,9 @@ export async function* runAgentTurn(employee: Employee, text: string, abortSigna
   // Com um analista, a mensagem segue para ele: o modelo não é chamado.
   const missingKey = agentCanReply(conversation.status) ? missingApiKey(env().LLM_MODEL, env()) : null;
   if (missingKey) {
-    throw new DomainError("agent_unavailable", `O Nexo Assist não está configurado neste ambiente: defina ${missingKey} no .env e reinicie o servidor.`);
+    const production = env().NODE_ENV === "production";
+    if (production) console.error(`[config] ${missingKey} não definida: o agent não pode responder.`);
+    throw new DomainError("agent_unavailable", missingKeyMessage(missingKey, production));
   }
 
   const employeeMessage = await services.messages.add({ conversationId: conversation.id, role: "employee", text });
@@ -140,7 +142,7 @@ async function* streamAgent(
     // O modelo "pensa" antes de responder; para atendimento, raciocínio mínimo basta e corta a latência.
     providerOptions: providerOptionsFor(env().LLM_MODEL, env().OPENROUTER_REASONING_EFFORT, turn.conversationId),
     // Passo 0: obriga o modelo a registrar o que entendeu. Depois de transferir, não age mais.
-    prepareStep: ({ stepNumber }) => stepPolicy(firstStep + stepNumber, recorder.handedOff),
+    prepareStep: ({ stepNumber }) => stepPolicy(firstStep + stepNumber, recorder.handedOff, recorder.clarifying),
   });
 
   const startedCalls = new Map<string, { at: number; input: unknown }>();

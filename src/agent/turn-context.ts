@@ -15,6 +15,8 @@ export type RecorderEvent = { type: "step"; step: TraceStep } | { type: "card"; 
 export class TurnRecorder {
   decision: Decision | null = null;
   handedOff = false;
+  /** Baixa confiança pela primeira vez: o turno só pode fazer uma pergunta. */
+  clarifying = false;
   readonly steps: TraceStep[] = [];
   readonly cards: Card[] = [];
   readonly guardrails: string[] = [];

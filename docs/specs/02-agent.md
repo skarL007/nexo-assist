@@ -9,7 +9,7 @@ A cada mensagem, entender o que o funcionário quer, escolher **uma** linha de a
 ```
 mensagem → limites → salva → (conversa com analista? para aqui)
         → passo 0 forçado: recordUnderstanding
-        → passos 1..5: tools de ação, sem recordUnderstanding (ou nenhuma, se já transferiu)
+        → passos 1..5: tools de ação, sem recordUnderstanding (só offerQuickReplies no turno de esclarecimento; nenhuma, se já transferiu)
         → (parou só no registro, sem texto? continua uma vez do passo 1)
         → resposta salva com trace
 ```
@@ -56,7 +56,11 @@ Ver `evals/scenarios.ts`. Exemplos:
 
 ## Sem chave do modelo
 
-Se a chave do provedor do `LLM_MODEL` não estiver configurada, o chat responde "O Nexo Assist não está configurado neste ambiente: defina <VARIÁVEL> no .env e reinicie o servidor" **antes** de gravar a mensagem (não gasta a cota da sessão). Com um analista na conversa, a mensagem segue para ele normalmente.
+Se a chave do provedor do `LLM_MODEL` não estiver configurada, o chat avisa **antes** de gravar a mensagem (não gasta a cota da sessão). Rodando local, o aviso diz o que fazer: "defina <VARIÁVEL> no .env e reinicie o servidor". No deploy (`NODE_ENV=production`), o funcionário vê só "O Nexo Assist está indisponível no momento", e o nome da variável vai para o log do servidor. Com um analista na conversa, a mensagem segue para ele normalmente.
+
+## Turno de esclarecimento
+
+Na primeira dúvida (confiança < 0,5), o turno só pode fazer uma pergunta: a partir do passo 1 a única tool liberada é `offerQuickReplies` (`stepPolicy` com `recorder.clarifying`). A regra não depende de o modelo obedecer à instrução.
 
 ## Custo
 

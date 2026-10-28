@@ -32,6 +32,7 @@ export const recordUnderstanding = createTool({
     const recent = await turn.services.messages.listRecent(turn.conversationId, 10);
     const previous = recent.findLast((m) => m.role === "agent" && m.trace?.decision)?.trace?.decision ?? null;
     if (!shouldHandOffForLowConfidence(input, previous)) {
+      turn.recorder.clarifying = true;
       turn.recorder.guardrail(
         `Confiança ${Math.round(input.confidence * 100)}% < ${LOW_CONFIDENCE * 100}%: primeiro uma pergunta de esclarecimento; se continuar sem segurança, um analista assume.`,
       );

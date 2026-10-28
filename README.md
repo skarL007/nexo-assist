@@ -51,7 +51,7 @@ Qualquer senha funciona para os usuários de exemplo (regra do desafio). Na tela
 Outros comandos:
 
 ```bash
-npm test                          # 161 testes unitários — sem LLM
+npm test                          # 165 testes unitários — sem LLM
 npx playwright install chromium   # só na primeira vez, antes do E2E
 npm run test:e2e                  # 18 testes E2E contra o build de produção — sem LLM
 npm run eval                      # 14 cenários de decisão do agent com o modelo real
@@ -211,7 +211,7 @@ O prompt ([`agent/instructions.ts`](src/agent/instructions.ts)) cuida só da con
 
 | Camada | O que cobre | Comando |
 |---|---|---|
-| **Testes unitários** (Vitest, 161) | prazos com fim de semana, matriz de prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real | `npm test` |
+| **Testes unitários** (Vitest, 165) | prazos com fim de semana, matriz de prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real | `npm test` |
 | **E2E** (Playwright, 18) | login, permissões, transferência de ponta a ponta, "Alterar detalhes", estados de erro (sem chave, sem conexão, falha ao confirmar, console) e a página 404, contra o build de produção | `npm run test:e2e` |
 | **Evals** (14 cenários, modelo real) | intenção, tools esperadas e proibidas, transferência (e quando *não* transferir), caso crítico, reabertura, escopo de TI e vazamento de dados de outra pessoa | `npm run eval` |
 | **Trace em toda resposta** | qualquer decisão pode ser auditada na própria interface e no console do analista | — |
@@ -247,15 +247,16 @@ O deploy roda na **Vercel** com o banco no **Turso**, publicado a partir de um `
 | Risco | Proteção |
 |---|---|
 | Qualquer pessoa usar o agent (e a minha cota) | **Porta de acesso com link temporário** em [`proxy.ts`](src/proxy.ts): sem `?access=` válido, nenhuma página ou API responde (401). O link leva `<validade>.<HMAC>`, assinado com um segredo que nunca sai do servidor ([`server/access-gate.ts`](src/server/access-gate.ts)); vira um cookie httpOnly que vence junto e sai da URL. Sem o segredo na Vercel, a porta fecha. |
-| Vazamento de chave | Chaves só em variáveis de ambiente do servidor, validadas com Zod. Nada com prefixo `NEXT_PUBLIC_`. `.env` fora do git; o JavaScript entregue foi conferido sem chaves. |
-| Custo inesperado | 30 mensagens por sessão, 40 por hora e 120 por dia por pessoa, teto global diário e **teto total de 100 turnos** (`TOTAL_AGENT_TURN_LIMIT`, cerca de US$ 1,06), reservado no banco num único comando antes de chamar o modelo; 800 tokens por passo; a chamada é cancelada quando a aba fecha. Ao atingir o teto, o chat avisa e não chama o modelo. |
+| Vazamento de chave | Chaves só em variáveis de ambiente do servidor, validadas com Zod. Nada com prefixo `NEXT_PUBLIC_`. `.env` fora do git; o JavaScript entregue foi conferido sem chaves. Se faltar a chave no deploy, o funcionário vê só "indisponível"; o nome da variável fica no log. |
+| Custo inesperado | 30 mensagens por sessão, 40 por hora e 120 por dia por pessoa, teto global diário e **teto total de 100 turnos** (`TOTAL_AGENT_TURN_LIMIT`, cerca de US$ 1,06), reservado no banco num único comando antes de chamar o modelo; 800 tokens por passo; a chamada é cancelada quando a aba fecha. Ao atingir o teto, o chat avisa e não chama o modelo. "Alterar detalhes" não chama o modelo, mas tem teto de 20 rascunhos por conversa. |
 | Requisição forjada de outro site (CSRF) | Toda mutação exige mesma origem (`Sec-Fetch-Site`/`Origin`); as que têm corpo exigem JSON validado por Zod ([`server/http.ts`](src/server/http.ts)). |
 | Ação em nome de outra pessoa | A identidade vem só do JWT da sessão (algoritmo fixo HS256). O modelo nunca recebe nem informa id de funcionário. |
+| O modelo agir quando devia perguntar | As tools liberadas em cada passo são decididas em código ([`agent/step-policy.ts`](src/agent/step-policy.ts)): no turno de esclarecimento, só botões de resposta; depois de transferir, nenhuma. |
 | Corridas | Confirmação de rascunho atômica, update de conversa condicionado ao estado esperado e limites conferidos de novo depois de gravar a mensagem. |
 | Dados pessoais nos logs | Erro do banco é registrado só pela causa (ex.: `SQLITE_BUSY`), sem os parâmetros da consulta. O corpo enviado ao LLM nunca é registrado. |
 | Clickjacking e afins | CSP, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, HSTS e sem `X-Powered-By` ([`next.config.ts`](next.config.ts)). |
 
-Houve três rodadas de revisão de segurança (antes do deploy, depois do deploy e uma final com 42 verificações de fora contra produção); o detalhe está em [`docs/DEPLOY.md`](docs/DEPLOY.md).
+Houve quatro rodadas de revisão de segurança (antes do deploy, depois do deploy, uma com 42 verificações de fora contra produção e uma com skills de auditoria de terceiros); o detalhe está em [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 ---
 

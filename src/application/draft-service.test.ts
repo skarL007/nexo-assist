@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { MAX_DRAFTS_PER_CONVERSATION } from "@/domain/draft-revision";
 import { DomainError } from "@/domain/errors";
 import type { NewTicketFields } from "@/domain/message";
 import { ConversationService } from "./conversation-service";
@@ -277,5 +278,20 @@ describe("crítico com o banco fora do ar na transferência", () => {
 
     expect(ticketRepo.tickets.size).toBe(1);
     expect(messages.items.at(-1)!.text).toContain("não consegui chamar o analista");
+  });
+});
+
+describe("limite de alterações pelo card (achado A1 da auditoria de segurança)", () => {
+  it("depois de muitos rascunhos na conversa, recusa novas alterações em vez de gravar sem fim", async () => {
+    const { drafts, conversation } = await setup();
+    const first = await drafts.proposeNewTicket(conversation.id, "ana", { ...fields, urgency: "deadline_today" });
+    const base = { type: fields.type, category: fields.category, title: fields.title, description: fields.description, impact: fields.impact } as const;
+    let current = first.id;
+    for (let i = 1; i < MAX_DRAFTS_PER_CONVERSATION; i++) {
+      await drafts.reviseFromForm(current, "ana", { ...base, urgency: i % 2 ? "blocked" : "deadline_today" });
+      current = (await drafts.pending(conversation.id))[0].id;
+    }
+    await expect(drafts.reviseFromForm(current, "ana", { ...base, urgency: "none" })).rejects.toMatchObject({ code: "message_limit" });
+    expect((await drafts.statuses(conversation.id))[current]).toBe("pending");
   });
 });
