@@ -6,7 +6,7 @@ Cada resposta do agent mostra **o que ele entendeu, o que fez e por quê**: pass
 
 **Stack:** TypeScript estrito · Next.js 16 (App Router) · Mastra (agent) · Google Gemini 3.5 Flash · Drizzle + libSQL (SQLite local, Turso no deploy) · Redux Toolkit + RTK Query · Zod · shadcn/ui + Tailwind · Vitest · Playwright.
 
-https://github.com/user-attachments/assets/eb670587-d3c7-4ce0-b768-a5f2dd3c6f40
+https://github.com/user-attachments/assets/b8169f56-3f1e-414a-aadd-0796184bf93b
 
 **Demonstração (1:49):** login, dúvida resolvida pela central de ajuda, o painel "por quê?", abertura de chamado conversando e com confirmação, chamado vencido indo para um analista e o console do analista. É uma gravação real com o Gemini; as esperas pelo modelo aparecem aceleradas e sinalizadas no vídeo.
 
