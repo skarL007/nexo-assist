@@ -30,7 +30,7 @@ Cada resposta do agent mostra **o que ele entendeu, o que fez e por quê**: pass
    - busca: 84% → 94%;
    - tempo real: ~1,6 s → ~0,4 s;
    - red-team: 21/21, mapeado ao OWASP.
-4. **Rode tudo sem LLM:** `npm run verify` (tipos, lint, 323 testes unitários e 39 E2E).
+4. **Rode tudo sem LLM:** `npm run verify` (tipos, lint, 379 testes unitários e 39 E2E).
 5. **Por que existe cada peça:** a [pesquisa de fronteira](docs/pesquisa/FRONTEIRA.md), com o que ServiceNow, Zendesk, Intercom e Atlassian fazem, e o que virou código aqui.
 
 ---
@@ -74,10 +74,10 @@ Qualquer senha funciona para os usuários de exemplo (regra do desafio). Na tela
 Outros comandos:
 
 ```bash
-npm test                          # 323 testes unitários — sem LLM
+npm test                          # 379 testes unitários — sem LLM
 npx playwright install chromium   # só na primeira vez, antes do E2E
 npm run test:e2e                  # 39 testes E2E contra o build de produção — sem LLM
-npm run eval                      # 26 cenários de decisão do agent com o modelo real (8 de ataque)
+npm run eval                      # 31 cenários de decisão do agent com o modelo real (8 de ataque)
 npm run eval:sim                  # funcionário simulado por um modelo, pass^k (τ-bench)
 npm run eval:busca                # busca na central: palavras-chave × híbrida, 50 perguntas
 npm run eval:sugestao             # sugestão de resposta do analista com o modelo real
@@ -248,10 +248,10 @@ O prompt ([`agent/instructions.ts`](src/agent/instructions.ts)) cuida só da con
 
 | Camada | O que cobre | Comando |
 |---|---|---|
-| **Testes unitários** (Vitest, 323) | prazos com fim de semana, matriz de prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, modelo reserva e o estimador pass^k | `npm test` |
+| **Testes unitários** (Vitest, 379) | prazos com fim de semana, matriz de prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória e só explícita, prazo × necessidade, assunto do chamado, categoria E-mail, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, modelo reserva e o estimador pass^k | `npm test` |
 | **E2E** (Playwright, 39) | login (inclusive SSO contra um provedor OIDC falso), permissões, transferência de ponta a ponta, relatório, sugestão de resposta, indicadores, prazos em risco, incidente em massa, frustração, tempo real com latência medida, estados de erro e a página 404, contra o build de produção | `npm run test:e2e` |
-| **Evals** (26 cenários, modelo real; 26/26 em 28/10) | intenção, tools esperadas e proibidas, transferência (e quando *não* transferir), caso crítico, reabertura, escopo de TI, vazamento de dados, incidente em massa, frustração e 8 ataques mapeados ao OWASP ([red-team](docs/validacao/RED-TEAM.md)) | `npm run eval` |
-| **Funcionário simulado** (pass^k; pass^1 0,72 e pass^3 0,50 em 28/10) | um modelo faz o papel do funcionário, com fatos que só conta se perguntarem, e clica em Confirmar ou Descartar; o estado no banco é conferido em k execuções, cada uma a partir do seed ([resultado e falhas](docs/validacao/SIMULACAO.md)) | `npm run eval:sim` |
+| **Evals** (31 cenários, modelo real; 31/31 em 28/10) | intenção, tools esperadas e proibidas, transferência (e quando *não* transferir), caso crítico, reabertura, escopo de TI, vazamento de dados, incidente em massa, frustração, os achados do funcionário simulado e 8 ataques mapeados ao OWASP ([red-team](docs/validacao/RED-TEAM.md)) | `npm run eval` |
+| **Funcionário simulado** (pass^k, 10 personas; pass^1 0,72 → 0,93 e pass^3 0,50 → 0,80 em 28/10) | um modelo faz o papel do funcionário, com fatos que só conta se perguntarem, e clica em Confirmar, Descartar ou numa resposta rápida; o estado no banco é conferido em k execuções, cada uma a partir do seed ([resultado e falhas](docs/validacao/SIMULACAO.md)) | `npm run eval:sim` |
 | **Provas de eficácia** | busca híbrida 84% → 94% ([BUSCA](docs/validacao/BUSCA.md)); tempo real ~0,4 s × ~1,6 s ([TEMPO-REAL](docs/validacao/TEMPO-REAL.md)); telemetria e SSO ([OBSERVABILIDADE-E-SSO](docs/validacao/OBSERVABILIDADE-E-SSO.md)) | `docs/validacao/` |
 | **Trace em toda resposta** | qualquer decisão pode ser auditada na própria interface e no console do analista | — |
 
@@ -259,7 +259,7 @@ O CI está configurado no [CircleCI](.circleci/config.yml) para cada push: tipos
 
 Localmente, `npm run verify` roda tipos, lint, testes e E2E antes de cada push.
 
-Os evals pagaram o próprio custo: pegaram o agent abrindo chamado repetido, a latência do "raciocínio" do Gemini (resolvida com `thinkingLevel: "minimal"`), a reabertura de chamado resolvido e o caso crítico que ele não tratava. Uma auditoria com conversas difíceis achou mais dois: mensagem vaga ia direto para um analista, e falha técnica num sistema do RH era recusada como "fora de TI". Cada achado virou regra e cenário novo. O funcionário simulado achou mais três, que são os próximos ajustes: abrir chamado a partir de uma resposta rápida que não era um "sim", anexar um problema novo ao chamado errado e oferecer analista depois de o chamado já atender o pedido ([SIMULACAO](docs/validacao/SIMULACAO.md)).
+Os evals pagaram o próprio custo: pegaram o agent abrindo chamado repetido, a latência do "raciocínio" do Gemini (resolvida com `thinkingLevel: "minimal"`), a reabertura de chamado resolvido e o caso crítico que ele não tratava. Uma auditoria com conversas difíceis achou mais dois: mensagem vaga ia direto para um analista, e falha técnica num sistema do RH era recusada como "fora de TI". Cada achado virou regra e cenário novo. O funcionário simulado achou mais quatro: abrir chamado a partir de uma resposta rápida que não era um "sim", anexar um problema novo ao chamado errado, classificar o Outlook como Software e oferecer analista depois de o chamado já atender o pedido. Os quatro viraram regra em código, e o pass^3 subiu de 0,50 para 0,80 com 10 personas; a falha que sobrou está explicada em [SIMULACAO](docs/validacao/SIMULACAO.md).
 
 O processo de desenvolvimento (SDD, TDD, skills, MCPs e uso de IA) está em [`docs/PROCESSO-IA.md`](docs/PROCESSO-IA.md), e as especificações em [`docs/specs/`](docs/specs).
 
