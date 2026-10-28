@@ -21,6 +21,7 @@ import {
   unsentRestored,
 } from "../chat-slice";
 import { Composer, type ComposerHandle } from "./composer";
+import { SlaBanner } from "./sla-banner";
 import { WelcomeMessage } from "./welcome-message";
 
 const POLL_MS = 4000;
@@ -105,6 +106,14 @@ export function ChatScreen({ firstName }: { firstName: string }) {
 
       <main className="flex-1 overflow-y-auto">
         <div className="mx-auto flex max-w-3xl flex-col gap-5 px-6 py-8">
+          {conversation.status === "with_agent" && (
+            <SlaBanner
+              disabled={sending}
+              onAskAnalyst={(alert) =>
+                send(`Quero falar com um analista sobre o ${alert.code}, que ${alert.level === "overdue" ? "já venceu o prazo" : "está perto de vencer o prazo"}.`)
+              }
+            />
+          )}
           {conversation.messages.length === 0 && !optimisticText && <WelcomeMessage firstName={firstName} onPick={send} />}
 
           {conversation.messages.map((message, index) => (

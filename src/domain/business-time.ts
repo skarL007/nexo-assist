@@ -72,3 +72,18 @@ export function addBusinessDays(start: Date, days: number): Date {
 export function addCalendarHours(start: Date, hours: number): Date {
   return new Date(start.getTime() + hours * HOUR_MS);
 }
+
+/** Tempo útil (ms) entre dois instantes: noites e fins de semana não contam. */
+export function businessMsBetween(start: Date, end: Date): number {
+  if (end <= start) return 0;
+  const last = toLocal(end);
+  let cursor = moveIntoBusinessTime(toLocal(start));
+  let total = 0;
+  while (cursor < last) {
+    const closing = atHour(cursor, CLOSE_HOUR);
+    const stop = last < closing ? last : closing;
+    total += stop.getTime() - cursor.getTime();
+    cursor = moveIntoBusinessTime(closing);
+  }
+  return total;
+}
