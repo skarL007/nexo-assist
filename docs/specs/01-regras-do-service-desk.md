@@ -6,6 +6,7 @@ Fonte: Anexo A do desafio. Tudo aqui é código puro em `src/domain/` e tem test
 
 - **Tipos:** `INC` (algo parou ou não funciona) e `REQ` (pedido de acesso, equipamento ou software).
 - **Categorias:** Acesso, Rede e VPN, Hardware, Software, E-mail, Outros.
+- **Programa de e-mail é E-mail, não Software.** Outlook, Thunderbird, webmail, caixa de entrada, Exchange e calendário do e-mail vão para a fila de E-mail. Se o modelo mandar um chamado novo com esses termos no título como Software, o código corrige para E-mail antes da duplicidade e da prioridade, e o trace registra a correção (`categoryForTitle` em `domain/ticket.ts`). Outras categorias escolhidas pelo modelo não mudam. Aceite: título "Outlook não abre desde a atualização" com categoria `software` → `email`; "Instalar o Power BI Desktop" continua `software`; "VPN não conecta" com `network` continua `network`.
 - **Campos obrigatórios:** título, descrição, tipo, categoria, prioridade e quem é afetado (impacto).
 - **Status:** aberto, aguardando analista, em andamento, aprovado, resolvido.
 
@@ -41,6 +42,7 @@ Aceite: sexta 17h + 4h úteis = segunda 11h; pedido no sábado começa a contar 
 - Só a categoria não basta: "Tela não está ligando" não é o mesmo problema que "Segundo monitor para home office", embora os dois sejam de Hardware; e um pedido de monitor novo (REQ) não é o mesmo problema que "Monitor da direita não liga" (INC). Só o título conta, porque a descrição traz palavras genéricas demais.
 - Confirmar com o sistema de chamados instável: se a falha vier antes de gravar, o rascunho volta a ficar pendente; depois que o chamado (ou o comentário) foi gravado, nada é desfeito, para o próximo Confirmar não duplicar. Em caso crítico, a transferência vem antes de marcar o chamado; se ela falhar, a resposta avisa.
 - Se for, o caminho é **atualizar** (comentário) o existente. Resolvido há até 7 dias é reaberto ao confirmar. Depois disso, abre-se um novo.
+- **Problema diferente não vai para o chamado existente.** Ao montar uma atualização, o agent informa a categoria do problema que o comentário descreve. Se ela não for do mesmo assunto da categoria do chamado, o rascunho não é montado e a tool manda propor um chamado novo (`sameSubject` em `domain/ticket.ts`). Hardware e Software contam como o mesmo assunto, porque o sintoma de um aparece no outro ("o notebook trava ao abrir o Excel" complementa "Notebook lento"). Aceite: comentário de E-mail ("Outlook não abre") no INC-20311 (Hardware) → recusado com a instrução de abrir chamado novo; comentário de Software no INC-20311 → aceito; comentário de Acesso no INC-20150 (Acesso) → aceito.
 
 ## Privacidade
 

@@ -53,6 +53,8 @@ Ver `evals/scenarios.ts`. Exemplos:
 - Problema igual a um chamado resolvido há até 7 dias → `draftTicketUpdate` com reabertura, não chamado novo.
 - "não funciona" → pergunta o que está acontecendo; **não** transfere nem monta rascunho.
 - "Não consigo entrar no portal de reembolso" → é TI (falha técnica, mesmo num sistema do financeiro): não é `out_of_scope`. Fora de TI é só assunto que não é de tecnologia (férias, benefícios, pagamento, predial).
+- Rascunho na tela + resposta rápida que não confirma ("Tenho alternativa / Posso aguardar") → nenhum chamado criado.
+- "Outlook não abre" com o INC-20311 (notebook lento) aberto → rascunho de chamado novo de E-mail, nunca atualização do INC-20311. O mesmo depois de uma mensagem vaga ("tudo travado aqui").
 
 ### Como os runners de eval lidam com limites, falhas e bancos
 
@@ -61,6 +63,19 @@ Ver `evals/scenarios.ts`. Exemplos:
 - **Janela de mensagens limpa.** O app recusa mais de 40 mensagens por hora e 120 por dia de cada pessoa (`message_limit`). Os evals jogam todos os cenários com os mesmos funcionários do seed no mesmo banco, então sem cuidado os últimos cenários bateriam nesse limite e o resultado não diria nada sobre o agent. Antes de cada cenário (eval e benchmark; o sim já parte do seed) o runner recua a data das mensagens recentes daquela pessoa no banco do eval, que é descartável (`evals/message-window.ts`). Nada é apagado, e o limite de produção em `src/` não muda. Aceite: uma pessoa com 45 mensagens na última hora e 130 no último dia passa a contar 0 nas duas janelas; as mensagens de outra pessoa, as mais antigas que um dia e a ordem das mensagens da conversa não mudam (`evals/message-window.test.ts`).
 - **Só falha do provedor é repetida.** `npm run eval` e `npm run eval:sim` repetem o cenário (até 3 vezes) e contam "erro do provedor" apenas quando a falha vem do modelo: erro de API com status 408, 429 ou 5xx (ou `isRetryable`), erro de rede ou de tempo esgotado, ou um turno sem uso do modelo (o Mastra engole o 503 e o turno sai com a resposta reserva). Erro de regra do app (`DomainError`, como `message_limit`), erro de banco e qualquer erro que não seja reconhecido como do provedor **não** são repetidos nem contados como do provedor: o runner para na hora e escreve o motivo real (nome do cenário, mensagem inteira e `cause`). No benchmark, erro de regra ou de banco também aborta o candidato em vez de virar "erro técnico" do modelo. Aceite: um `DomainError("message_limit", ...)` durante o cenário → 1 tentativa, 0 erros do provedor, parada com a mensagem "Você enviou muitas mensagens em pouco tempo..."; um 503 → repete e só então conta como erro do provedor (`evals/provider-errors.test.ts`).
 - **Um banco por eval.** `npm run eval` usa `eval.db`, `npm run eval:sim` usa `eval-sim.db` e `npm run eval:sugestao` usa `eval-sugestao.db`, cada um recriado com migração e seed antes de rodar, então nenhum disputa o arquivo do outro (o benchmark já tem um banco por candidato). Os `*.db` ficam fora do git. Aceite: os três runners apontam para arquivos diferentes (`evals/db-isolation.test.ts`).
+
+## Confirmação só explícita
+
+Um chamado nasce só pelo botão Confirmar ou por uma mensagem que confirma sem ambiguidade. `confirmDraft` passa o texto da última mensagem do funcionário (`TurnContext.employeeText`, vindo do turno, nunca de argumento da tool) e o `DraftService` recusa a confirmação pelo agent quando `isExplicitConfirmation` (`domain/confirmation.ts`) não reconhece um "pode criar". A regra é código: vale mesmo que o modelo entenda outra coisa como "sim". Conta como confirmação: "sim", "pode criar", "pode abrir o chamado", "confirmo", "ok, pode mandar", "isso mesmo, pode abrir", "está certo". Não conta: resposta a outra pergunta ou clique em resposta rápida ("Tenho alternativa / Posso aguardar", "Só eu"), pergunta ("posso criar depois?"), hesitação ou pedido de mudança ("sim, mas muda a prioridade", "não", "espera", "ainda não"). Achado do funcionário simulado de 28/10 (`power-bi`): com o rascunho na tela, a resposta rápida de urgência virou "sim" e o REQ foi criado. Aceite: `domain/confirmation.test.ts`, `application/draft-service.test.ts` ("Tenho alternativa / Posso aguardar" → `confirmation_required`, nenhum chamado criado; "pode criar" → criado) e o eval "Confirmação: resposta rápida de urgência não confirma o rascunho".
+
+## Analista só quando o prazo não atende
+
+Decisão de produto (achado do `vpn-reuniao` de 28/10): o agent oferece um analista por causa de prazo só quando o prazo do chamado (SLA) não atende a urgência que o funcionário informou, por exemplo uma reunião antes do vencimento. `getTicket` e `draftNewTicket` recebem `neededBy` ("HH:MM" de hoje, "DD/MM" ou "DD/MM HH:MM", horário de Brasília) quando o funcionário disse até quando precisa. O código compara (`deadlineMeetsNeed` em `domain/sla-need.ts`; "DD/MM" sem hora vale até as 18h):
+
+- prazo depois da necessidade → o turno oferece um analista (botão "Falar com um analista", posto pelo código) e o trace registra o guardrail;
+- prazo até a necessidade, ou necessidade não informada → o agent não oferece analista por prazo: o código tira o botão de analista das respostas rápidas do turno e registra o guardrail.
+
+Continuam valendo as outras ofertas: chamado vencido, frustração e pedido explícito do funcionário ("quero falar com alguém" sempre transfere). Aceite: `domain/sla-need.test.ts` (prazo quinta 11h e reunião quarta 15h → não atende; prazo quinta 11h e necessidade 06/11 → atende; sem necessidade → atende) e os evals "Prazo atende a necessidade: não oferece analista" e "Prazo não atende a necessidade: oferece analista".
 
 ## Sem chave do modelo
 
