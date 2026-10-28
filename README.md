@@ -6,19 +6,19 @@ Cada resposta do agent mostra **o que ele entendeu, o que fez e por quê**: pass
 
 **Stack:** TypeScript estrito · Next.js 16 (App Router) · Mastra (agent) · Google Gemini 3.5 Flash · Drizzle + libSQL (SQLite local, Turso no deploy) · Redux Toolkit + RTK Query · Zod · shadcn/ui + Tailwind · Vitest · Playwright.
 
-[![Vídeo de demonstração do Nexo Assist (3:53)](docs/demo/poster.png)](docs/demo/nexo-assist-demo.mp4)
+[![Vídeo de demonstração do Nexo Assist (5:28)](docs/demo/poster.png)](docs/demo/nexo-assist-demo.mp4)
 
-**Demonstração (3:53, sem áudio):** clique na imagem para abrir o vídeo. As partes do app são gravações reais com o Gemini; as esperas pelo modelo aparecem aceleradas e sinalizadas ("acelerado N×"). Diagramas e números são animações, e cada número mostra a fonte no repositório.
+**Demonstração (5:28, com música original de fundo e efeitos sonoros, sem narração):** clique na imagem para abrir o vídeo. As partes do app são gravações reais com o Gemini: trechos longos aparecem acelerados no máximo 2× e sinalizados ("acelerado N×"), e as esperas pelo modelo foram cortadas, com um aviso do tempo real ("aguardando o modelo · N s"). Diagramas e números são animações, e cada número mostra a fonte no repositório. A música é original, gerada por código para este vídeo. Efeitos sonoros: Pixabay (licença de conteúdo do Pixabay).
 
 - 0:00 Abertura: o problema, a solução e o que há de novo
-- 0:14 1. O funcionário resolve sozinho: central de ajuda, "Isso resolveu?" e o painel "por quê?"
-- 0:42 2. Prazo em risco e incidente em massa
-- 1:23 3. Console do analista: relatório, sugestão de resposta, tempo real (SSE) e indicadores
-- 2:08 4. Busca híbrida na central
-- 2:29 5. Qualidade: testes, evals, funcionário simulado (pass^k) e red team
-- 2:56 6. Arquitetura
-- 3:17 7. Entrega: imagem Docker, CircleCI e Komodo (fluxo configurado, em diagrama)
-- 3:40 8. Os números
+- 0:25 1. O funcionário resolve sozinho: central de ajuda, "Isso resolveu?" e o painel "por quê?"
+- 1:01 2. Prazo em risco e incidente em massa
+- 1:53 3. Console do analista: relatório, sugestão de resposta, tempo real (SSE) e indicadores
+- 2:56 4. Busca híbrida na central
+- 3:28 5. Qualidade: testes, evals, funcionário simulado (pass^k) e red team
+- 4:10 6. Arquitetura
+- 4:41 7. Entrega: imagem Docker, CircleCI e Komodo (fluxo configurado, em diagrama)
+- 5:16 8. Os números
 
 **App no ar:** https://nexo-assist-puce.vercel.app, com um link de acesso temporário enviado junto com o repositório.
 
