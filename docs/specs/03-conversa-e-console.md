@@ -33,6 +33,10 @@ with_agent ──handoff──▶ waiting_analyst ──assume──▶ with_ana
 
 - Endereço que não existe mostra "Página não encontrada", em português e no visual do app, com link para voltar ao início (status 404).
 - Erro inesperado numa tela mostra "Algo deu errado" com "Tentar de novo", sem detalhes técnicos.
+- Falha ao enviar (sem conexão, sem chave do modelo) mostra o aviso em português e **devolve o texto ao campo**; nada do que o funcionário escreveu se perde.
+- Erro ao confirmar, cancelar ou alterar um rascunho aparece no próprio card.
+- Console: se abrir uma conversa falhar, mostra o erro com "Tentar de novo". Os chamados do painel vêm do sistema legado; se ele cair, a conversa abre mesmo assim e o painel avisa que está tentando de novo.
+- Trocar de conversa no console limpa o texto digitado (não vai para outra pessoa).
 
 ## Sessão
 

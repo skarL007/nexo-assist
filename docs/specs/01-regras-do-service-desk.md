@@ -39,6 +39,7 @@ Aceite: sexta 17h + 4h úteis = segunda 11h; pedido no sábado começa a contar 
 
 - Antes de montar um rascunho novo, procurar chamados do funcionário abertos ou resolvidos há até 7 dias que sejam **do mesmo tipo (INC/REQ), da mesma categoria e tenham palavra relevante em comum no título** (sem acentos, sem palavras vazias nem genéricas como "problema" e "erro"). Se houver, mostrar a lista e perguntar se é um deles.
 - Só a categoria não basta: "Tela não está ligando" não é o mesmo problema que "Segundo monitor para home office", embora os dois sejam de Hardware; e um pedido de monitor novo (REQ) não é o mesmo problema que "Monitor da direita não liga" (INC). Só o título conta, porque a descrição traz palavras genéricas demais.
+- Confirmar com o sistema de chamados instável: se a falha vier antes de gravar, o rascunho volta a ficar pendente; depois que o chamado (ou o comentário) foi gravado, nada é desfeito, para o próximo Confirmar não duplicar. Em caso crítico, a transferência vem antes de marcar o chamado; se ela falhar, a resposta avisa.
 - Se for, o caminho é **atualizar** (comentário) o existente. Resolvido há até 7 dias é reaberto ao confirmar. Depois disso, abre-se um novo.
 
 ## Privacidade

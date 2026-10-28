@@ -28,6 +28,12 @@ export function apiKeyVarFor(model: string): ApiKeyVar | null {
   return provider in API_KEY_BY_PROVIDER ? API_KEY_BY_PROVIDER[provider as keyof typeof API_KEY_BY_PROVIDER] : null;
 }
 
+/** A chave que falta para o modelo configurado, ou null se está tudo certo. */
+export function missingApiKey(model: string, env: Partial<Record<ApiKeyVar, string>>): ApiKeyVar | null {
+  const keyVar = apiKeyVarFor(model);
+  return keyVar && !env[keyVar] ? keyVar : null;
+}
+
 type ProviderOptions =
   | { google: { thinkingConfig: { thinkingLevel: "minimal" } } }
   | { openrouter: { reasoning: { effort: ReasoningEffort }; session_id: string } };

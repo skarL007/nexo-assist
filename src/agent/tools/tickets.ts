@@ -39,7 +39,7 @@ export const listMyTickets = createTool({
         tickets: snapshots.map(summary),
         reopenable: reopenable.map((t) => summary(tickets.snapshot(t))),
         hint: reopenable.length
-          ? "Se o problema relatado é o mesmo de um chamado em reopenable, pergunte se é ele e use draftTicketUpdate com reopen=true."
+          ? "Se o problema relatado é o mesmo de um chamado em reopenable, pergunte se é ele e use draftTicketUpdate (a confirmação o reabre)."
           : undefined,
       };
     });

@@ -16,7 +16,7 @@ import { DomainError } from "@/domain/errors";
 import type { ToolCallLog, TurnTrace } from "@/domain/message";
 import { createServices, type Services } from "@/infrastructure/container";
 import { conversationView } from "@/server/views";
-import { apiKeyVarFor, providerOptionsFor } from "./model-config";
+import { missingApiKey, providerOptionsFor } from "./model-config";
 import { stripMarkdown, stripSystemNotes, toModelMessages } from "./model-history";
 import { nexoAgent } from "./nexo-agent";
 import { needsContinuation, stepPolicy } from "./step-policy";
@@ -40,6 +40,12 @@ export async function* runAgentTurn(employee: Employee, text: string, abortSigna
 
   const conversation = await services.conversations.getOrStart(employee.id);
   await assertWithinPersonalLimits(services, employee.id, conversation.id);
+  // Sem chave do modelo, explica antes de gravar (a mensagem não fica sem resposta nem gasta a cota).
+  // Com um analista, a mensagem segue para ele: o modelo não é chamado.
+  const missingKey = agentCanReply(conversation.status) ? missingApiKey(env().LLM_MODEL, env()) : null;
+  if (missingKey) {
+    throw new DomainError("agent_unavailable", `O Nexo Assist não está configurado neste ambiente: defina ${missingKey} no .env e reinicie o servidor.`);
+  }
 
   const employeeMessage = await services.messages.add({ conversationId: conversation.id, role: "employee", text });
   await assertWithinPersonalLimits(services, employee.id, conversation.id, { saved: true });
@@ -53,8 +59,6 @@ export async function* runAgentTurn(employee: Employee, text: string, abortSigna
 
   // Tetos globais conferidos DEPOIS de gravar e ANTES do modelo: pedidos simultâneos enxergam uns aos outros.
   await assertWithinBudget(services);
-  const keyVar = apiKeyVarFor(env().LLM_MODEL);
-  if (keyVar && !env()[keyVar]) throw new Error(`${keyVar} não configurada.`);
 
   try {
     yield* replyWithAgent({ employee, conversationId: conversation.id, startedAt, services, recorder }, abortSignal);

@@ -39,9 +39,11 @@ export function TicketChoiceCard({ tickets, onChoose }: { tickets: TicketSnapsho
               {chosen === ticket.code && <span className="size-2 rounded-full bg-primary" />}
             </span>
             <span className="w-20 shrink-0 text-xs text-muted-foreground">{ticket.code}</span>
-            <span className="min-w-0 flex-1 truncate font-medium">{ticket.title}</span>
+            <span className="min-w-0 flex-1 truncate font-medium" title={ticket.title}>
+              {ticket.title}
+            </span>
             <TicketStatus status={ticket.status} overdue={ticket.overdue} />
-            <span className="w-12 shrink-0 text-right text-xs text-muted-foreground">{formatDayMonth(ticket.updatedAt)}</span>
+            <span className="w-14 shrink-0 text-right text-xs whitespace-nowrap text-muted-foreground">{formatDayMonth(ticket.updatedAt)}</span>
           </button>
         </li>
       ))}

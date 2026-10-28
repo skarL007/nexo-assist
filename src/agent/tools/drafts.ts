@@ -123,6 +123,14 @@ export const confirmDraft = createTool({
         turn.recorder.step("chamou um analista", "Chamado crítico");
         turn.recorder.guardrail("Prioridade crítica: transferido automaticamente para um analista após a criação.");
       }
+      if (result.escalationFailed) {
+        turn.recorder.step("chamou um analista", "Chamado crítico criado, mas a transferência falhou", false);
+        return {
+          ticketCode: result.ticket.code,
+          handedOff: false,
+          instruction: "Diga que o chamado foi criado, mas que não conseguiu chamar o analista agora; ofereça tentar de novo (transferToAnalyst).",
+        };
+      }
       return { ticketCode: result.ticket.code, handedOff: result.handedOff };
     });
   },

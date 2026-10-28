@@ -11,6 +11,7 @@ import type { DraftSnapshot } from "@/domain/message";
 import { SLA_LABEL, slaDeadline, URGENCIES, URGENCY_LABEL } from "@/domain/priority";
 import { CATEGORIES, CATEGORY_LABEL, IMPACTS, IMPACT_LABEL, PRIORITY_LABEL, TICKET_TYPES, TICKET_TYPE_LABEL } from "@/domain/ticket";
 import { formatDeadline } from "@/lib/format";
+import { messageOf } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
 export type DraftEditFields = NewTicketEdit | { comment: string };
@@ -149,7 +150,7 @@ function EditorShell({
     try {
       await onSave();
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Não foi possível salvar. Tente de novo.");
+      setError(messageOf(failure, "Não foi possível salvar. Tente de novo."));
       setBusy(false);
     }
   };

@@ -85,7 +85,8 @@ export interface ConsoleConversationSummary {
 export interface ConsoleConversationDetail extends ConsoleConversationSummary {
   handoffSummary: string | null;
   messages: ChatMessage[];
-  tickets: TicketSnapshot[];
+  /** null: o sistema de chamados não respondeu agora (o console tenta de novo no próximo polling). */
+  tickets: TicketSnapshot[] | null;
 }
 
 export const consoleActionSchema = z.object({

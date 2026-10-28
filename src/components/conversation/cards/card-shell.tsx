@@ -25,7 +25,7 @@ export function CardShell({
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
       <dl className="grid grid-cols-2 gap-x-6 gap-y-3 border-t px-4 py-3 sm:grid-cols-4">{children}</dl>
-      {footer && <div className="flex items-center gap-2 border-t bg-muted/50 px-4 py-3">{footer}</div>}
+      {footer && <div className="flex flex-wrap items-center gap-2 border-t bg-muted/50 px-4 py-3">{footer}</div>}
     </div>
   );
 }

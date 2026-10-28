@@ -18,7 +18,7 @@ mensagem → limites → salva → (conversa com analista? para aqui)
 
 | Tool | Faz | Passos visíveis |
 |---|---|---|
-| `recordUnderstanding` | Registra intenção, entendimento, confiança, motivo. Confiança < 0,5 → transfere | "chamou um analista" (se transferir) |
+| `recordUnderstanding` | Registra intenção, entendimento, confiança, motivo. Confiança < 0,5 → na primeira vez, uma pergunta de esclarecimento; se a resposta anterior do agent também foi sem segurança, transfere (`shouldHandOffForLowConfidence`) | "chamou um analista" (se transferir) |
 | `searchHelpCenter` | Busca artigos por palavras-chave | "buscou na central de ajuda" |
 | `listMyTickets` | Lista chamados do funcionário; `showAsChoice` mostra seleção | "consultou seus chamados" |
 | `getTicket` | Um chamado + prazo | "consultou o INC-…", "calculou o prazo" |
@@ -51,6 +51,12 @@ Ver `evals/scenarios.ts`. Exemplos:
 - Problema novo → pergunta o que falta e chega a `draftNewTicket`, **nunca** a `confirmDraft` sem confirmação.
 - Caso crítico ("ninguém da empresa consegue emitir nota") → `draftNewTicket` na hora, sem perguntar o que a mensagem já disse.
 - Problema igual a um chamado resolvido há até 7 dias → `draftTicketUpdate` com reabertura, não chamado novo.
+- "não funciona" → pergunta o que está acontecendo; **não** transfere nem monta rascunho.
+- "Não consigo entrar no portal de reembolso" → é TI (falha técnica, mesmo num sistema do financeiro): não é `out_of_scope`. Fora de TI é só assunto que não é de tecnologia (férias, benefícios, pagamento, predial).
+
+## Sem chave do modelo
+
+Se a chave do provedor do `LLM_MODEL` não estiver configurada, o chat responde "O Nexo Assist não está configurado neste ambiente: defina <VARIÁVEL> no .env e reinicie o servidor" **antes** de gravar a mensagem (não gasta a cota da sessão). Com um analista na conversa, a mensagem segue para ele normalmente.
 
 ## Custo
 
