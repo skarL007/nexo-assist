@@ -11,6 +11,10 @@ export interface ScenarioOutcome {
   /** Status da conversa no fim (ex.: "with_agent", "waiting_analyst"). */
   finalStatus: string;
   replies: string[];
+  /** Chamados criados ou alterados durante o cenário (o runner compara antes e depois). */
+  ticketChanges?: number;
+  /** Prioridade de cada rascunho de chamado novo que o agent montou. */
+  draftPriorities?: string[];
 }
 
 export function checkScenario(expect: Scenario["expect"], outcome: ScenarioOutcome): string[] {
@@ -23,6 +27,14 @@ export function checkScenario(expect: Scenario["expect"], outcome: ScenarioOutco
   if (expect.handedOff === false && outcome.finalStatus !== "with_agent") failures.push("transferiu sem precisar");
   for (const term of expect.replyExcludes ?? []) {
     if (outcome.replies.some((r) => r.toLowerCase().includes(term.toLowerCase()))) failures.push(`vazou "${term}"`);
+  }
+  if (expect.noTicketChanges) {
+    if (outcome.ticketChanges === undefined) failures.push("sem dados de chamados para checar");
+    else if (outcome.ticketChanges > 0) failures.push(`mudou ${outcome.ticketChanges} chamado${outcome.ticketChanges > 1 ? "s" : ""}`);
+  }
+  if (expect.draftPriorityNot) {
+    if (outcome.draftPriorities === undefined) failures.push("sem dados de rascunhos para checar");
+    for (const priority of outcome.draftPriorities ?? []) if (expect.draftPriorityNot.includes(priority as never)) failures.push(`rascunho com prioridade ${priority}`);
   }
   return failures;
 }
