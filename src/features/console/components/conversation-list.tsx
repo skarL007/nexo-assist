@@ -11,13 +11,15 @@ import { cn } from "@/lib/utils";
 import { FILTERS, matchesFilter, matchesSearch, sortForConsole, statusLine, type FilterId } from "../conversation-filters";
 
 interface Props {
+  /** Stream aberto (tempo real) ou polling. */
+  live: boolean;
   conversations: ConsoleConversationSummary[];
   analystId: string;
   selectedId: string | null;
   onSelect: (id: string) => void;
 }
 
-export function ConversationList({ conversations, analystId, selectedId, onSelect }: Props) {
+export function ConversationList({ live, conversations, analystId, selectedId, onSelect }: Props) {
   const [filter, setFilter] = useState<FilterId>("queue");
   const [query, setQuery] = useState("");
 
@@ -30,6 +32,10 @@ export function ConversationList({ conversations, analystId, selectedId, onSelec
           <h1 className="text-lg font-semibold">Conversas</h1>
           <StatusPill tone="success">Disponível</StatusPill>
         </div>
+        <p className="-mt-2 flex items-center gap-1.5 text-xs text-muted-foreground" data-testid="live-indicator">
+          <span className={cn("size-1.5 rounded-full", live ? "bg-success" : "bg-muted-foreground/50")} aria-hidden />
+          {live ? "Ao vivo" : "Atualiza a cada 4 s"}
+        </p>
         <div className="relative">
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="Pesquisar conversa ou chamado" className="pl-9" value={query} onChange={(e) => setQuery(e.target.value)} />

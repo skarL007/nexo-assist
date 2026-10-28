@@ -107,6 +107,17 @@ export interface FeedbackRepository {
 }
 
 /** Leitura agregada para os indicadores (não muda nada). */
+/**
+ * Assinaturas baratas do estado (tempo real). Mudam quando algo que a tela mostra muda;
+ * o valor em si não importa, só se é diferente do anterior.
+ */
+export interface ChangeFeed {
+  /** Tudo o que o console mostra: conversas, mensagens, chamados, rascunhos e avaliações. */
+  consoleVersion(): Promise<string>;
+  /** A conversa mais recente do funcionário e as mensagens dela. */
+  employeeVersion(employeeId: string): Promise<string>;
+}
+
 export interface InsightsSource {
   messagesSince(since: Date): Promise<ChatMessage[]>;
   feedbackSince(since: Date): Promise<{ helpful: boolean }[]>;

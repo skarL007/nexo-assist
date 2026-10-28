@@ -9,6 +9,7 @@ import { StatusPill } from "@/components/nexo/status-pill";
 import type { ConversationView } from "@/contracts/chat";
 import { PageHeader } from "@/features/shell/page-header";
 import { apiFetch } from "@/lib/api-client";
+import { useLiveUpdates } from "@/lib/use-live-updates";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   conversationRefreshed,
@@ -36,16 +37,19 @@ export function ChatScreen({ firstName }: { firstName: string }) {
     void dispatch(loadConversation());
   }, [dispatch]);
 
-  // Enquanto um analista cuida da conversa, as respostas dele chegam por polling.
+  // Enquanto um analista cuida da conversa, as respostas dele chegam pelo stream (tempo real);
+  // se o stream cair, por polling.
   const paused = conversation !== null && conversation.status !== "with_agent";
+  const refresh = useCallback(async () => {
+    const fresh = await apiFetch<ConversationView>("/api/chat").catch(() => null);
+    if (fresh) dispatch(conversationRefreshed(fresh));
+  }, [dispatch]);
+  const streaming = useLiveUpdates("/api/chat/stream", () => void refresh(), paused) === "live";
   useEffect(() => {
-    if (!paused) return;
-    const timer = setInterval(async () => {
-      const fresh = await apiFetch<ConversationView>("/api/chat").catch(() => null);
-      if (fresh) dispatch(conversationRefreshed(fresh));
-    }, POLL_MS);
+    if (!paused || streaming) return;
+    const timer = setInterval(() => void refresh(), POLL_MS);
     return () => clearInterval(timer);
-  }, [paused, dispatch]);
+  }, [paused, streaming, refresh]);
 
   // Envio que falhou antes de gravar: o texto volta para o campo, pronto para tentar de novo.
   useEffect(() => {
