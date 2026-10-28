@@ -5,7 +5,8 @@
 import { Agent } from "@mastra/core/agent";
 import type { ReplyWriter } from "@/application/ports";
 import { env } from "@/config/env";
-import { providerOptionsFor } from "./model-config";
+import { missingApiKey, providerOptionsFor } from "./model-config";
+import { modelChain } from "./model-fallback";
 import { stripMarkdown } from "./model-history";
 
 export const SUGGESTION_INSTRUCTIONS = `
@@ -22,7 +23,7 @@ Responda só com a mensagem.
 
 let agent: Agent | null = null;
 const suggester = () =>
-  (agent ??= new Agent({ id: "nexo-reply-suggester", name: "Sugestão de resposta", instructions: SUGGESTION_INSTRUCTIONS, model: env().LLM_MODEL }));
+  (agent ??= new Agent({ id: "nexo-reply-suggester", name: "Sugestão de resposta", instructions: SUGGESTION_INSTRUCTIONS, model: modelChain(env().LLM_MODEL, env().LLM_FALLBACK_MODEL, (m) => !missingApiKey(m, env())) }));
 
 export const mastraReplyWriter: ReplyWriter = {
   async write({ context, analystFirstName }) {

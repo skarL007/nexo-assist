@@ -1,5 +1,5 @@
 /** Indicadores do atendimento numa janela de dias (painel do console e números do login). */
-import { computeInsights, type InsightsReport } from "@/domain/insights";
+import { computeInsights, type InsightsInput, type InsightsReport } from "@/domain/insights";
 import { findKnowledgeGaps, helpCenterSearches } from "@/domain/knowledge-gaps";
 import { classifyResolutions, summarizeResolutions, type ConversationFacts } from "@/domain/resolution";
 import { slaRisk, type SlaRisk } from "@/domain/sla-risk";
@@ -10,7 +10,7 @@ const DAY_MS = 86_400_000;
 export class InsightsService {
   constructor(
     private readonly source: InsightsSource,
-    private readonly price: { input: number; output: number } | null,
+    private readonly price: InsightsInput["price"],
     private readonly suggestions: Pick<SuggestionRepository, "countsSince"> | null = null,
     private readonly clock: Clock = systemClock,
   ) {}

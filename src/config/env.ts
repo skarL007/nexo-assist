@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 import { REASONING_EFFORTS } from "@/agent/model-config";
+import { DEFAULT_FALLBACK_MODEL } from "@/agent/model-fallback";
 
 const DEV_SECRET = "dev-only-secret-change-me-dev-only-secret";
 
@@ -17,6 +18,8 @@ const schema = z.object({
   OPENROUTER_REASONING_EFFORT: z.enum(REASONING_EFFORTS).default("minimal"),
   /** Formato "provedor/modelo" do roteador de modelos do Mastra. */
   LLM_MODEL: z.string().default("google/gemini-3.5-flash"),
+  /** Modelo reserva quando o principal falha (ex.: 503 "alta demanda"). "off" desliga. */
+  LLM_FALLBACK_MODEL: z.string().default(DEFAULT_FALLBACK_MODEL),
   /** Modelo de embeddings do Gemini para a busca híbrida na central (usa a mesma chave do Google). */
   EMBEDDING_MODEL: z.string().default("gemini-embedding-2"),
   DATABASE_URL: z.string().default("file:local.db"),

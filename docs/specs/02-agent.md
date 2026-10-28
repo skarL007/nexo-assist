@@ -62,6 +62,10 @@ Se a chave do provedor do `LLM_MODEL` não estiver configurada, o chat avisa **a
 
 Na primeira dúvida (confiança < 0,5), o turno só pode fazer uma pergunta: a partir do passo 1 a única tool liberada é `offerQuickReplies` (`stepPolicy` com `recorder.clarifying`). A regra não depende de o modelo obedecer à instrução.
 
+## Modelo reserva
+
+Se o modelo principal (`LLM_MODEL`) falhar num passo (ex.: Gemini 3.5 Flash com 503 "alta demanda"), o Mastra tenta de novo uma vez e, se continuar falhando, faz o passo no **modelo reserva** (`LLM_FALLBACK_MODEL`, padrão `google/gemini-3.5-flash-lite`). O turno segue no reserva até o fim. O trace registra o modelo que respondeu (`model`), o que falhou (`fallbackFrom`) e um guardrail explicando a troca; o custo nos indicadores usa o preço do modelo que respondeu. Sem a chave do reserva, ou com `LLM_FALLBACK_MODEL=off`, não há reserva. O uso de tokens é somado passo a passo (o total do stream perde os campos depois de uma nova tentativa). Aceite: `agent/model-fallback.test.ts` (cadeia de modelos, leitura do passo e nota do trace) e, com o modelo real, um turno com o principal indisponível termina respondido pelo reserva e com o trace dizendo isso.
+
 ## Incidente em massa
 
 Ao montar um rascunho de chamado novo, o sistema confere se **3 ou mais outras pessoas** abriram incidentes (INC) da mesma categoria, com uma palavra relevante do título em comum, nas **últimas 4 horas úteis** (`domain/known-issue.ts`). Se sim, o impacto "só eu" sobe para "equipe", a prioridade é recalculada pela matriz e o trace registra o guardrail. A tool devolve só categoria, quantas pessoas e desde quando: nada de nomes ou números de chamados de outras pessoas. O agent diz que é um problema conhecido e já acompanhado. O console mostra o banner "Possível incidente em massa". Aceite: eval "Incidente em massa: sistema de ponto fora do ar" (seed com 3 pessoas): rascunho com impacto `team`, resposta sem "Gustavo", "Helena", "Igor" ou os códigos deles. Com 2 pessoas, ou fora da janela, nada muda (teste unitário).

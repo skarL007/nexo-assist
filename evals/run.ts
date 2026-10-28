@@ -49,6 +49,7 @@ async function main() {
     const replies: string[] = [];
     let lastIntent: string | undefined;
     let lastFrustration: string | undefined;
+    let fallbackTurns = 0;
     let status = "with_agent";
 
     for (const text of scenario.turns) {
@@ -60,6 +61,7 @@ async function main() {
         // O Mastra às vezes engole o 503 e o turno sai com a resposta reserva, sem uso do modelo (null ou zerado).
         // Contar isso como acerto deixaria ataque "passar" sem o modelo ter respondido: vira erro do provedor.
         if (reply?.role === "agent" && reply.trace?.model && !reply.trace.usage?.inputTokens) throw new Error("turno sem resposta do modelo (provedor)");
+        if (reply?.trace?.fallbackFrom) fallbackTurns++;
         replies.push(reply?.text ?? "");
         for (const call of reply?.trace?.toolCalls ?? []) toolsUsed.add(call.tool);
         for (const card of reply?.cards ?? []) if (card.kind === "quick_replies") quickReplies.push(...card.options);
@@ -76,10 +78,11 @@ async function main() {
     await withExtraArticles([]);
     const after = await ticketFingerprint();
     const ticketChanges = [...after].filter(([code, state]) => before.get(code) !== state).length;
-    return { lastIntent, toolsUsed, finalStatus: status, replies, ticketChanges, draftPriorities, draftImpacts, lastFrustration, quickReplies };
+    return { lastIntent, toolsUsed, finalStatus: status, replies, ticketChanges, draftPriorities, draftImpacts, lastFrustration, quickReplies, fallbackTurns };
   }
 
   let providerErrors = 0;
+  let fallbackTurnsTotal = 0;
   for (const scenario of scenarios) {
     // Erro do provedor (ex.: 503 "high demand") não é decisão do agent: espera e repete o cenário.
     let outcome: Awaited<ReturnType<typeof play>> | null = null;
@@ -99,7 +102,8 @@ async function main() {
       passed++;
       passesByName.set(scenario.name, (passesByName.get(scenario.name) ?? 0) + 1);
     }
-    console.log(`${failures.length ? "✗" : "✓"} ${scenario.name}`);
+    fallbackTurnsTotal += outcome?.fallbackTurns ?? 0;
+    console.log(`${failures.length ? "✗" : "✓"} ${scenario.name}${outcome?.fallbackTurns ? ` (modelo reserva em ${outcome.fallbackTurns} turno)` : ""}`);
     console.log(`    ferramentas: ${[...toolsUsed].join(", ") || "—"} · intenção: ${lastIntent ?? "—"}`);
     console.log(`    resposta: ${replies.at(-1)?.slice(0, 160)}`);
     if (failures.length) console.log(`    falhou: ${failures.join("; ")}`);
@@ -109,7 +113,7 @@ async function main() {
     console.log(`\nTaxa de acerto em ${repeat} execuções:`);
     for (const { name } of selected) console.log(`  ${passesByName.get(name) ?? 0}/${repeat}  ${name}`);
   }
-  console.log(`\n${passed}/${scenarios.length} cenários ok · ${tokens} tokens no total${providerErrors ? ` · ${providerErrors} erro(s) do provedor repetido(s)` : ""}`);
+  console.log(`\n${passed}/${scenarios.length} cenários ok · ${tokens} tokens no total${providerErrors ? ` · ${providerErrors} erro(s) do provedor repetido(s)` : ""}${fallbackTurnsTotal ? ` · ${fallbackTurnsTotal} turno(s) respondidos pelo modelo reserva` : ""}`);
   process.exit(passed === scenarios.length ? 0 : 1);
 }
 

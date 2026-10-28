@@ -16,8 +16,11 @@ export interface InsightsInput {
   feedback: { helpful: boolean }[];
   drafts: { status: DraftStatus }[];
   analysts: number;
-  /** Preço por token do modelo (US$), ou null se o modelo não tem preço conhecido. */
-  price: { input: number; output: number } | null;
+  /**
+   * Preço por token (US$) do modelo de cada resposta, ou null se não há preço conhecido.
+   * Um preço fixo vale para todas (o modelo reserva, quando assume, tem outro preço).
+   */
+  price: { input: number; output: number } | ((model: string) => { input: number; output: number } | null) | null;
   /** Sugestões de resposta do analista por resultado (null: não medido). */
   suggestions?: Record<SuggestionOutcome, number> | null;
 }
@@ -63,7 +66,12 @@ export function computeInsights(input: InsightsInput): Insights {
     input: traces.reduce((sum, t) => sum + (t.usage?.inputTokens ?? 0), 0),
     output: traces.reduce((sum, t) => sum + (t.usage?.outputTokens ?? 0), 0),
   };
-  const costUsd = input.price && traces.length ? tokens.input * input.price.input + tokens.output * input.price.output : null;
+  const priceOf = typeof input.price === "function" ? input.price : () => input.price as { input: number; output: number } | null;
+  const prices = traces.map((t) => priceOf(t.model ?? ""));
+  const costUsd =
+    traces.length && prices.every(Boolean)
+      ? traces.reduce((sum, t, i) => sum + (t.usage?.inputTokens ?? 0) * prices[i]!.input + (t.usage?.outputTokens ?? 0) * prices[i]!.output, 0)
+      : null;
 
   const helpful = input.feedback.filter((f) => f.helpful).length;
   const notHelpful = input.feedback.length - helpful;
