@@ -30,7 +30,7 @@ O deploy roda na **Vercel** com o banco no **Turso** (libSQL, compatível com o 
 `scripts/deploy-prod.ps1` faz os passos 2 e 4 em ordem: migrações, seed opcional e publicação do último commit por `git archive`. Ele recusa rodar com mudanças não commitadas e não imprime segredo.
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scriptsdeploy-prod.ps1 -Seed   # sem -Seed, mantém as conversas de produção
+powershell -ExecutionPolicy Bypass -File scripts\deploy-prod.ps1 -Seed   # sem -Seed, mantém as conversas de produção
 ```
 
 ## Links de acesso (só para o autor)
