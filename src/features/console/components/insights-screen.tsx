@@ -1,5 +1,6 @@
 import { HANDOFF_REASON_LABEL } from "@/domain/conversation";
-import type { Insights } from "@/domain/insights";
+import type { InsightsReport } from "@/domain/insights";
+import type { ResolutionSummary } from "@/domain/resolution";
 import type { SlaRisk } from "@/domain/sla-risk";
 import { explainSla } from "@/lib/sla-text";
 import { formatClock, formatSeconds, formatUsd, percent } from "@/lib/format";
@@ -17,7 +18,7 @@ export function InsightsScreen({
   generatedAt,
 }: {
   analystName: string;
-  insights: Insights;
+  insights: InsightsReport;
   slaQueue: (SlaRisk & { ownerName: string })[];
   days: number;
   generatedAt: string;
@@ -44,9 +45,9 @@ export function InsightsScreen({
 
           <section aria-label="Principais indicadores" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Tile
-              label="Resolvido sem analista"
-              value={pct(insights.resolvedWithoutHuman)}
-              detail={`${insights.conversations} conversa${insights.conversations === 1 ? "" : "s"}`}
+              label="Resolvido pelo agent"
+              value={pct(insights.resolution.rate)}
+              detail={`${insights.resolution.confirmed} confirmadas · ${insights.resolution.presumed} presumidas · ${insights.resolution.total} conversas`}
             />
             <Tile
               label="Tempo de resposta do agent"
@@ -61,7 +62,11 @@ export function InsightsScreen({
             <Tile
               label="Custo estimado"
               value={insights.costUsd === null ? dash : formatUsd(insights.costUsd)}
-              detail={insights.costPerConversationUsd === null ? "sem preço ou sem respostas" : `${formatUsd(insights.costPerConversationUsd)} por conversa`}
+              detail={
+                insights.costPerConversationUsd === null
+                  ? "sem preço ou sem respostas"
+                  : `${formatUsd(insights.costPerConversationUsd)} por conversa · ${insights.resolution.costPerResolutionUsd === null ? dash : formatUsd(insights.resolution.costPerResolutionUsd)} por resolução`
+              }
             />
           </section>
 
@@ -87,6 +92,10 @@ export function InsightsScreen({
             />
             <Tile small label="Analistas no service desk" value={String(insights.analysts)} detail={`${totalHandoffs} transferência${totalHandoffs === 1 ? "" : "s"}`} />
           </section>
+
+          <ResolutionSection resolution={insights.resolution} withoutHuman={insights.resolvedWithoutHuman} />
+
+          <GapsSection gaps={insights.knowledgeGaps} />
 
           <section aria-labelledby="sla-title" className="rounded-xl border bg-surface p-5">
             <h2 id="sla-title" className="font-semibold">
@@ -150,6 +159,91 @@ export function InsightsScreen({
         </div>
       </main>
     </div>
+  );
+}
+
+/** Grupos da resolução honesta, na ordem em que aparecem (o que conta como resolvido primeiro). */
+const RESOLUTION_ROWS: { key: keyof ResolutionSummary; label: string; resolved?: boolean; definition: string }[] = [
+  { key: "confirmed", label: "Confirmadas", resolved: true, definition: 'O funcionário respondeu "sim" no "Isso resolveu?" (vale a última avaliação).' },
+  { key: "presumed", label: "Presumidas", resolved: true, definition: "Saiu sem pedir mais nada depois da resposta: sem analista, sem chamado, sem pergunta do agent no fim." },
+  { key: "ticket", label: "Viraram chamado", definition: "Rascunho confirmado. É um bom encaminhamento, mas o problema não foi resolvido na conversa." },
+  { key: "inProgress", label: "Em andamento", definition: "Há um rascunho esperando o funcionário confirmar." },
+  { key: "reopened", label: "Reabertas", definition: "A mesma pessoa voltou com o mesmo assunto em até 7 dias. Deixa de contar como resolvida." },
+  { key: "notResolved", label: "Não resolveram", definition: 'A última avaliação do "Isso resolveu?" foi "não".' },
+  { key: "abandoned", label: "Abandonadas", definition: "Terminou com o agent perguntando algo (ou sem resposta) e a pessoa não voltou." },
+  { key: "human", label: "Com analista", definition: "Teve transferência ou resposta de um analista." },
+];
+
+function ResolutionSection({ resolution, withoutHuman }: { resolution: ResolutionSummary; withoutHuman: number | null }) {
+  const max = Math.max(1, ...RESOLUTION_ROWS.map((row) => resolution[row.key] as number));
+  return (
+    <section aria-labelledby="resolution-title" className="rounded-xl border bg-surface p-5">
+      <h2 id="resolution-title" className="font-semibold">
+        Resolução honesta
+      </h2>
+      <p className="mb-4 text-xs text-muted-foreground">
+        Resolvida = confirmada ou presumida. “Sem analista” seria {pct(withoutHuman)}, mas conta chamado aberto, pergunta sem resposta e quem voltou com o mesmo problema.
+      </p>
+      <ul className="space-y-3">
+        {RESOLUTION_ROWS.map((row) => {
+          const count = resolution[row.key] as number;
+          return (
+            <li key={row.key} className="grid grid-cols-[minmax(8rem,14rem)_1fr_2.5rem] items-center gap-3 text-sm">
+              <span className="truncate text-muted-foreground">
+                {row.label}
+                {row.resolved && <span className="sr-only"> (conta como resolvida)</span>}
+              </span>
+              <span className="h-2.5 rounded-full bg-muted">
+                <span className={row.resolved ? "block h-full rounded-full bg-primary" : "block h-full rounded-full bg-muted-foreground/40"} style={{ width: `${(count / max) * 100}%` }} />
+              </span>
+              <span className="text-right font-medium tabular-nums">{count}</span>
+            </li>
+          );
+        })}
+      </ul>
+      <details className="mt-4 text-xs">
+        <summary className="cursor-pointer font-medium text-primary">Como contamos</summary>
+        <dl className="mt-2 grid gap-x-4 gap-y-1 text-muted-foreground sm:grid-cols-[10rem_1fr]">
+          {RESOLUTION_ROWS.map((row) => (
+            <div key={row.key} className="contents">
+              <dt className="font-medium text-foreground">{row.label}</dt>
+              <dd>{row.definition}</dd>
+            </div>
+          ))}
+        </dl>
+      </details>
+    </section>
+  );
+}
+
+function GapsSection({ gaps }: { gaps: InsightsReport["knowledgeGaps"] }) {
+  return (
+    <section aria-labelledby="gaps-title" className="rounded-xl border bg-surface p-5">
+      <h2 id="gaps-title" className="font-semibold">
+        Lacunas da central
+      </h2>
+      <p className="mb-4 text-xs text-muted-foreground">
+        Temas que o agent buscou e não achou artigo (3 ou mais vezes). Candidatos a artigo novo. E-mails, CPFs e números aparecem mascarados.
+      </p>
+      {gaps.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Nenhuma lacuna recorrente.</p>
+      ) : (
+        <ul className="divide-y">
+          {gaps.map((gap) => (
+            <li key={gap.terms.join("-")} className="py-3 text-sm">
+              <p>
+                <span className="font-medium">{gap.terms.join(", ")}</span>
+                <span className="text-muted-foreground">
+                  {" "}
+                  · {gap.searches} buscas sem artigo · {percent(gap.escalatedRate)} viraram chamado ou analista
+                </span>
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">Exemplo: “{gap.example}”</p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 

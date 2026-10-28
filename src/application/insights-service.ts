@@ -1,5 +1,7 @@
 /** Indicadores do atendimento numa janela de dias (painel do console e números do login). */
-import { computeInsights, type Insights } from "@/domain/insights";
+import { computeInsights, type InsightsReport } from "@/domain/insights";
+import { findKnowledgeGaps, helpCenterSearches } from "@/domain/knowledge-gaps";
+import { classifyResolutions, summarizeResolutions, type ConversationFacts } from "@/domain/resolution";
 import { slaRisk, type SlaRisk } from "@/domain/sla-risk";
 import { systemClock, type Clock, type InsightsSource, type SuggestionRepository } from "./ports";
 
@@ -13,7 +15,7 @@ export class InsightsService {
     private readonly clock: Clock = systemClock,
   ) {}
 
-  async lastDays(days: number): Promise<Insights> {
+  async lastDays(days: number): Promise<InsightsReport> {
     const since = new Date(this.clock.now().getTime() - days * DAY_MS);
     const [messages, feedback, drafts, analysts, suggestions] = await Promise.all([
       this.source.messagesSince(since),
@@ -22,7 +24,24 @@ export class InsightsService {
       this.source.countAnalysts(),
       this.suggestions?.countsSince(since) ?? null,
     ]);
-    return computeInsights({ messages, feedback, drafts, analysts, price: this.price, suggestions });
+    const insights = computeInsights({ messages, feedback, drafts, analysts, price: this.price, suggestions });
+
+    // Resolução honesta e lacunas: precisam da conversa inteira (dono, avaliações, rascunhos).
+    const byConversation = Map.groupBy(messages, (m) => m.conversationId);
+    const owners = await this.source.conversationOwners([...byConversation.keys()]);
+    const facts: ConversationFacts[] = owners.map(({ id, employeeId }) => ({
+      id,
+      employeeId,
+      messages: (byConversation.get(id) ?? []).toSorted((a, b) => a.createdAt.localeCompare(b.createdAt)),
+      feedback: feedback.filter((f) => f.conversationId === id),
+      drafts: drafts.filter((d) => d.conversationId === id).map((d) => d.status),
+    }));
+    const outcomes = classifyResolutions(facts);
+    return {
+      ...insights,
+      resolution: summarizeResolutions(outcomes, insights.costUsd),
+      knowledgeGaps: findKnowledgeGaps(helpCenterSearches(facts, outcomes)),
+    };
   }
 
   /** Chamados de todo mundo com prazo vencido ou em risco: vencidos primeiro, o mais atrasado no topo. */

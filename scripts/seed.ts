@@ -5,7 +5,7 @@
 import { createDatabase } from "@/infrastructure/db/client";
 import * as schema from "@/infrastructure/db/schema";
 import { ago, articles, employees, tickets } from "@/infrastructure/db/seed-data";
-import type { Card } from "@/domain/message";
+import type { Card, TurnTrace } from "@/domain/message";
 
 const db = createDatabase();
 
@@ -18,7 +18,19 @@ interface SeedMessage {
   text: string;
   minutesAgo: number;
   cards?: Card[];
+  trace?: TurnTrace;
 }
+
+/** Turno do agent em que a busca na central não achou nada (vira "Lacunas da central" nos indicadores). */
+const searchMiss = (query: string): TurnTrace => ({
+  decision: { intent: "new_ticket", understanding: "Impressora do 3º andar sem funcionar", confidence: 0.82, reasoning: "" },
+  steps: [{ label: "buscou na central de ajuda", detail: `Nada encontrado para "${query}"`, ok: true }],
+  toolCalls: [{ tool: "searchHelpCenter", input: { query }, output: { articles: [] }, durationMs: 310 }],
+  guardrails: [],
+  model: "google/gemini-3.5-flash",
+  usage: { inputTokens: 2300, outputTokens: 90 },
+  latencyMs: 2600,
+});
 
 async function seedConversation(
   id: string,
@@ -43,7 +55,7 @@ async function seedConversation(
       authorName: m.role === "analyst" ? "Rafael Lima" : null,
       text: m.text,
       cards: m.cards ?? [],
-      trace: null,
+      trace: m.trace ?? null,
       createdAt: ago(m.minutesAgo * 60_000),
     })),
   );
@@ -115,6 +127,21 @@ async function main() {
     { role: "agent", text: "De segunda a sexta, das 8h às 18h. Chamados críticos têm plantão 24 horas.", minutesAgo: 3 * 60 - 1 },
     { role: "employee", text: "Isso resolveu, obrigado!", minutesAgo: 3 * 60 - 2 },
   ]);
+
+  // Três pessoas, mesmo tema, nenhum artigo: a central tem uma lacuna (e o CPF do exemplo sai mascarado).
+  const printer: [string, string, string, number][] = [
+    ["emp-gustavo", "A impressora do 3º andar não imprime nada desde ontem.", "impressora 3 andar não imprime", 26],
+    ["emp-helena", "Impressora do terceiro andar travada, preciso imprimir um contrato. Meu CPF é 123.456.789-09 se precisar.", "impressora terceiro andar travada", 30],
+    ["emp-igor", "impressora do 3 andar com fila parada", "impressora andar fila parada", 50],
+  ];
+  for (const [employeeId, text, query, hoursAgo] of printer) {
+    const minutes = hoursAgo * 60;
+    await seedConversation(`conv-impressora-${employeeId.slice(4)}`, employeeId, { status: "closed" }, [
+      { role: "employee", text, minutesAgo: minutes },
+      { role: "agent", text: "Não achei um artigo sobre essa impressora. Vou chamar um analista para olhar.", minutesAgo: minutes - 1, trace: searchMiss(query) },
+      { role: "system", text: "Transferido para o service desk · Funcionário pediu um analista", minutesAgo: minutes - 1, cards: [{ kind: "handoff", reason: "employee_request", summary: "Impressora do 3º andar sem funcionar." }] },
+    ]);
+  }
 
   console.log(`✔ seed concluído (${employees().length} pessoas, ${articles.length} artigos, ${tickets().length} chamados)`);
 }
