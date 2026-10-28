@@ -6,9 +6,19 @@ Cada resposta do agent mostra **o que ele entendeu, o que fez e por quê**: pass
 
 **Stack:** TypeScript estrito · Next.js 16 (App Router) · Mastra (agent) · Google Gemini 3.5 Flash · Drizzle + libSQL (SQLite local, Turso no deploy) · Redux Toolkit + RTK Query · Zod · shadcn/ui + Tailwind · Vitest · Playwright.
 
-https://github.com/user-attachments/assets/b8169f56-3f1e-414a-aadd-0796184bf93b
+[![Vídeo de demonstração do Nexo Assist (3:53)](docs/demo/poster.png)](docs/demo/nexo-assist-demo.mp4)
 
-**Demonstração (1:49):** login, dúvida resolvida pela central de ajuda, o painel "por quê?", abertura de chamado conversando e com confirmação, chamado vencido indo para um analista e o console do analista. É uma gravação real com o Gemini; as esperas pelo modelo aparecem aceleradas e sinalizadas no vídeo.
+**Demonstração (3:53, sem áudio):** clique na imagem para abrir o vídeo. As partes do app são gravações reais com o Gemini; as esperas pelo modelo aparecem aceleradas e sinalizadas ("acelerado N×"). Diagramas e números são animações, e cada número mostra a fonte no repositório.
+
+- 0:00 Abertura: o problema, a solução e o que há de novo
+- 0:14 1. O funcionário resolve sozinho: central de ajuda, "Isso resolveu?" e o painel "por quê?"
+- 0:42 2. Prazo em risco e incidente em massa
+- 1:23 3. Console do analista: relatório, sugestão de resposta, tempo real (SSE) e indicadores
+- 2:08 4. Busca híbrida na central
+- 2:29 5. Qualidade: testes, evals, funcionário simulado (pass^k) e red team
+- 2:56 6. Arquitetura
+- 3:17 7. Entrega: imagem Docker, CircleCI e Komodo (fluxo configurado, em diagrama)
+- 3:40 8. Os números
 
 **App no ar:** https://nexo-assist-puce.vercel.app, com um link de acesso temporário enviado junto com o repositório.
 
