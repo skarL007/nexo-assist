@@ -30,6 +30,8 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Só a imagem Docker (Dockerfile) liga o servidor enxuto em .next/standalone; o build da Vercel não muda.
+  output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
   // O driver do libSQL tem partes nativas: fica fora do bundle do servidor.
   serverExternalPackages: ["@libsql/client", "libsql"],
   turbopack: {
