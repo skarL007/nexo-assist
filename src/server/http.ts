@@ -18,6 +18,8 @@ const STATUS_BY_DOMAIN_ERROR: Record<DomainErrorCode, number> = {
   invalid_transition: 409,
   reopen_window_expired: 409,
   draft_not_pending: 409,
+  confirmation_required: 409,
+  different_problem: 409,
   conflict: 409,
   message_limit: 429,
   daily_limit: 429,

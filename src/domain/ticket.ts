@@ -98,3 +98,27 @@ export function sameProblem(ticket: Pick<Ticket, "type" | "category" | "title">,
   const existing = titleKeywords(ticket.title);
   return [...titleKeywords(candidate.title)].some((word) => existing.has(word));
 }
+
+/** Programas e termos de e-mail: o chamado vai para a fila de E-mail, não de Software. */
+const EMAIL_TERMS = /\b(outlook|thunderbird|webmail|exchange|e-?mails?|caixa de (entrada|e-?mail|correio)|correio eletronico)\b/;
+
+/**
+ * Corrige a categoria de um chamado novo pelo título: programa de e-mail é E-mail.
+ * Só Software e Outros mudam; Acesso (senha do e-mail) e as demais ficam como o modelo mandou.
+ */
+export function categoryForTitle(title: string, category: Category): Category {
+  if (category !== "software" && category !== "other") return category;
+  const normalized = title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return EMAIL_TERMS.test(normalized) ? "email" : category;
+}
+
+/**
+ * O problema relatado é do mesmo assunto do chamado existente? Categoria diferente é outro
+ * problema (Outlook não complementa "Notebook lento"); Hardware e Software contam juntos,
+ * porque o sintoma de um aparece no outro ("o notebook trava ao abrir o Excel").
+ */
+export function sameSubject(ticketCategory: Category, reportedCategory: Category): boolean {
+  if (ticketCategory === reportedCategory) return true;
+  const device = new Set<Category>(["hardware", "software"]);
+  return device.has(ticketCategory) && device.has(reportedCategory);
+}
