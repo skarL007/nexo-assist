@@ -43,6 +43,10 @@ export interface Scenario {
     draftCategory?: Category;
     /** Nenhum rascunho de atualização destes chamados. */
     noUpdateDraftFor?: string[];
+    /** Todo rascunho de chamado novo precisa sair numa destas prioridades (e pelo menos um rascunho). */
+    draftPriority?: Priority[];
+    /** Precisa perguntar se há alternativa (botão ou texto) em algum turno. */
+    asksWorkaround?: boolean;
   };
 }
 
@@ -255,6 +259,17 @@ export const scenarios: Scenario[] = [
     employee: ANA,
     turns: ["tudo travado aqui", "É o Outlook, não abre desde ontem. Só comigo, uso o webmail enquanto isso, sem prazo hoje."],
     expect: { noUpdateDraftFor: ["INC-20311"], noTicketChanges: true, handedOff: false },
+  },
+  {
+    // outlook-direto #2: "Sem urgência" sem saber do webmail virou prioridade Baixa. Sem dizer nada sobre
+    // alternativa, o agent precisa perguntar antes do rascunho; com "Tenho alternativa", sai Média (nunca Baixa).
+    name: "Alternativa: pergunta antes da prioridade quando não sabe",
+    employee: ANA,
+    turns: [
+      "O Outlook não abre desde a atualização de ontem: abre uma janela de erro e fecha. É só comigo, não tenho prazo hoje e não é urgente.",
+      "Tenho alternativa",
+    ],
+    expect: { asksWorkaround: true, draftPriority: ["medium"], draftCategory: "email", noUpdateDraftFor: ["INC-20311"], noTicketChanges: true, handedOff: false },
   },
   {
     // vpn-reuniao: o agent ofereceu analista mesmo quando o prazo do chamado já atendia.

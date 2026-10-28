@@ -30,6 +30,9 @@ export interface ScenarioOutcome {
 /** Convite a falar com um analista no texto ("posso chamar um analista", "quer falar com um analista?"). */
 export const ANALYST_INVITE = /(falar|chamar|transferir|conversar|acionar|encaminhar)[^.?!]{0,30}analista/i;
 
+/** Pergunta (ou botão) sobre alternativa: "Tenho alternativa", "outro jeito de trabalhar enquanto isso?". */
+export const WORKAROUND_QUESTION = /alternativa|outro jeito|outra forma|enquanto isso/i;
+
 export function checkScenario(expect: Scenario["expect"], outcome: ScenarioOutcome): string[] {
   const tools = new Set(outcome.toolsUsed);
   const failures: string[] = [];
@@ -68,6 +71,14 @@ export function checkScenario(expect: Scenario["expect"], outcome: ScenarioOutco
   }
   for (const code of expect.noUpdateDraftFor ?? []) {
     if (outcome.updateDraftCodes?.includes(code)) failures.push(`rascunho de atualização no ${code}`);
+  }
+  if (expect.draftPriority) {
+    if (!outcome.draftPriorities?.length) failures.push("nenhum rascunho de chamado novo");
+    else if (!outcome.draftPriorities.every((p) => expect.draftPriority?.includes(p as never))) failures.push(`rascunho com prioridade ${outcome.draftPriorities.join("/")}`);
+  }
+  if (expect.asksWorkaround) {
+    const asked = [...outcome.replies, ...(outcome.quickReplies ?? [])].some((text) => WORKAROUND_QUESTION.test(text));
+    if (!asked) failures.push("não perguntou se há alternativa");
   }
   if (expect.draftImpact) {
     if (!outcome.draftImpacts?.length) failures.push("nenhum rascunho de chamado novo");

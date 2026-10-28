@@ -87,3 +87,17 @@ describe("achados do funcionário simulado", () => {
     expect(checkScenario({ noUpdateDraftFor: ["INC-20311"] }, { ...ok, updateDraftCodes: ["INC-20150"] })).toEqual([]);
   });
 });
+
+describe("alternativa antes da prioridade", () => {
+  it("todo rascunho precisa sair numa das prioridades esperadas; sem rascunho, falha", () => {
+    expect(checkScenario({ draftPriority: ["medium"] }, { ...ok, draftPriorities: ["medium"] })).toEqual([]);
+    expect(checkScenario({ draftPriority: ["medium"] }, { ...ok, draftPriorities: ["low", "medium"] })).toEqual(["rascunho com prioridade low/medium"]);
+    expect(checkScenario({ draftPriority: ["medium"] }, ok)).toEqual(["nenhum rascunho de chamado novo"]);
+  });
+
+  it("precisa perguntar sobre alternativa, no botão ou no texto", () => {
+    expect(checkScenario({ asksWorkaround: true }, { ...ok, quickReplies: ["Tenho alternativa", "Não tenho alternativa"] })).toEqual([]);
+    expect(checkScenario({ asksWorkaround: true }, { ...ok, replies: ["Você tem outro jeito de trabalhar enquanto isso?"] })).toEqual([]);
+    expect(checkScenario({ asksWorkaround: true }, { ...ok, replies: ["Isso afeta só você?"] })).toEqual(["não perguntou se há alternativa"]);
+  });
+});
