@@ -9,7 +9,7 @@
  *   npm run eval:sim -- --min=0.6     → falha (código 1) se o pass^k médio ficar abaixo
  */
 import { execSync } from "node:child_process";
-import { describeError } from "../describe-error";
+import { assertModelResponded, retryOnProviderError } from "../provider-errors";
 import { checkSimRun, parseSimAction, type SimAction, type SimOutcome } from "./checks";
 import { passHatK } from "./pass-k";
 import type { Persona } from "./personas";
@@ -86,7 +86,7 @@ async function main() {
           handedOff = event.conversation.status !== "with_agent";
           const reply = event.conversation.messages.at(-1);
           // Resposta reserva sem uso do modelo = o provedor falhou (o Mastra engole o 503): repete a conversa.
-          if (reply?.role === "agent" && reply.trace?.model && !reply.trace.usage?.inputTokens) throw new Error("turno sem resposta do modelo (provedor)");
+          assertModelResponded(reply);
           agentTokens = { input: agentTokens.input + (reply?.trace?.usage?.inputTokens ?? 0), output: agentTokens.output + (reply?.trace?.usage?.outputTokens ?? 0) };
         }
       } else if (conversation) {
@@ -144,14 +144,13 @@ async function main() {
     let questions = 0;
     let cost = 0;
     for (let i = 0; i < k; i++) {
-      let run: Awaited<ReturnType<typeof play>> | null = null;
-      for (let attempt = 1; attempt <= PROVIDER_ATTEMPTS && !run; attempt++) {
-        try {
-          run = await play(persona);
-        } catch (error) {
-          console.log(`    (erro na tentativa ${attempt}: ${describeError(error)})`);
-        }
-      }
+      // Só falha do provedor repete a conversa; regra do app (message_limit), banco ou harness param a execução.
+      const { value: run } = await retryOnProviderError(() => play(persona), {
+        label: `${persona.id} #${i + 1}`,
+        attempts: PROVIDER_ATTEMPTS,
+        waitMs: () => 0,
+        log: (line) => console.log(`    ${line}`),
+      });
       if (!run) continue;
       const failures = checkSimRun(persona.expect, run.outcome);
       if (!failures.length) c++;
