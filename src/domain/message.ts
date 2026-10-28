@@ -5,6 +5,7 @@
  * histórico mostra o que o funcionário viu naquela hora, mesmo se o chamado mudar.
  * Datas viram string ISO porque tudo aqui é salvo como JSON e enviado ao browser.
  */
+import type { Frustration } from "./frustration";
 import type { HandoffReason } from "./conversation";
 import type { Urgency } from "./priority";
 import type { Category, Impact, Priority, TicketStatus, TicketType } from "./ticket";
@@ -92,6 +93,9 @@ export interface Decision {
   understanding: string;
   confidence: number; // 0 a 1
   reasoning: string;
+  /** Opcional: traces antigos não têm. */
+  frustration?: Frustration;
+  frustrationReason?: string;
 }
 
 /** Um passo visível ("consultou seus chamados") com o detalhe por trás dele. */

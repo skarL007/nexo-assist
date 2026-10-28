@@ -2,6 +2,7 @@
  * Portas: o que a aplicação precisa de fora (banco), descrito como interfaces.
  * A infraestrutura implementa; os testes usam versões em memória.
  */
+import type { FrustrationSignal } from "@/domain/frustration";
 import type { Conversation } from "@/domain/conversation";
 import type { Employee } from "@/domain/employee";
 import type { SuggestionOutcome } from "@/domain/reply-suggestion";
@@ -31,6 +32,8 @@ export interface Embedder {
 export interface TicketRepository {
   findByCode(code: string): Promise<Ticket | null>;
   listByOwner(ownerId: string): Promise<Ticket[]>;
+  /** Abertos de todo mundo criados desde `since` (incidente em massa). */
+  listOpenCreatedSince(since: Date): Promise<Ticket[]>;
   nextCode(type: TicketType): Promise<string>;
   insert(ticket: Ticket): Promise<void>;
   update(ticket: Ticket): Promise<void>;
@@ -66,6 +69,8 @@ export interface MessageRepository {
   listRecent(conversationId: string, limit: number): Promise<ChatMessage[]>;
   /** Última mensagem de cada conversa, sem o trace (lista do console). */
   lastByConversations(conversationIds: string[]): Promise<Map<string, ChatMessage>>;
+  /** Frustração do último entendimento do agent em cada conversa (fila do console). */
+  lastFrustrations(conversationIds: string[]): Promise<Map<string, FrustrationSignal>>;
   countByRole(conversationId: string, role: MessageRole): Promise<number>;
   /** Mensagens de um papel no sistema todo desde `since` (teto global de custo). */
   countByRoleSince(role: MessageRole, since: Date): Promise<number>;

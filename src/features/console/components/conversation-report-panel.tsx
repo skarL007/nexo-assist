@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { ConsoleConversationDetail } from "@/contracts/chat";
 import { percent } from "@/lib/format";
-import { countsLine, handoffLine, pendingLine, reportAsText, reportOf, ticketLine } from "@/lib/report-text";
+import { countsLine, frustrationLine, handoffLine, pendingLine, reportAsText, reportOf, ticketLine } from "@/lib/report-text";
 
 /** Relatório da conversa no topo do histórico: o analista entende o caso sem ler tudo. */
 export function ConversationReportPanel({ conversation, onClose }: { conversation: ConsoleConversationDetail; onClose: () => void }) {
@@ -52,6 +52,7 @@ export function ConversationReportPanel({ conversation, onClose }: { conversatio
         <Section title="Falhas" items={report.failures} tone="text-danger" />
         <Section title="Chamados citados" items={report.tickets.map(ticketLine)} />
         <Section title="Pendências" items={report.pending.map((item) => pendingLine(item, report.employee.name))} tone="text-amber-800" />
+        {report.frustration && <p className="text-xs font-medium text-danger">{frustrationLine(report.frustration)}</p>}
         {report.lowestConfidence !== null && <p className="text-xs text-muted-foreground">Menor confiança do agent: {percent(report.lowestConfidence)}</p>}
       </div>
     </section>

@@ -9,7 +9,8 @@
 import { DomainError } from "@/domain/errors";
 import type { NewTicketFields, TicketSnapshot } from "@/domain/message";
 import { ticketSla } from "@/domain/priority";
-import { canReopen, isOpen, sameProblem, type Ticket } from "@/domain/ticket";
+import { detectKnownIssues, knownIssueFor, type KnownIssue } from "@/domain/known-issue";
+import { canReopen, isOpen, sameProblem, type Category, type Ticket } from "@/domain/ticket";
 import { withRetry } from "@/lib/retry";
 import { systemClock, type Clock, type TicketRepository } from "./ports";
 
@@ -55,6 +56,22 @@ export class TicketService {
     const now = this.clock.now();
     const mine = await this.listMine(employeeId);
     return mine.filter((t) => sameProblem(t, candidate) && (isOpen(t) || canReopen(t, now)));
+  }
+
+  /** Incidentes em massa agora, de todo mundo (banner do console). */
+  async knownIssues(): Promise<KnownIssue[]> {
+    return detectKnownIssues(await this.recentOpen(), this.clock.now());
+  }
+
+  /** O problema desta pessoa é um incidente conhecido? Conta só os relatos das outras pessoas. */
+  async knownIssueFor(employeeId: string, candidate: { category: Category; title: string; description: string }): Promise<KnownIssue | null> {
+    const others = (await this.recentOpen()).filter((t) => t.ownerId !== employeeId);
+    return knownIssueFor(candidate, detectKnownIssues(others, this.clock.now()));
+  }
+
+  /** 4 horas úteis cabem em 5 dias corridos mesmo num fim de semana prolongado. */
+  private recentOpen(): Promise<Ticket[]> {
+    return this.call(() => this.repo.listOpenCreatedSince(new Date(this.clock.now().getTime() - 5 * 86_400_000)));
   }
 
   async create(employeeId: string, fields: NewTicketFields): Promise<Ticket> {

@@ -1,4 +1,5 @@
 /** Monta as respostas da API (contracts) a partir dos serviços. */
+import { currentFrustration, type FrustrationSignal } from "@/domain/frustration";
 import type { ConsoleConversationDetail, ConsoleConversationSummary, ConversationView, SlaAlertView } from "@/contracts/chat";
 import { MESSAGE_LIMIT_PER_SESSION, type Conversation } from "@/domain/conversation";
 import type { Employee } from "@/domain/employee";
@@ -40,7 +41,12 @@ export async function conversationView(services: Services, conversation: Convers
   };
 }
 
-function summary(conversation: Conversation, people: Map<string, Employee>, last: ChatMessage | undefined): ConsoleConversationSummary {
+function summary(
+  conversation: Conversation,
+  people: Map<string, Employee>,
+  last: ChatMessage | undefined,
+  frustration: FrustrationSignal | null,
+): ConsoleConversationSummary {
   const employee = people.get(conversation.employeeId);
   const analyst = conversation.analystId ? people.get(conversation.analystId) : undefined;
   return {
@@ -53,6 +59,7 @@ function summary(conversation: Conversation, people: Map<string, Employee>, last
     handoffAt: conversation.handoff?.at.toISOString() ?? null,
     lastMessage: last ? { role: last.role, text: last.text, at: last.createdAt } : null,
     ticketCode: conversation.handoff?.ticketCode ?? null,
+    frustration,
   };
 }
 
@@ -63,12 +70,14 @@ async function peopleOf(services: Services, conversations: Conversation[]) {
 }
 
 export async function consoleList(services: Services, conversations: Conversation[]): Promise<ConsoleConversationSummary[]> {
-  const [people, lastMessages] = await Promise.all([
+  const ids = conversations.map((c) => c.id);
+  const [people, lastMessages, frustrations] = await Promise.all([
     peopleOf(services, conversations),
-    services.messages.lastByConversations(conversations.map((c) => c.id)),
+    services.messages.lastByConversations(ids),
+    services.messages.lastFrustrations(ids),
   ]);
   // Conversas sem mensagem (abertas e abandonadas) não interessam ao analista.
-  return conversations.filter((c) => lastMessages.has(c.id)).map((c) => summary(c, people, lastMessages.get(c.id)));
+  return conversations.filter((c) => lastMessages.has(c.id)).map((c) => summary(c, people, lastMessages.get(c.id), frustrations.get(c.id) ?? null));
 }
 
 export async function consoleDetail(services: Services, conversation: Conversation): Promise<ConsoleConversationDetail> {
@@ -85,7 +94,7 @@ export async function consoleDetail(services: Services, conversation: Conversati
   ]);
   const snapshots = tickets ? tickets.map((t) => services.tickets.snapshot(t)) : null;
   return {
-    ...summary(conversation, people, messages.at(-1)),
+    ...summary(conversation, people, messages.at(-1), currentFrustration(messages)),
     handoffSummary: conversation.handoff?.summary ?? null,
     messages,
     draftStatuses,

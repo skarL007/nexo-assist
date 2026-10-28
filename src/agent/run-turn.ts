@@ -7,6 +7,7 @@
  *   3. roda o agent com as últimas mensagens; o 1º passo é sempre recordUnderstanding
  *   4. salva a resposta com o trace (decisão, passos, tools, tokens, tempo)
  */
+import { OFFER_ANALYST_OPTION } from "@/domain/frustration";
 import { RequestContext } from "@mastra/core/request-context";
 import type { ChatStreamEvent } from "@/contracts/chat";
 import { env } from "@/config/env";
@@ -92,6 +93,13 @@ async function* replyWithAgent(turn: TurnContext, abortSignal?: AbortSignal): As
   if (needsContinuation({ reply: run.reply, handedOff: recorder.handedOff, toolCalls: run.toolCalls })) {
     recorder.guardrail("O modelo repetiu o registro do entendimento sem agir: o turno continuou a partir das ações.");
     yield* streamAgent(turn, messages, system, 1, run, abortSignal);
+  }
+
+  // Oferta por frustração é do código, não do modelo: o botão aparece mesmo que a resposta esqueça de oferecer.
+  if (recorder.offerAnalyst && !recorder.handedOff) {
+    const replies = recorder.cards.find((c) => c.kind === "quick_replies");
+    if (!replies) recorder.card({ kind: "quick_replies", options: [OFFER_ANALYST_OPTION] });
+    else if (!replies.options.includes(OFFER_ANALYST_OPTION)) replies.options.push(OFFER_ANALYST_OPTION);
   }
 
   const trace: TurnTrace = {

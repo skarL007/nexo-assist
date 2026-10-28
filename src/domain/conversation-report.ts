@@ -6,6 +6,7 @@
  * modelo, então não gasta o teto e não inventa nada. Datas ficam em ISO; o texto
  * formatado fica com quem mostra (features/console/report-text.ts).
  */
+import { currentFrustration, type FrustrationSignal } from "./frustration";
 import type { ConversationStatus, HandoffReason } from "./conversation";
 import type { Card, ChatMessage, DraftStatus, Intent, TicketSnapshot } from "./message";
 
@@ -41,6 +42,8 @@ export interface ConversationReport {
   /** Chamados citados na conversa; `ticket` null se não há dados dele agora. */
   tickets: { code: string; ticket: TicketSnapshot | null }[];
   lowestConfidence: number | null;
+  /** Frustração no último entendimento, com o motivo. */
+  frustration: FrustrationSignal | null;
   pending: PendingItem[];
 }
 
@@ -74,6 +77,7 @@ export function buildConversationReport(input: ReportInput): ConversationReport 
     articles: unique(traces.flatMap((t) => t.toolCalls.filter((c) => c.tool === "searchHelpCenter").flatMap((c) => articleTitles(c.output)))),
     tickets,
     lowestConfidence: confidences.length ? Math.min(...confidences) : null,
+    frustration: currentFrustration(messages),
     pending: pendingOf(input, tickets),
   };
 }

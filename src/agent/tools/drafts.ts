@@ -1,7 +1,7 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 import { classifyPriority, SLA_LABEL, URGENCIES } from "@/domain/priority";
-import { CATEGORIES, IMPACTS, TICKET_TYPES } from "@/domain/ticket";
+import { CATEGORIES, CATEGORY_LABEL, IMPACTS, TICKET_TYPES } from "@/domain/ticket";
 import { turnFrom } from "../turn-context";
 import { attempt, formatDateTime } from "./shared";
 
@@ -45,7 +45,18 @@ export const draftNewTicket = createTool({
       }
       turn.recorder.step("verificou duplicidade", "Nenhum chamado parecido aberto");
 
-      const { priority, reason } = classifyPriority(input.impact, input.urgency);
+      // Incidente em massa: outras pessoas relataram o mesmo agora. O impacto real é maior do que a mensagem de uma pessoa mostra.
+      const issue = await tickets.knownIssueFor(turn.employee.id, input);
+      let impact = input.impact;
+      if (issue) {
+        turn.recorder.step("viu um incidente em massa", `${issue.people} pessoas relataram ${CATEGORY_LABEL[issue.category]} (${issue.terms.join(", ")}) desde ${formatDateTime(issue.since)}`);
+        if (impact === "me") {
+          impact = "team";
+          turn.recorder.guardrail(`Incidente em massa: ${issue.people} pessoas relataram o mesmo problema nas últimas 4 horas úteis; o impacto subiu de "só eu" para "equipe" e a prioridade foi recalculada.`);
+        }
+      }
+
+      const { priority, reason } = classifyPriority(impact, input.urgency);
       turn.recorder.step("classificou a prioridade", reason);
 
       const draft = await drafts.proposeNewTicket(turn.conversationId, turn.employee.id, {
@@ -53,7 +64,7 @@ export const draftNewTicket = createTool({
         category: input.category,
         title: input.title,
         description: input.description,
-        impact: input.impact,
+        impact,
         urgency: input.urgency,
         priority,
         priorityReason: reason,
@@ -69,7 +80,13 @@ export const draftNewTicket = createTool({
         priority,
         priorityReason: reason,
         responseDeadline: formatDateTime(draft.deadline),
-        instruction: "Explique a prioridade em uma frase e peça para conferir e confirmar o rascunho.",
+        ...(issue
+          ? {
+              knownIssue: { category: CATEGORY_LABEL[issue.category], people: issue.people, since: formatDateTime(issue.since) },
+              instruction:
+                "Outras pessoas relataram o mesmo problema agora: diga que é um problema conhecido e que o service desk já está acompanhando, SEM citar nomes nem números de chamados de outras pessoas. Explique a prioridade em uma frase e peça para conferir e confirmar o rascunho.",
+            }
+          : { instruction: "Explique a prioridade em uma frase e peça para conferir e confirmar o rascunho." }),
       };
     });
   },

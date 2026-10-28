@@ -9,6 +9,7 @@ import { createDatabase, type Database } from "../db/client";
 import { conversations, employees, messages } from "../db/schema";
 import { DrizzleBudgetRepository } from "./budget-repository";
 import { DrizzleChangeFeed } from "./change-feed";
+import { DrizzleMessageRepository } from "./message-repository";
 import { DrizzleTicketRepository } from "./ticket-repository";
 
 let db: Database;
@@ -75,5 +76,28 @@ describe("assinaturas do tempo real", () => {
     await db.update(conversations).set({ status: "with_analyst", updatedAt: new Date(3000) });
     expect(await feed.employeeVersion("ana")).not.toBe(ana1);
     expect(await feed.employeeVersion("ninguem")).toBe("none");
+  });
+});
+
+describe("frustração na fila do console", () => {
+  it("vale o último entendimento do agent; sem frustração, a conversa não aparece no mapa", async () => {
+    const repo = new DrizzleMessageRepository(db);
+    await db.insert(employees).values({ id: "ana", name: "Ana", email: "ana@nexo.com.br", role: "employee", department: "TI", passwordChangedAt: new Date() });
+    await db.insert(conversations).values([
+      { id: "c1", employeeId: "ana", status: "with_agent", createdAt: new Date(1), updatedAt: new Date(1) },
+      { id: "c2", employeeId: "ana", status: "closed", createdAt: new Date(1), updatedAt: new Date(1) },
+    ]);
+    const decision = (frustration: string, frustrationReason?: string) => ({
+      decision: { intent: "question", understanding: "", confidence: 0.9, reasoning: "", frustration, frustrationReason },
+      steps: [],
+      toolCalls: [],
+      guardrails: [],
+      model: null,
+      usage: null,
+      latencyMs: 1,
+    });
+    const agent = (id: string, conversationId: string, trace: object, at: number) => ({ id, conversationId, role: "agent" as const, text: "…", cards: [], trace: trace as never, createdAt: new Date(at) });
+    await db.insert(messages).values([agent("m1", "c1", decision("none"), 1), agent("m2", "c1", decision("high", "terceira vez"), 2), agent("m3", "c2", decision("high"), 1), agent("m4", "c2", decision("none"), 2)]);
+    expect(Object.fromEntries(await repo.lastFrustrations(["c1", "c2"]))).toEqual({ c1: { level: "high", reason: "terceira vez" } });
   });
 });

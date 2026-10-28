@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useLiveUpdates } from "@/lib/use-live-updates";
 import { useAppDispatch } from "@/store/hooks";
-import { consoleApi, useGetConversationQuery, useListConversationsQuery } from "../console-api";
+import { consoleApi, useGetConversationQuery, useListConversationsQuery, useListKnownIssuesQuery } from "../console-api";
 import { ConsoleRail } from "./console-rail";
 import { ConversationList } from "./conversation-list";
 import { ConversationPanel } from "./conversation-panel";
@@ -30,6 +30,7 @@ export function ConsoleScreen({ analyst }: { analyst: { id: string; name: string
   if (!selectedId && fallbackId) setSelectedId(fallbackId);
   const activeId = selectedId ?? fallbackId;
   const detail = useGetConversationQuery(activeId ?? "", { skip: !activeId, pollingInterval: live ? SAFETY_POLL_MS : DETAIL_POLL_MS });
+  const knownIssues = useListKnownIssuesQuery(undefined, { pollingInterval: live ? SAFETY_POLL_MS : LIST_POLL_MS });
   const queueSize = list.data?.filter((c) => c.status === "waiting_analyst").length ?? 0;
 
   return (
@@ -49,7 +50,7 @@ export function ConsoleScreen({ analyst }: { analyst: { id: string; name: string
         </Centered>
       ) : (
         <>
-          <ConversationList live={live} conversations={list.data ?? []} analystId={analyst.id} selectedId={activeId} onSelect={setSelectedId} />
+          <ConversationList live={live} knownIssues={knownIssues.data ?? []} conversations={list.data ?? []} analystId={analyst.id} selectedId={activeId} onSelect={setSelectedId} />
           {detail.data && detail.data.id === activeId ? (
             <>
               {/* key: trocar de conversa zera o texto digitado e o erro da anterior (senão iriam para outra pessoa). */}

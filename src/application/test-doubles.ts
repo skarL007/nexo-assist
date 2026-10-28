@@ -1,4 +1,5 @@
 /** Implementações em memória das portas, usadas só nos testes. */
+import { currentFrustration } from "@/domain/frustration";
 import type { Conversation } from "@/domain/conversation";
 import type { ChatMessage, DraftStatus, MessageRole } from "@/domain/message";
 import type { Ticket, TicketType } from "@/domain/ticket";
@@ -27,6 +28,9 @@ export class InMemoryTicketRepository implements TicketRepository {
   }
   async listByOwner(ownerId: string) {
     return [...this.tickets.values()].filter((t) => t.ownerId === ownerId);
+  }
+  async listOpenCreatedSince(since: Date) {
+    return [...this.tickets.values()].filter((t) => t.status !== "resolved" && t.createdAt >= since);
   }
   async nextCode(type: TicketType) {
     return `${type}-${++this.sequence}`;
@@ -111,6 +115,14 @@ export class InMemoryMessageRepository implements MessageRepository {
   }
   async lastByConversations(ids: string[]) {
     return new Map(ids.map((id) => [id, this.items.filter((m) => m.conversationId === id).at(-1)!]));
+  }
+  async lastFrustrations(ids: string[]) {
+    return new Map(
+      ids.flatMap((id) => {
+        const signal = currentFrustration(this.items.filter((m) => m.conversationId === id));
+        return signal ? [[id, signal] as const] : [];
+      }),
+    );
   }
   async countByRole(conversationId: string, role: MessageRole) {
     return this.items.filter((m) => m.conversationId === conversationId && m.role === role).length;

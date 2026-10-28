@@ -29,6 +29,11 @@ export class FlakyTicketRepository implements TicketRepository {
     return this.inner.listByOwner(ownerId);
   };
 
+  listOpenCreatedSince: TicketRepository["listOpenCreatedSince"] = async (since) => {
+    this.maybeFail();
+    return this.inner.listOpenCreatedSince(since);
+  };
+
   nextCode: TicketRepository["nextCode"] = async (type) => {
     this.maybeFail();
     return this.inner.nextCode(type);
