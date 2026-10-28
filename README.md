@@ -51,7 +51,7 @@ Qualquer senha funciona para os usuários de exemplo (regra do desafio). Na tela
 Outros comandos:
 
 ```bash
-npm test                          # 173 testes unitários — sem LLM
+npm test                          # 174 testes unitários — sem LLM
 npx playwright install chromium   # só na primeira vez, antes do E2E
 npm run test:e2e                  # 18 testes E2E contra o build de produção — sem LLM
 npm run eval                      # 14 cenários de decisão do agent com o modelo real
@@ -212,7 +212,7 @@ O prompt ([`agent/instructions.ts`](src/agent/instructions.ts)) cuida só da con
 
 | Camada | O que cobre | Comando |
 |---|---|---|
-| **Testes unitários** (Vitest, 173) | prazos com fim de semana, matriz de prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real | `npm test` |
+| **Testes unitários** (Vitest, 174) | prazos com fim de semana, matriz de prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real | `npm test` |
 | **E2E** (Playwright, 19) | login, permissões, transferência de ponta a ponta, relatório da conversa no console, "Alterar detalhes", estados de erro (sem chave, sem conexão, falha ao confirmar, console) e a página 404, contra o build de produção | `npm run test:e2e` |
 | **Evals** (14 cenários, modelo real) | intenção, tools esperadas e proibidas, transferência (e quando *não* transferir), caso crítico, reabertura, escopo de TI e vazamento de dados de outra pessoa | `npm run eval` |
 | **Trace em toda resposta** | qualquer decisão pode ser auditada na própria interface e no console do analista | — |
