@@ -55,6 +55,7 @@ export function buildConversationReport(input: ReportInput): ConversationReport 
   const confidences = traces.flatMap((t) => (t.decision ? [t.decision.confidence] : []));
   const lastNeed = traces.findLast((t) => t.decision && !NOT_A_NEED.includes(t.decision.intent))?.decision?.understanding;
   const tickets = ticketsCited(input);
+  const handoff = input.handoff ?? lastHandoffCard(messages);
 
   return {
     employee: input.employee,
@@ -66,8 +67,8 @@ export function buildConversationReport(input: ReportInput): ConversationReport 
       agent: messages.filter((m) => m.role === "agent").length,
       analyst: messages.filter((m) => m.role === "analyst").length,
     },
-    need: input.handoff?.summary ?? lastNeed ?? messages.find((m) => m.role === "employee")?.text ?? null,
-    handoff: input.handoff,
+    need: handoff?.summary ?? lastNeed ?? messages.find((m) => m.role === "employee")?.text ?? null,
+    handoff,
     actions: unique(steps.filter((s) => s.ok).map((s) => s.label)),
     failures: unique(steps.filter((s) => !s.ok).map((s) => s.label)),
     articles: unique(traces.flatMap((t) => t.toolCalls.filter((c) => c.tool === "searchHelpCenter").flatMap((c) => articleTitles(c.output)))),
@@ -75,6 +76,18 @@ export function buildConversationReport(input: ReportInput): ConversationReport 
     lowestConfidence: confidences.length ? Math.min(...confidences) : null,
     pending: pendingOf(input, tickets),
   };
+}
+
+/**
+ * Ao devolver a conversa ao agent, a transferência é limpa da conversa; o card gravado
+ * no histórico continua lá e diz por que ela foi transferida da última vez.
+ */
+function lastHandoffCard(messages: ChatMessage[]): ReportInput["handoff"] {
+  for (const message of messages.toReversed()) {
+    const card = message.cards.find((c) => c.kind === "handoff");
+    if (card?.kind === "handoff") return { reason: card.reason, summary: card.summary, confidence: null, at: message.createdAt };
+  }
+  return null;
 }
 
 function ticketsCited(input: ReportInput): ConversationReport["tickets"] {
