@@ -23,7 +23,7 @@ interface SeedMessage {
 
 /** Turno do agent em que a busca na central não achou nada (vira "Lacunas da central" nos indicadores). */
 const searchMiss = (query: string): TurnTrace => ({
-  decision: { intent: "new_ticket", understanding: "Impressora do 3º andar sem funcionar", confidence: 0.82, reasoning: "" },
+  decision: { intent: "new_ticket", understanding: "Projetor da sala de reunião sem funcionar", confidence: 0.82, reasoning: "" },
   steps: [{ label: "buscou na central de ajuda", detail: `Nada encontrado para "${query}"`, ok: true }],
   toolCalls: [{ tool: "searchHelpCenter", input: { query }, output: { articles: [] }, durationMs: 310 }],
   guardrails: [],
@@ -128,18 +128,18 @@ async function main() {
     { role: "employee", text: "Isso resolveu, obrigado!", minutesAgo: 3 * 60 - 2 },
   ]);
 
-  // Três pessoas, mesmo tema, nenhum artigo: a central tem uma lacuna (e o CPF do exemplo sai mascarado).
-  const printer: [string, string, string, number][] = [
-    ["emp-gustavo", "A impressora do 3º andar não imprime nada desde ontem.", "impressora 3 andar não imprime", 26],
-    ["emp-helena", "Impressora do terceiro andar travada, preciso imprimir um contrato. Meu CPF é 123.456.789-09 se precisar.", "impressora terceiro andar travada", 30],
-    ["emp-igor", "impressora do 3 andar com fila parada", "impressora andar fila parada", 50],
+  // Três pessoas, mesmo tema, nenhum artigo (a central não fala de projetor): uma lacuna. O CPF do exemplo sai mascarado.
+  const projector: [string, string, string, number][] = [
+    ["emp-gustavo", "O projetor da sala 5 não liga, tenho apresentação daqui a pouco.", "projetor sala 5 não liga", 26],
+    ["emp-helena", "Projetor da sala de reunião sem sinal no HDMI. Meu CPF é 123.456.789-09 se precisar.", "projetor sala reunião sem sinal hdmi", 30],
+    ["emp-igor", "projetor da sala 5 não reconhece o notebook", "projetor sala notebook não reconhece", 50],
   ];
-  for (const [employeeId, text, query, hoursAgo] of printer) {
+  for (const [employeeId, text, query, hoursAgo] of projector) {
     const minutes = hoursAgo * 60;
-    await seedConversation(`conv-impressora-${employeeId.slice(4)}`, employeeId, { status: "closed" }, [
+    await seedConversation(`conv-projetor-${employeeId.slice(4)}`, employeeId, { status: "closed" }, [
       { role: "employee", text, minutesAgo: minutes },
-      { role: "agent", text: "Não achei um artigo sobre essa impressora. Vou chamar um analista para olhar.", minutesAgo: minutes - 1, trace: searchMiss(query) },
-      { role: "system", text: "Transferido para o service desk · Funcionário pediu um analista", minutesAgo: minutes - 1, cards: [{ kind: "handoff", reason: "employee_request", summary: "Impressora do 3º andar sem funcionar." }] },
+      { role: "agent", text: "Não achei um artigo sobre o projetor. Vou chamar um analista para olhar.", minutesAgo: minutes - 1, trace: searchMiss(query) },
+      { role: "system", text: "Transferido para o service desk · Funcionário pediu um analista", minutesAgo: minutes - 1, cards: [{ kind: "handoff", reason: "employee_request", summary: "Projetor da sala de reunião sem funcionar." }] },
     ]);
   }
 
