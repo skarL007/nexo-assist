@@ -1,7 +1,8 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
-import { classifyPriority, SLA_LABEL, URGENCIES } from "@/domain/priority";
-import { CATEGORIES, CATEGORY_LABEL, categoryForTitle, IMPACTS, TICKET_TYPES } from "@/domain/ticket";
+import { classifyPriority, SLA_LABEL, URGENCIES, URGENCY_LABEL } from "@/domain/priority";
+import { CATEGORIES, CATEGORY_LABEL, categoryForTitle, IMPACTS, PRIORITY_LABEL, TICKET_TYPES } from "@/domain/ticket";
+import { decideWorkaround, WORKAROUND_OPTIONS } from "@/domain/workaround";
 import { turnFrom } from "../turn-context";
 import { attempt, formatDateTime, judgeDeadline, NEEDED_BY_DESCRIPTION } from "./shared";
 
@@ -15,6 +16,7 @@ export const draftNewTicket = createTool({
     "Monta o RASCUNHO de um chamado novo para o funcionário conferir. Não cria o chamado. " +
     "Só chame quando souber o problema, quem é afetado (impact) e a urgência. " +
     "A prioridade é calculada pelo sistema a partir de impact × urgency. " +
+    "Num INC com urgency=none em que ninguém falou de alternativa, a tool pede para perguntar antes (e mostra os botões). " +
     "Se houver chamado parecido aberto, a tool devolve os possíveis duplicados em vez do rascunho.",
   inputSchema: z.object({
     type: z.enum(TICKET_TYPES).describe("INC = algo parou ou não funciona; REQ = pedido de acesso, equipamento ou software"),
@@ -56,6 +58,30 @@ export const draftNewTicket = createTool({
       }
       turn.recorder.step("verificou duplicidade", "Nenhum chamado parecido aberto");
 
+      // Incidente "sem urgência" sem saber se há alternativa: a resposta muda a prioridade, então pergunta antes (regra de código).
+      const askedThisTurn = turn.recorder.cards.some((c) => c.kind === "quick_replies" && c.options.includes(WORKAROUND_OPTIONS[0]));
+      const workaround = askedThisTurn
+        ? null
+        : decideWorkaround(input, [...(await turn.services.messages.listRecent(turn.conversationId, 20)), { role: "agent", text: "", cards: turn.recorder.cards }]);
+      if (!workaround || workaround.action === "ask") {
+        if (workaround) {
+          const withAlt = PRIORITY_LABEL[classifyPriority(input.impact, "has_workaround").priority];
+          const without = PRIORITY_LABEL[classifyPriority(input.impact, "none").priority];
+          turn.recorder.step("perguntou se há alternativa", `Incidente sem urgência e nada dito sobre alternativa: com alternativa é ${withAlt}, sem é ${without}`);
+          turn.recorder.card({ kind: "quick_replies", options: workaround.options });
+          turn.recorder.guardrail(`Prioridade depende de haver alternativa (${withAlt} × ${without}) e ninguém falou disso: o rascunho espera a resposta.`);
+        }
+        return {
+          draftReady: false,
+          instruction:
+            'Ainda NÃO há rascunho. Pergunte em uma frase se a pessoa tem outro jeito de trabalhar enquanto isso (ex.: webmail, outro computador). O sistema já mostra os botões "Tenho alternativa" e "Não tenho alternativa": não chame offerQuickReplies nem draftNewTicket de novo neste turno.',
+        };
+      }
+      if (workaround.corrected) {
+        turn.recorder.guardrail(`Urgência corrigida de "${URGENCY_LABEL[input.urgency]}" para "${URGENCY_LABEL[workaround.urgency]}": o funcionário respondeu "${WORKAROUND_OPTIONS[0]}".`);
+      }
+      const urgency = workaround.urgency;
+
       // Incidente em massa: outras pessoas relataram o mesmo agora. O impacto real é maior do que a mensagem de uma pessoa mostra.
       const issue = await tickets.knownIssueFor(turn.employee.id, input);
       let impact = input.impact;
@@ -67,7 +93,7 @@ export const draftNewTicket = createTool({
         }
       }
 
-      const { priority, reason } = classifyPriority(impact, input.urgency);
+      const { priority, reason } = classifyPriority(impact, urgency);
       turn.recorder.step("classificou a prioridade", reason);
 
       const draft = await drafts.proposeNewTicket(turn.conversationId, turn.employee.id, {
@@ -76,7 +102,7 @@ export const draftNewTicket = createTool({
         title: input.title,
         description: input.description,
         impact,
-        urgency: input.urgency,
+        urgency,
         priority,
         priorityReason: reason,
       });
