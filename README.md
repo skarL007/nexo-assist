@@ -51,10 +51,14 @@ Qualquer senha funciona para os usuários de exemplo (regra do desafio). Na tela
 Outros comandos:
 
 ```bash
-npm test                          # 174 testes unitários — sem LLM
+npm test                          # 279 testes unitários — sem LLM
 npx playwright install chromium   # só na primeira vez, antes do E2E
-npm run test:e2e                  # 18 testes E2E contra o build de produção — sem LLM
-npm run eval                      # 14 cenários de decisão do agent com o modelo real
+npm run test:e2e                  # 39 testes E2E contra o build de produção — sem LLM
+npm run eval                      # 26 cenários de decisão do agent com o modelo real (8 de ataque)
+npm run eval:sim                  # funcionário simulado por um modelo, pass^k (τ-bench)
+npm run eval:busca                # busca na central: palavras-chave × híbrida, 50 perguntas
+npm run eval:sugestao             # sugestão de resposta do analista com o modelo real
+npm run otel:local                # coletor OTLP local para ver a telemetria dos turnos
 npm run db:seed                   # volta os dados ao estado inicial
 npm run typecheck && npm run lint
 ```
@@ -68,7 +72,8 @@ Entre como **Ana** e escreva:
 1. **"Qual o horário do service desk?"** → responde pela central de ajuda. Clique em **"por quê?"** para ver a intenção, a confiança, as tools e as regras.
 2. **"Como está o chamado do notebook?"** → encontra o INC-20311 sem o número, mostra que o prazo venceu e oferece um analista.
 3. **"Minha VPN dá erro 809, uso Windows 11"** → o artigo vale só para Windows 10, então ele pergunta o que falta e monta um **rascunho**. Use **"Alterar detalhes"** (a prioridade e o prazo mudam ao vivo) e **Confirmar**.
-4. **"Quero falar com um analista"** → a conversa vai para a fila. Entre como **Rafael**: abra o **Relatório** da conversa (o que a pessoa precisa, o que o agent já fez e o que está pendente), assuma, responda e devolva ao agent.
+4. **"Quero falar com um analista"** → a conversa vai para a fila. Entre como **Rafael**: abra o **Relatório** da conversa (o que a pessoa precisa, o que o agent já fez e o que está pendente), assuma, use **"Sugerir resposta"** (o modelo escreve, você revisa) e devolva ao agent. A mensagem chega ao chat da Ana em menos de 1 s (SSE).
+5. Ainda como **Rafael**, repare na fila: o chip **"Frustração alta"** da Carla e o aviso de **possível incidente em massa** (três pessoas com o sistema de ponto fora do ar). Em **Indicadores**: a resolução honesta (confirmada × presumida, sem contar chamado aberto nem quem voltou com o mesmo problema), as lacunas da central e os prazos em risco com a conta explicada.
 
 ---
 
@@ -78,7 +83,7 @@ Entre como **Ana** e escreva:
 flowchart LR
   subgraph Browser
     UI["Chat do funcionário<br/>Redux + stream NDJSON"]
-    CON["Console do analista<br/>RTK Query + polling"]
+    CON["Console do analista<br/>RTK Query + SSE"]
   end
 
   subgraph Next["Next.js 16 (Vercel)"]
@@ -124,7 +129,7 @@ src/
 - **Dependências só apontam para dentro** (`app → agent/application → domain`). O domínio não conhece Next, Mastra nem banco, então prioridade, prazo, reabertura e transições são testados sem mock. A aplicação depende de **portas** ([`application/ports.ts`](src/application/ports.ts)); um único arquivo liga as peças: [`infrastructure/container.ts`](src/infrastructure/container.ts).
 - **O serviço de chamados é separado do agent.** As tools chamam o `TicketService`, o mesmo das rotas e dos botões. O "sistema legado" é um *decorator* (`FlakyTicketRepository`) que falha aleatoriamente (`LEGACY_FAILURE_RATE`, 15%). O serviço tenta de novo, e cada nova tentativa aparece no trace. Se a falha vier depois de o chamado ser gravado, nada é desfeito, para o próximo Confirmar não duplicar.
 - **Persistência:** conversas, mensagens (com cards e trace), rascunhos, chamados e o estado de cada conversa ficam no SQLite/Turso e sobrevivem a um restart. Ao voltar outro dia, o funcionário cai na conversa aberta dele.
-- **Tempo real:** `POST /api/chat` responde em NDJSON (`employee_message`, `step`, `card`, `text`, `done`), e o thunk do Redux despacha cada evento. As mensagens do analista chegam por polling a cada 4 s.
+- **Tempo real:** `POST /api/chat` responde em NDJSON (`employee_message`, `step`, `card`, `text`, `done`), e o thunk do Redux despacha cada evento. O console e o chat (enquanto um analista atende) abrem um stream SSE. O servidor confere uma assinatura barata do banco a cada 1 s e avisa "mudou"; a tela busca de novo pelas rotas de sempre. A mensagem chega em ~0,3–0,6 s de mediana, contra ~1,6 s no polling antigo, que continua como plano B ([medição](docs/validacao/TEMPO-REAL.md)).
 
 ### Estados da conversa
 
@@ -202,7 +207,13 @@ O modelo decide **o que fazer**. As regras do service desk ficam em código test
 | Chamado crítico confirmado → transfere sozinho | `DraftService.confirm` |
 | Agent mudo com analista; depois de transferir, não chama mais tools | `run-turn.ts` (`agentCanReply`), [`agent/step-policy.ts`](src/agent/step-policy.ts) |
 | Relatório da conversa para o analista: montado do histórico e dos traces, sem chamar o modelo (não inventa nem gasta o teto) | [`domain/conversation-report.ts`](src/domain/conversation-report.ts) |
+| Incidente em massa: 3+ outras pessoas com o mesmo problema nas últimas 4 h úteis → impacto sobe para "equipe" e a prioridade é recalculada, sem revelar quem relatou | [`domain/known-issue.ts`](src/domain/known-issue.ts) |
+| Frustração alta (ou moderada duas vezes) → o botão "Falar com um analista" aparece; nunca transfere sozinho nem mexe na prioridade | [`domain/frustration.ts`](src/domain/frustration.ts), `run-turn.ts` |
+| Busca na central: híbrida (sentido + palavras), abstém quando o 1º não se destaca do 2º; sem chave, só palavras | [`domain/hybrid-search.ts`](src/domain/hybrid-search.ts) |
+| Aviso de prazo em risco (75% do prazo útil) com a conta explicada | [`domain/sla-risk.ts`](src/domain/sla-risk.ts) |
 | Privacidade: o funcionário vem do cookie assinado, nunca de argumento do modelo; chamado de outra pessoa responde "não encontrado" | [`agent/turn-context.ts`](src/agent/turn-context.ts), `TicketService.getMine` |
+
+O [`step-policy.ts`](src/agent/step-policy.ts) segue o padrão *action-selector* da literatura de defesa contra injeção ([arXiv 2506.08837](https://arxiv.org/abs/2506.08837)): o código decide quais tools existem em cada passo, e o modelo só escolhe entre elas. Um texto malicioso pode mudar o que o modelo *quer* fazer, mas não o que ele *consegue* fazer.
 
 O prompt ([`agent/instructions.ts`](src/agent/instructions.ts)) cuida só da conversa: perguntar uma coisa por vez, não perguntar o que a mensagem já disse, oferecer respostas rápidas e redirecionar o que não é de TI (falha técnica em sistema de outra área continua sendo TI).
 
@@ -255,6 +266,7 @@ O deploy roda na **Vercel** com o banco no **Turso**, publicado a partir de um `
 | O modelo agir quando devia perguntar | As tools liberadas em cada passo são decididas em código ([`agent/step-policy.ts`](src/agent/step-policy.ts)): no turno de esclarecimento, só botões de resposta; depois de transferir, nenhuma. |
 | Corridas | Confirmação de rascunho atômica, update de conversa condicionado ao estado esperado e limites conferidos de novo depois de gravar a mensagem. |
 | Dados pessoais nos logs | Erro do banco é registrado só pela causa (ex.: `SQLITE_BUSY`), sem os parâmetros da consulta. O corpo enviado ao LLM nunca é registrado. |
+| Dados pessoais na telemetria e nos indicadores | A telemetria OpenTelemetry/Langfuse é opcional e, por padrão, não leva texto da conversa nem argumentos de tools; o funcionário vira um pseudônimo. As frases de exemplo das lacunas da central mascaram e-mail, CPF, telefone e números. O incidente em massa não revela quem relatou. |
 | Clickjacking e afins | CSP, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, HSTS e sem `X-Powered-By` ([`next.config.ts`](next.config.ts)). |
 
 Houve quatro rodadas de revisão de segurança (antes do deploy, depois do deploy, uma com 42 verificações de fora contra produção e uma com skills de auditoria de terceiros); o detalhe está em [`docs/DEPLOY.md`](docs/DEPLOY.md).
@@ -263,30 +275,33 @@ Houve quatro rodadas de revisão de segurança (antes do deploy, depois do deplo
 
 ## Trade-offs
 
-- **Polling em vez de WebSocket/SSE** para as mensagens do analista: simples e compatível com serverless, com latência de até 4 s.
-- **Busca por palavras-chave** na central: com 9 artigos é grátis e explicável (o trace mostra os termos que bateram). Com centenas, eu trocaria por embeddings sem mudar quem chama.
+- **SSE com conferência no servidor, não push de verdade:** a Vercel não tem fila compartilhada entre funções, então o stream confere uma assinatura do banco a cada 1 s. Isso dá menos de 1 s de latência, mas cada aba aberta faz uma consulta leve por segundo; com muitos analistas, o certo seria Redis pub/sub. O polling continua como plano B.
+- **Busca híbrida com embeddings em cache no banco:** o acerto subiu de 84% para 94% nas 50 perguntas ([medição](docs/validacao/BUSCA.md)). Sem a chave, ou se o Gemini falhar, ela volta para as palavras-chave.
 - **Duplicidade por regra simples** (mesmo tipo, categoria e palavra em comum no título), com a decisão final para o modelo: barato e transparente, mas pode deixar passar um duplicado escrito com outras palavras.
 - **Histórico próprio em vez da memória do Mastra:** o console do analista lê e escreve na mesma conversa, então uma única tabela `messages` é a fonte da verdade.
 - **Limites contados no próprio banco** em vez de Redis: um serviço a menos, consistente entre instâncias serverless.
 - **Porta de acesso por link** em vez de contas para avaliadores: zero atrito e suficiente para proteger a cota. Para produção, seria SSO. O teto total é compartilhado: quem tem o link pode gastá-lo.
 - **CSP sem nonce** (`'unsafe-inline'` em scripts): mantém as páginas estáticas e o deploy simples.
-- **Login sem senha real**, como pede o desafio: a troca para SSO fica isolada em [`server/session.ts`](src/server/session.ts).
+- **Login sem senha real**, como pede o desafio. **SSO OpenID Connect opcional** (PKCE, state, nonce, JWKS), testado de ponta a ponta contra um provedor falso. Ele não foi testado contra Entra ID ou Okta de verdade, por falta de conta ([detalhes](docs/validacao/OBSERVABILIDADE-E-SSO.md)).
 - **Sair não revoga o JWT no servidor:** um token copiado antes continua válido até vencer (8 horas, ou 7 dias com "Manter conectado"). Revogar exigiria uma lista consultada a cada pedido, e os avaliadores entram todos como a mesma Ana: revogar derrubaria os outros.
 - **Interface pensada para desktop** (como o protótipo): o chat funciona no celular, mas o console do analista precisa de tela larga.
 
 ## O que eu faria com mais tempo
 
-- Eventos em tempo real (SSE) para o console e o chat do analista.
-- Busca semântica na central e duplicidade por similaridade de texto.
-- Evals no CI com limiar mínimo, conferindo também os argumentos das tools (impacto, urgência, categoria).
-- Rate limit por IP na borda e teto de uso por pessoa.
+- **Corrigir o achado da telemetria:** no passo 0, o Gemini às vezes chama `recordUnderstanding` várias vezes em paralelo, o que gasta tokens à toa. Depois, medir de novo os tokens por turno.
+- Evals e simulação no CI com limiar mínimo (hoje rodam à mão porque chamam o modelo real).
+- Duplicidade por similaridade de sentido, reaproveitando os embeddings da busca.
+- Artigo da central gerado a partir de chamado resolvido, como rascunho para o analista revisar (fecha o ciclo com as lacunas).
+- Push de verdade (Redis pub/sub) no lugar da conferência a cada 1 s, se o número de analistas crescer.
+- Rate limit por IP na borda.
 - Layout de celular completo e revisão de acessibilidade (contraste, leitor de tela).
-- Observabilidade: traces do Mastra via OpenTelemetry e painel de métricas (resolução sem fila, tempo até a primeira resposta, motivos de transferência).
 
 ## Documentação
 
 - [`docs/specs/`](docs/specs): especificações (SDD) de regras, agent, conversa/console e arquitetura.
 - [`docs/DEPLOY.md`](docs/DEPLOY.md): passos do deploy e histórico de segurança.
+- [`docs/validacao/`](docs/validacao): provas de eficácia, com método, números e limites (busca, tempo real, red-team, simulação, telemetria e SSO).
+- [`docs/pesquisa/FRONTEIRA.md`](docs/pesquisa/FRONTEIRA.md): o que a fronteira dos produtos de service desk com IA faz (2025–2026) e o que virou código aqui.
 - [`docs/benchmark/`](docs/benchmark): benchmark de modelos.
 - [`docs/PROCESSO-IA.md`](docs/PROCESSO-IA.md): como IA, MCPs, skills, TDD e SDD foram usados.
 - [`AGENTS.md`](AGENTS.md) e [`.claude/skills/`](.claude/skills): convenções e roteiros para quem (ou qual IA) for alterar o projeto.

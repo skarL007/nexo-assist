@@ -20,6 +20,7 @@
     "access-link": "tsx --env-file=.env.deploy.local scripts/access-link.ts",
     "eval:busca": "tsx --env-file-if-exists=.env evals/retrieval/run.ts",
     "eval:sugestao": "tsx --env-file-if-exists=.env evals/suggestion/run.ts",
+    "eval:sim": "tsx --env-file-if-exists=.env evals/sim/run.ts",
     "otel:local": "tsx scripts/otel-local.ts"
   },
   "dependencies": {
