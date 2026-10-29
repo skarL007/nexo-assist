@@ -50,7 +50,14 @@ Validação local em 28/10/2026, com o `main` buildado a partir de um `git archi
 - No primeiro start: migração e seed, contêiner healthy, sem root, `/login` 200, API do console 401 sem sessão, login real de funcionária e de analista, 403 da funcionária no console, e o analista assumindo uma conversa.
 - Depois de um restart: nada é recriado e a conversa assumida continua com o analista.
 
-O CircleCI ainda não rodou nenhum job. Ele começa quando o projeto for conectado (passo 1 de *Passos do dono*, abaixo).
+**Primeira execução real (28/10/2026).** O CircleCI rodou pela primeira vez e pegou dois problemas que a máquina local escondia:
+
+1. **`checks` falhou com `TS2304: Cannot find name 'LayoutProps'`.** O Next 16 gera esse tipo global em `.next/types`, que existe na minha máquina, mas não num clone limpo. Reproduzi num clone limpo e corrigi com `"typecheck": "next typegen && tsc --noEmit"` (commit `7d0d2ca`). O `npm run verify` local nunca teria pego isso.
+2. **`image-publish` falhou com `DOCKERHUB_USERNAME: unbound variable`**, porque o contexto `dockerhub` ainda não existia. Criei o contexto com a restrição de branch e o dono colocou o token.
+
+Na nova execução do pipeline #2, todos os jobs passaram: `checks`, `e2e`, build, prova de fumaça e publicação. O Docker Hub tem `skarl007/nexo-assist` com as tags `latest` e `7d0d2ca` (115,5 MB comprimida).
+
+**Primeiro Deploy no Komodo (29/10/2026).** Fluxo completo: Variables criadas, sync `circleci` executado (criou a stack e o procedure), Deploy pela interface. O contêiner ficou `healthy` em 11 segundos. O log mostrou as migrações aplicadas e o seed no banco vazio. Em http://localhost:3300, o login da funcionária de exemplo funcionou, e o agent respondeu pela central de ajuda com o Gemini, com o painel "por quê?".
 
 ### O que o CI prova
 
@@ -73,7 +80,7 @@ Exigem login e criam credenciais, por isso ficam com o dono da conta. A ordem im
 3. **Contexto `dockerhub`** no CircleCI (*Organization Settings > Contexts*), com `DOCKERHUB_USERNAME` e `DOCKERHUB_TOKEN`. No mesmo contexto, adicione a restrição por expressão `pipeline.git.branch == "main"`: assim nenhuma outra branch recebe o token, mesmo que alguém acrescente `context: dockerhub` ao config. Em *Project Settings > Advanced*, deixe desligado *Pass secrets to builds from forked pull requests*.
 4. **Primeira imagem:** faça um push no `main` e espere o job `image-publish` ficar verde no CircleCI. Confira no Docker Hub que `nexo-assist` tem as tags `latest` e o sha curto. Sem isso, o primeiro Deploy no Komodo falha porque a imagem ainda não existe.
 5. **Variables do Komodo** (*Settings > Variables*): `DOCKERHUB_USERNAME` (em minúsculas, não é segredo), `NEXO_AUTH_SECRET` (32+ caracteres; gere com o comando do `.env.example`) e `GOOGLE_GENERATIVE_AI_API_KEY`, as duas últimas marcadas como secret. **As três precisam existir, mesmo que uma fique com valor vazio**: quando falta uma Variable, o Komodo não dá erro; ele deixa o texto `[[NOME]]` como valor no `.env` da stack. Sem a `GOOGLE_GENERATIVE_AI_API_KEY`, o app tentaria usar esse texto como chave do modelo e as chamadas falhariam, em vez de o agent responder "indisponível". Para ligar a porta de acesso, crie também `NEXO_ACCESS_TOKEN` e acrescente `ACCESS_TOKEN = [[NEXO_ACCESS_TOKEN]]` ao `environment` da stack.
-6. **Resource sync `circleci`** no Komodo. Se ainda não existir: *Resource Syncs > New*, modo *files on host*, `resource_path = ["circleci"]`, com *Delete* e *Managed* desligados (o sync só cria e atualiza, nunca apaga recurso). Depois: *Refresh*, conferir o diff (stack `nexo-assist` e procedure `ci-auto-update`) e *Execute*.
+6. **Resource sync `circleci`** no Komodo. Se ainda não existir: *Resource Syncs > New Sync*, nome `circleci`, modo *Files On Server*, *Resource Paths* `nexo-assist.toml` e `ci-auto-update.toml` (no Komodo v2.3 o caminho é relativo a `/syncs/<nome do sync>`, que no Core é a pasta `sync/` do host), com *Delete Unmatched Resources* e *Managed* desligados (o sync só cria e atualiza, nunca apaga recurso). Depois: conferir na aba *Execute* o diff (criar a stack `nexo-assist` e o procedure `ci-auto-update`) e *Execute Sync*.
 7. **Primeiro Deploy** da stack pela interface do Komodo, à mão. Abra http://localhost:3300. A partir daí, cada push no `main` com o CircleCI verde atualiza a stack sozinha em 10 a 20 minutos.
 
 O primeiro Deploy pela interface é obrigatório. O compose monta o nome da imagem com `${DOCKERHUB_USERNAME}`. No código do Komodo v2.3.4, a checagem de atualização usa a imagem já interpolada do último deploy, obtida por `docker compose config`. Antes do primeiro deploy, ela só tem o texto cru do compose e não acha atualização. Um erro silencioso comum é deixar o repositório do Docker Hub como *Private*: o Komodo só registra um aviso e nunca atualiza.

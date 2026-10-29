@@ -1,5 +1,7 @@
 # Nexo Assist
 
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/skarL007/nexo-assist/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/skarL007/nexo-assist/tree/main) [![Docker Hub](https://img.shields.io/badge/docker%20hub-skarl007%2Fnexo--assist-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/skarl007/nexo-assist)
+
 Agent de atendimento do service desk de TI da Nexo. O funcionário descreve o problema com as próprias palavras. O agent consulta os chamados dele, busca na central de ajuda, abre ou atualiza chamados (sempre com confirmação) e chama um analista quando precisa. O analista atende pelo console: vê a fila, assume a conversa com o agent pausado e depois devolve ou encerra.
 
 Cada resposta do agent mostra **o que ele entendeu, o que fez e por quê**: passos ao vivo, decisão com confiança, chamadas de tool com entrada e saída, regras que agiram, tokens e latência.
@@ -260,7 +262,7 @@ O prompt ([`agent/instructions.ts`](src/agent/instructions.ts)) cuida só da con
 | **Provas de eficácia** | busca híbrida 84% → 94% ([BUSCA](docs/validacao/BUSCA.md)); tempo real ~0,4 s × ~1,6 s ([TEMPO-REAL](docs/validacao/TEMPO-REAL.md)); telemetria e SSO ([OBSERVABILIDADE-E-SSO](docs/validacao/OBSERVABILIDADE-E-SSO.md)) | `docs/validacao/` |
 | **Trace em toda resposta** | qualquer decisão pode ser auditada na própria interface e no console do analista | — |
 
-O CI está configurado no [CircleCI](.circleci/config.yml) para cada push: tipos, lint, testes unitários, E2E e o build da imagem Docker com uma prova de fumaça (migra, cria os dados de exemplo, faz login e reinicia sem perder dados), sem segredos do app nem chave de LLM. Os evals ficam fora porque chamam o modelo real.
+O CI roda no [CircleCI](.circleci/config.yml) a cada push: tipos, lint, testes unitários, E2E e o build da imagem Docker com uma prova de fumaça (migra, cria os dados de exemplo, faz login e reinicia sem perder dados), sem segredos do app nem chave de LLM. No `main`, a imagem aprovada vai para o [Docker Hub](https://hub.docker.com/r/skarl007/nexo-assist) com a tag `latest` e o sha do commit, e o Komodo da minha máquina a puxa e reimplanta sozinho (por pull, sem expor nada; rodando desde 29/10/2026). Os evals ficam fora porque chamam o modelo real. Na primeira execução, o CI pegou um erro que a minha máquina escondia: o tipo `LayoutProps` que o Next 16 gera em `.next/` não existe num clone limpo. A correção foi rodar `next typegen` antes do `tsc` ([DEPLOY](docs/DEPLOY.md#docker-circleci-e-komodo)).
 
 Localmente, `npm run verify` roda tipos, lint, testes e E2E antes de cada push.
 
