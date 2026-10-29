@@ -6,11 +6,15 @@
  * artigos, trocaríamos por embeddings sem mudar quem chama esta função.
  */
 
+import type { DiagnosticCheck } from "./diagnostics";
+
 export interface Article {
   id: string;
   title: string;
   body: string;
   tags: string[];
+  /** Verificações que o funcionário faz sozinho, uma por vez (artigos de equipamento). */
+  checks?: DiagnosticCheck[];
 }
 
 export interface ArticleMatch {

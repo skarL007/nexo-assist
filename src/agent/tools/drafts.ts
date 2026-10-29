@@ -1,5 +1,6 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
+import { checksFromHistory } from "@/domain/diagnostics";
 import { classifyPriority, SLA_LABEL, URGENCIES, URGENCY_LABEL } from "@/domain/priority";
 import { CATEGORIES, CATEGORY_LABEL, categoryForTitle, IMPACTS, PRIORITY_LABEL, TICKET_TYPES } from "@/domain/ticket";
 import { decideWorkaround, WORKAROUND_OPTIONS } from "@/domain/workaround";
@@ -96,11 +97,17 @@ export const draftNewTicket = createTool({
       const { priority, reason } = classifyPriority(impact, urgency);
       turn.recorder.step("classificou a prioridade", reason);
 
+      // O "já tentado" sai do histórico (verificação pedida + botão clicado) e o texto, dos artigos da central:
+      // o modelo não precisa lembrar de nada nem consegue inventar uma verificação (regra de código).
+      const done = checksFromHistory(await turn.services.messages.listRecent(turn.conversationId, 20));
+      const checks = done.length ? await turn.services.knowledge.describeChecks(done) : { text: null, unknown: [] };
+      if (checks.text) turn.recorder.step("anexou as verificações feitas", `${done.length - checks.unknown.length} verificação(ões) da central`);
+
       const draft = await drafts.proposeNewTicket(turn.conversationId, turn.employee.id, {
         type: input.type,
         category: input.category,
         title: input.title,
-        description: input.description,
+        description: checks.text ? `${input.description}\n\n${checks.text}` : input.description,
         impact,
         urgency,
         priority,

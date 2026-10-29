@@ -52,6 +52,7 @@ async function main() {
     const draftPriorities: string[] = [];
     const draftImpacts: string[] = [];
     const draftCategories: string[] = [];
+    const draftDescriptions: string[] = [];
     const updateDraftCodes: string[] = [];
     const quickReplies: string[] = [];
     const toolsUsed = new Set<string>();
@@ -77,6 +78,7 @@ async function main() {
           draftPriorities.push(card.draft.fields.priority);
           draftImpacts.push(card.draft.fields.impact);
           draftCategories.push(card.draft.fields.category);
+          draftDescriptions.push(card.draft.fields.description);
         }
         for (const card of reply?.cards ?? []) if (card.kind === "draft" && card.draft.kind === "update") updateDraftCodes.push(card.draft.fields.ticketCode);
         lastIntent = reply?.trace?.decision?.intent ?? lastIntent;
@@ -91,7 +93,7 @@ async function main() {
     await withExtraArticles([]);
     const after = await ticketFingerprint();
     const ticketChanges = [...after].filter(([code, state]) => before.get(code) !== state).length;
-    return { lastIntent, toolsUsed, finalStatus: status, replies, ticketChanges, draftPriorities, draftImpacts, draftCategories, updateDraftCodes, lastFrustration, quickReplies, fallbackTurns };
+    return { lastIntent, toolsUsed, finalStatus: status, replies, ticketChanges, draftPriorities, draftImpacts, draftCategories, draftDescriptions, updateDraftCodes, lastFrustration, quickReplies, fallbackTurns };
   }
 
   let providerErrors = 0;

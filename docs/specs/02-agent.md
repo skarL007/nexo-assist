@@ -20,6 +20,7 @@ mensagem → limites → salva → (conversa com analista? para aqui)
 |---|---|---|
 | `recordUnderstanding` | Registra intenção, entendimento, confiança, motivo. Confiança < 0,5 → na primeira vez, uma pergunta de esclarecimento; se a resposta anterior do agent também foi sem segurança, transfere (`shouldHandOffForLowConfidence`) | "chamou um analista" (se transferir) |
 | `searchHelpCenter` | Busca híbrida: sentido (embeddings `gemini-embedding-2`, vetores dos artigos em cache no banco) + bônus de palavras-chave. Nenhum artigo quando o 1º não se destaca do 2º (margem < 0,02). Sem embeddings, só palavras ([validação](../validacao/BUSCA.md)) | "buscou na central de ajuda" (com termos e sentido de cada artigo) |
+| `askDiagnosticCheck` | Pede uma verificação de um artigo (id conferido na central), com botões fixos; no máximo 3 por conversa ([verificações](#verificações-de-diagnóstico)) | "pediu uma verificação" |
 | `listMyTickets` | Lista chamados do funcionário; `showAsChoice` mostra seleção | "consultou seus chamados" |
 | `getTicket` | Um chamado + prazo | "consultou o INC-…", "calculou o prazo" |
 | `draftNewTicket` | Duplicidade → prioridade → SLA → rascunho | "verificou duplicidade", "classificou a prioridade", "consultou o SLA", "montou o rascunho" |
@@ -91,6 +92,12 @@ Na primeira dúvida (confiança < 0,5), o turno só pode fazer uma pergunta: a p
 ## Modelo reserva
 
 Se o modelo principal (`LLM_MODEL`) falhar num passo (ex.: Gemini 3.5 Flash com 503 "alta demanda"), o Mastra tenta de novo uma vez e, se continuar falhando, faz o passo no **modelo reserva** (`LLM_FALLBACK_MODEL`, padrão `google/gemini-3.5-flash-lite`). O turno segue no reserva até o fim. O trace registra o modelo que respondeu (`model`), o que falhou (`fallbackFrom`) e um guardrail explicando a troca; o custo nos indicadores usa o preço do modelo que respondeu. Sem a chave do reserva, ou com `LLM_FALLBACK_MODEL=off`, não há reserva. O uso de tokens é somado passo a passo (o total do stream perde os campos depois de uma nova tentativa). Aceite: `agent/model-fallback.test.ts` (cadeia de modelos, leitura do passo e nota do trace) e, com o modelo real, um turno com o principal indisponível termina respondido pelo reserva e com o trace dizendo isso.
+
+## Verificações de diagnóstico
+
+Artigos de problema de equipamento (computador não liga, tela sem imagem, cabo de rede, teclado e mouse, áudio em reunião) trazem, além do texto, uma lista de verificações (`checks`) no formato KCS: cada uma tem um `id` estável, o que conferir (`label`) e o que fazer se não estiver em ordem (`fix`). São só verificações seguras para o funcionário fazer sozinho: nada de abrir o gabinete ou mexer dentro da fonte. `searchHelpCenter` devolve as verificações com o artigo. O agent pede uma por turno com `askDiagnosticCheck(checkId)`: a tool confere se o id existe na central, mostra os botões fixos "Já estava assim / Ajustei, mas continua / Resolveu / Não consigo verificar" e, depois de 3 verificações na conversa, recusa pedir outra e manda seguir para o chamado (guardrail no trace). Num caso crítico o agent não pede nenhuma.
+
+Se nada resolver, o `draftNewTicket` monta o "já tentado" sozinho, a partir do histórico: cada `askDiagnosticCheck` do trace mais o botão que o funcionário clicou em seguida ("Já estava assim" = em ordem, "Ajustei, mas continua" = ajustado, sem resolver, "Não consigo verificar"). Resposta livre e "Resolveu" ficam de fora. O texto que entra na descrição ("Verificações já feitas com o funcionário: …") sai do `label` do artigo (`domain/diagnostics.ts`), não do modelo. Primeira versão: um parâmetro `checksDone` preenchido pelo modelo; no eval com o modelo real ele foi ignorado 3 vezes em 3, e por isso a regra virou código. Aceite: `domain/diagnostics.test.ts` (três verificações respondidas pelos botões → três linhas com o texto do artigo; resposta livre, "Resolveu" ou verificação sem resposta → nada; id fora da central → descartado), `application/knowledge-service.test.ts` (`findCheck`), o benchmark de recuperação com as perguntas de equipamento e os evals "Computador não liga: …".
 
 ## Incidente em massa
 

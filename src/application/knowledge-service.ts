@@ -3,6 +3,7 @@
  * Os vetores dos artigos ficam no banco e só são recalculados quando o texto muda.
  */
 import { createHash } from "node:crypto";
+import { describeChecksDone, type CheckDone, type DiagnosticCheck } from "@/domain/diagnostics";
 import { hybridSearch, type HybridMatch } from "@/domain/hybrid-search";
 import type { Article } from "@/domain/knowledge";
 import type { ArticleRepository, Embedder } from "./ports";
@@ -19,7 +20,9 @@ export interface KnowledgeResult {
   mode: "hybrid" | "keyword";
 }
 
-export const articleText = (a: Article) => `${a.title}\n${a.tags.join(", ")}\n${a.body}`;
+/** Texto que vira embedding. As verificações entram só quando existem: artigo sem elas mantém o hash (e o cache). */
+export const articleText = (a: Article) =>
+  [a.title, a.tags.join(", "), a.body, ...(a.checks?.length ? [a.checks.map((c) => c.label).join("; ")] : [])].join("\n");
 const hashOf = (text: string) => createHash("sha256").update(text).digest("hex").slice(0, 16);
 
 export class KnowledgeService {
@@ -47,6 +50,19 @@ export class KnowledgeService {
       this.onError(error);
       return keywordOnly();
     }
+  }
+
+  /** Texto das verificações feitas para a descrição do chamado, sempre a partir dos artigos da central. */
+  async describeChecks(done: CheckDone[]): Promise<{ text: string | null; unknown: string[] }> {
+    return describeChecksDone(await this.articles.listAll(), done);
+  }
+
+  async findCheck(checkId: string): Promise<{ articleId: string; check: DiagnosticCheck } | null> {
+    for (const article of await this.articles.listAll()) {
+      const check = article.checks?.find((c) => c.id === checkId);
+      if (check) return { articleId: article.id, check };
+    }
+    return null;
   }
 
   private async articleVectors(articles: Article[], embedder: Embedder): Promise<Map<string, number[]>> {

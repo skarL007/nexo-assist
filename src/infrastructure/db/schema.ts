@@ -4,6 +4,7 @@
  */
 import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import type { ConversationStatus, HandoffReason } from "@/domain/conversation";
+import type { DiagnosticCheck } from "@/domain/diagnostics";
 import type { EmployeeRole } from "@/domain/employee";
 import type { SuggestionOutcome } from "@/domain/reply-suggestion";
 import type { Card, DraftKind, DraftStatus, MessageRole, NewTicketFields, TicketUpdateFields, TurnTrace } from "@/domain/message";
@@ -25,6 +26,7 @@ export const articles = sqliteTable("articles", {
   title: text("title").notNull(),
   body: text("body").notNull(),
   tags: text("tags", { mode: "json" }).$type<string[]>().notNull(),
+  checks: text("checks", { mode: "json" }).$type<DiagnosticCheck[]>().notNull().default([]),
 });
 
 /** Cache dos embeddings dos artigos: recalcula só se o texto (hash) ou o modelo mudar. */

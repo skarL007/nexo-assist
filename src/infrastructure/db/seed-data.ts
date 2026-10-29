@@ -77,7 +77,67 @@ export const articles: Article[] = [
     id: "kb-equipamento",
     title: "Pedir equipamento",
     body: "Monitor, teclado, mouse e headset são pedidos por requisição (REQ) de Hardware. A entrega leva até 5 dias úteis após a aprovação do gestor.",
-    tags: ["equipamento", "monitor", "teclado", "mouse", "headset", "notebook"],
+    tags: ["equipamento", "monitor", "teclado", "mouse", "headset", "notebook", "novo", "pedir"],
+  },
+  // Artigos de diagnóstico (formato KCS): verificações seguras que o funcionário faz sozinho,
+  // uma por vez. Se nada resolver, as verificações feitas vão para a descrição do chamado.
+  {
+    id: "kb-pc-nao-liga",
+    title: "Computador não liga",
+    body: "Se o computador (de mesa ou portátil) não dá sinal de vida, confira a energia antes de abrir chamado. Não abra o gabinete nem a fonte. Se continuar sem ligar, abra um chamado de Hardware com o número de patrimônio.",
+    tags: ["não liga", "desligado", "energia", "tomada", "fonte"],
+    checks: [
+      { id: "energia-cabo", label: "Cabo de energia bem encaixado no computador e na tomada", fix: "Encaixe o cabo com firmeza nas duas pontas e tente ligar de novo." },
+      { id: "energia-tomada", label: "Tomada ou filtro de linha funcionando (testado com outro aparelho)", fix: "Ligue o filtro de linha ou use outra tomada." },
+      { id: "energia-chave-fonte", label: "Chave atrás do computador (I/O) na posição ligada (I)", fix: "Passe a chave para I e aperte o botão de ligar." },
+      { id: "energia-carregador", label: "Notebook com carregador conectado e luz de carga acesa", fix: "Conecte o carregador, espere 10 minutos e tente ligar." },
+      { id: "energia-descarga", label: "Botão de ligar segurado por 15 segundos com o cabo fora da tomada", fix: "Tire o cabo da tomada, segure o botão por 15 segundos, recoloque o cabo e ligue." },
+    ],
+  },
+  {
+    id: "kb-tela-sem-imagem",
+    title: "Tela preta ou sem imagem",
+    body: "Se o computador liga (luz ou barulho) mas a tela fica preta, confira o monitor e o cabo de vídeo. Se não houver imagem depois disso, abra um chamado de Hardware.",
+    tags: ["tela preta", "sem imagem", "sem sinal", "hdmi", "displayport"],
+    checks: [
+      { id: "video-monitor-ligado", label: "Monitor ligado, com a luz do botão acesa", fix: "Ligue o monitor e confira o cabo de energia dele." },
+      { id: "video-cabo", label: "Cabo de vídeo (HDMI ou DisplayPort) encaixado no monitor e no computador", fix: "Reencaixe o cabo nas duas pontas." },
+      { id: "video-entrada", label: "Monitor na entrada certa (botão Input ou Source)", fix: "Aperte Input/Source até aparecer a entrada do cabo usado." },
+      { id: "video-atalho", label: "Atalho Windows + Ctrl + Shift + B testado", fix: "Aperte as quatro teclas juntas: o Windows reinicia o vídeo." },
+    ],
+  },
+  {
+    id: "kb-rede-cabo",
+    title: "Cabo ethernet desconectado",
+    body: "Computador do escritório ligado por cabo e sem conexão: confira o cabo e a porta. Se continuar sem conexão, abra um chamado de Rede informando o andar.",
+    tags: ["ethernet", "cabo", "rj45", "desconectado"],
+    checks: [
+      { id: "rede-cabo-encaixado", label: "Cabo de rede encaixado no computador e na tomada de rede da mesa, com clique", fix: "Reencaixe o cabo até ouvir o clique nas duas pontas." },
+      { id: "rede-luz-porta", label: "Luz da porta de rede do computador acesa ou piscando", fix: "Troque o cabo por outro ou use a outra tomada de rede da mesa." },
+      { id: "rede-reinicio", label: "Computador reiniciado depois de reencaixar o cabo", fix: "Reinicie o computador." },
+    ],
+  },
+  {
+    id: "kb-teclado-mouse",
+    title: "Teclado ou mouse parou de responder",
+    body: "Teclado ou mouse que parou de responder costuma ser conexão ou pilha. Confira antes de abrir chamado.",
+    tags: ["parou", "não responde", "usb", "pilha", "travado"],
+    checks: [
+      { id: "periferico-usb", label: "Cabo ou receptor USB encaixado (testado em outra porta USB)", fix: "Troque de porta USB, de preferência uma atrás do computador." },
+      { id: "periferico-pilha", label: "Teclado ou mouse sem fio com pilha ou bateria carregada e botão ligado", fix: "Troque a pilha ou carregue e confira o botão liga/desliga embaixo." },
+      { id: "periferico-reinicio", label: "Computador reiniciado com o equipamento conectado", fix: "Reinicie o computador com o teclado ou mouse já conectado." },
+    ],
+  },
+  {
+    id: "kb-audio-reuniao",
+    title: "Sem som ou microfone em chamada",
+    body: "Em chamada de vídeo sem áudio, confira o dispositivo escolhido no aplicativo e o mudo físico do fone. Se continuar, abra um chamado de Hardware ou Software.",
+    tags: ["sem som", "áudio", "microfone", "teams", "não escutam", "mudo"],
+    checks: [
+      { id: "audio-dispositivo", label: "Headset escolhido como alto-falante e microfone nas configurações de dispositivo da reunião", fix: "Abra as configurações de dispositivo na reunião e escolha o headset nos dois campos." },
+      { id: "audio-mudo", label: "Mudo do headset desligado (botão no fio ou na haste) e volume acima de zero", fix: "Desligue o mudo físico e aumente o volume." },
+      { id: "audio-reconectar", label: "Headset reconectado (USB em outra porta ou Bluetooth pareado de novo)", fix: "Desconecte, conecte em outra porta ou pareie de novo, e saia e volte da reunião." },
+    ],
   },
 ];
 

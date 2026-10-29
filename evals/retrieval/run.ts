@@ -3,7 +3,7 @@
  *
  *   npm run eval:busca
  *
- * Calcula os embeddings dos 9 artigos e das perguntas (chamadas em lote, frações de centavo),
+ * Calcula os embeddings dos artigos e das perguntas (chamadas em lote, frações de centavo),
  * mede hit@1, hit@3, MRR e abstenção no conjunto de calibração e no conjunto separado
  * (escrito depois da escolha da margem), e varre a margem para mostrar a faixa estável.
  */
@@ -13,7 +13,7 @@ import { hybridSearch } from "@/domain/hybrid-search";
 import { GeminiEmbedder } from "@/infrastructure/ai/gemini-embedder";
 import { articles } from "@/infrastructure/db/seed-data";
 import { scoreRetrieval, type RetrievalScore } from "./metrics";
-import { holdoutQueries, retrievalQueries, type RetrievalQuery } from "./queries";
+import { diagnosticQueries, holdoutQueries, retrievalQueries, type RetrievalQuery } from "./queries";
 
 const MARGINS = [0, 0.01, 0.015, 0.02, 0.03, 0.04];
 const pct = (v: number) => `${Math.round(v * 100)}%`;
@@ -61,6 +61,7 @@ async function main() {
   console.log(`Modelo de embeddings: ${embedder.model} (768 dimensões) · ${articles.length} artigos`);
   await evaluate("Conjunto de calibração", retrievalQueries, true);
   await evaluate("Conjunto separado (escrito depois da escolha)", holdoutQueries, false);
+  await evaluate("Artigos de diagnóstico (escritos depois da escolha)", diagnosticQueries, false);
 }
 
 main().catch((error) => {

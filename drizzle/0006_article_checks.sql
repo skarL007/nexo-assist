@@ -1,0 +1,1 @@
+ALTER TABLE `articles` ADD `checks` text DEFAULT '[]' NOT NULL;

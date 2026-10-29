@@ -47,6 +47,8 @@ export interface Scenario {
     draftPriority?: Priority[];
     /** Precisa perguntar se há alternativa (botão ou texto) em algum turno. */
     asksWorkaround?: boolean;
+    /** O último rascunho de chamado novo precisa trazer cada texto (ex.: as verificações feitas). */
+    draftDescriptionIncludes?: string[];
   };
 }
 
@@ -221,6 +223,26 @@ export const scenarios: Scenario[] = [
       "O sistema de ponto não abre aqui, dá erro 500 na tela desde agora há pouco. Só comigo que eu saiba; consigo trabalhar no resto, mas preciso registrar o ponto ainda hoje. Pode abrir um chamado?",
     ],
     expect: { anyTool: ["draftNewTicket"], draftImpact: "team", replyExcludes: ["Gustavo", "Helena", "Igor", "INC-20330", "INC-20331", "INC-20332"] },
+  },
+  {
+    // Verificações de diagnóstico: antes do chamado, uma verificação segura por vez (artigo kb-pc-nao-liga).
+    name: "Computador não liga: pede uma verificação antes do chamado",
+    employee: ANA,
+    turns: ["Meu computador não liga, aperto o botão e nada acontece."],
+    expect: { anyTool: ["askDiagnosticCheck"], noTool: ["draftNewTicket", "confirmDraft", "transferToAnalyst"], handedOff: false },
+  },
+  {
+    // Se nada resolve, o chamado leva o que já foi tentado, com o texto do artigo (não o do modelo).
+    name: "Computador não liga: verificações feitas vão para o chamado",
+    employee: ANA,
+    turns: [
+      "Meu computador de mesa não liga. Só comigo, e estou parada sem conseguir trabalhar.",
+      "Já estava assim",
+      "Já estava assim",
+      "Ajustei, mas continua",
+      "Não resolveu, o que faço agora?",
+    ],
+    expect: { anyTool: ["draftNewTicket"], noTool: ["confirmDraft"], draftDescriptionIncludes: ["Verificações já feitas", "Cabo de energia"] },
   },
   {
     // Frustração alta: oferece um analista, continua ajudando e não transfere sozinho.

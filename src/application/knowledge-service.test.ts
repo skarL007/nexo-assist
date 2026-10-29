@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Article } from "@/domain/knowledge";
-import { KnowledgeService } from "./knowledge-service";
+import { articleText, KnowledgeService } from "./knowledge-service";
 import type { ArticleRepository, Embedder } from "./ports";
 
 const vpn: Article = { id: "kb-vpn", title: "VPN com erro 809", body: "Reinstale o cliente de VPN.", tags: ["vpn"] };
@@ -74,5 +74,36 @@ describe("busca na central com embeddings", () => {
   it("sem chave do Google (sem embedder), é a busca por palavras", async () => {
     const result = await new KnowledgeService(new FakeArticles([vpn, wifi]), null).search("wifi");
     expect(result).toMatchObject({ mode: "keyword", matches: [{ article: { id: "kb-wifi" }, similarity: null }] });
+  });
+});
+
+describe("verificações de diagnóstico", () => {
+  const pc: Article = {
+    id: "kb-pc",
+    title: "Computador não liga",
+    body: "Confira a energia.",
+    tags: ["energia"],
+    checks: [{ id: "energia-cabo", label: "Cabo de energia encaixado", fix: "Encaixe o cabo." }],
+  };
+
+  it("o texto das verificações entra no que vira embedding; artigo sem verificação não muda (cache preservado)", () => {
+    expect(articleText(pc)).toContain("Cabo de energia encaixado");
+    expect(articleText(vpn)).toBe("VPN com erro 809\nvpn\nReinstale o cliente de VPN.");
+  });
+
+  it("monta o texto do chamado com as verificações da central e aponta id desconhecido", async () => {
+    const service = new KnowledgeService(new FakeArticles([vpn, pc]), null);
+    const { text, unknown } = await service.describeChecks([
+      { checkId: "energia-cabo", result: "ok" },
+      { checkId: "inventada", result: "ok" },
+    ]);
+    expect(text).toBe("Verificações já feitas com o funcionário:\n- Cabo de energia encaixado: em ordem");
+    expect(unknown).toEqual(["inventada"]);
+  });
+
+  it("acha a verificação pelo id, com o artigo de origem; id inventado não acha", async () => {
+    const service = new KnowledgeService(new FakeArticles([vpn, pc]), null);
+    expect(await service.findCheck("energia-cabo")).toEqual({ articleId: "kb-pc", check: pc.checks![0] });
+    expect(await service.findCheck("inventada")).toBeNull();
   });
 });

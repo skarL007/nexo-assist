@@ -56,6 +56,15 @@ describe("incidente em massa", () => {
   });
 });
 
+describe("verificações de diagnóstico no chamado", () => {
+  it("o último rascunho de chamado novo precisa trazer cada texto; sem rascunho, falha", () => {
+    const expected = { draftDescriptionIncludes: ["Verificações já feitas", "Cabo de energia"] };
+    expect(checkScenario(expected, { ...ok, draftDescriptions: ["Não liga.\n\nVerificações já feitas com o funcionário:\n- Cabo de energia bem encaixado: em ordem"] })).toEqual([]);
+    expect(checkScenario(expected, { ...ok, draftDescriptions: ["Não liga."] })).toEqual(['rascunho sem "Verificações já feitas"', 'rascunho sem "Cabo de energia"']);
+    expect(checkScenario(expected, ok)).toEqual(["nenhum rascunho de chamado novo"]);
+  });
+});
+
 describe("frustração", () => {
   it("compara com o último entendimento; sem o campo conta como none", () => {
     expect(checkScenario({ frustration: "high" }, { ...ok, lastFrustration: "high" })).toEqual([]);

@@ -25,6 +25,8 @@ export interface ScenarioOutcome {
   draftCategories?: string[];
   /** Chamado de cada rascunho de atualização. */
   updateDraftCodes?: string[];
+  /** Descrição de cada rascunho de chamado novo, na ordem. */
+  draftDescriptions?: string[];
 }
 
 /** Convite a falar com um analista no texto ("posso chamar um analista", "quer falar com um analista?"). */
@@ -83,6 +85,11 @@ export function checkScenario(expect: Scenario["expect"], outcome: ScenarioOutco
   if (expect.draftImpact) {
     if (!outcome.draftImpacts?.length) failures.push("nenhum rascunho de chamado novo");
     else if (!outcome.draftImpacts.every((impact) => impact === expect.draftImpact)) failures.push(`rascunho com impacto ${outcome.draftImpacts.join("/")}`);
+  }
+  if (expect.draftDescriptionIncludes) {
+    const last = outcome.draftDescriptions?.at(-1);
+    if (last === undefined) failures.push("nenhum rascunho de chamado novo");
+    else for (const text of expect.draftDescriptionIncludes) if (!last.includes(text)) failures.push(`rascunho sem "${text}"`);
   }
   return failures;
 }

@@ -69,3 +69,24 @@ export const holdoutQueries: RetrievalQuery[] = [
   { query: "qual o ramal do RH?", expected: null },
   { query: "o elevador está parado", expected: null },
 ];
+
+/**
+ * Artigos de diagnóstico (computador não liga, tela, cabo de rede, teclado e mouse, áudio),
+ * escritos depois da margem: conferem que os 5 artigos novos são achados e não roubam as
+ * perguntas dos artigos antigos parecidos (Pedir equipamento, Wi-Fi).
+ */
+export const diagnosticQueries: RetrievalQuery[] = [
+  { query: "meu computador não liga", expected: "kb-pc-nao-liga" },
+  { query: "apertei o botão e o PC não dá sinal de vida", expected: "kb-pc-nao-liga" },
+  { query: "o notebook não carrega e não acende", expected: "kb-pc-nao-liga" },
+  { query: "o computador liga mas a tela fica preta", expected: "kb-tela-sem-imagem" },
+  { query: "o monitor diz sem sinal", expected: "kb-tela-sem-imagem" },
+  { query: "estou sem internet no computador da minha mesa, uso cabo", expected: "kb-rede-cabo" },
+  { query: "aparece cabo de rede desconectado", expected: "kb-rede-cabo" },
+  { query: "o mouse parou de funcionar do nada", expected: "kb-teclado-mouse" },
+  { query: "meu teclado sem fio não digita", expected: "kb-teclado-mouse" },
+  { query: "ninguém me escuta na reunião do Teams", expected: "kb-audio-reuniao" },
+  { query: "não sai som no meu fone durante a chamada", expected: "kb-audio-reuniao" },
+  { query: "o carregador do meu celular pessoal quebrou", expected: null },
+  { query: "a luz da sala de reunião não acende", expected: null },
+];
