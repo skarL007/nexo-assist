@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { draftActionSchema } from "@/contracts/chat";
-import { createServices } from "@/infrastructure/container";
+import { servicesFor } from "@/server/services";
 import { handle, HttpError, parseBody } from "@/server/http";
 import { requireUser } from "@/server/session";
 import { conversationView } from "@/server/views";
@@ -12,7 +12,7 @@ export const POST = handle(async (request: Request, { params }: { params: Promis
   const parsedId = z.coerce.number().int().positive().safeParse((await params).id);
   if (!parsedId.success) throw new HttpError(400, "Rascunho inválido.");
   const draftId = parsedId.data;
-  const services = createServices();
+  const services = servicesFor(employee);
 
   if (body.action === "confirm") await services.drafts.confirmFromButton(draftId, employee.id);
   else if (body.action === "cancel") await services.drafts.cancelFromButton(draftId, employee.id);

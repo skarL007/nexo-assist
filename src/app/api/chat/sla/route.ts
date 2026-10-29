@@ -1,4 +1,4 @@
-import { createServices } from "@/infrastructure/container";
+import { servicesFor } from "@/server/services";
 import { handle, logError } from "@/server/http";
 import { requireUser } from "@/server/session";
 import { slaAlerts } from "@/server/views";
@@ -9,7 +9,7 @@ import { slaAlerts } from "@/server/views";
  */
 export const GET = handle(async () => {
   const employee = await requireUser("employee");
-  const services = createServices();
+  const services = servicesFor(employee);
   const tickets = await services.tickets.listMine(employee.id, { openOnly: true }).catch((error: unknown) => {
     logError(error);
     return [];

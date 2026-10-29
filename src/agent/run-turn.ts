@@ -11,6 +11,7 @@ import { RequestContext } from "@mastra/core/request-context";
 import type { ChatStreamEvent } from "@/contracts/chat";
 import { env } from "@/config/env";
 import { isExplicitConfirmation } from "@/domain/confirmation";
+import { demoScopeOf } from "@/domain/demo";
 import { agentCanReply, EMPLOYEE_MESSAGES_PER_DAY, EMPLOYEE_MESSAGES_PER_HOUR } from "@/domain/conversation";
 import type { Employee } from "@/domain/employee";
 import { DomainError } from "@/domain/errors";
@@ -37,6 +38,7 @@ export async function* runAgentTurn(employee: Employee, text: string, abortSigna
   const startedAt = new Date();
   const recorder = new TurnRecorder();
   const services = createServices({
+    demoScope: demoScopeOf(employee.id),
     onLegacyRetry: (attempt) => recorder.step("sistema de chamados instável", `Tentativa ${attempt} falhou, tentando de novo`, false),
   });
 

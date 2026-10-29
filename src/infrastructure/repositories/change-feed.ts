@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import type { ChangeFeed } from "@/application/ports";
 import type { Database } from "../db/client";
 import { conversations, drafts, messageFeedback, messages, tickets } from "../db/schema";
+import { demoScopeWhere } from "./demo-scope";
 
 /**
  * Uma consulta por conferência, só com agregados (max/count usam os índices).
@@ -9,16 +10,16 @@ import { conversations, drafts, messageFeedback, messages, tickets } from "../db
  * e rascunhos que mudam de status sem data de atualização.
  */
 export class DrizzleChangeFeed implements ChangeFeed {
-  constructor(private readonly db: Database) {}
+  constructor(private readonly db: Database, private readonly demoScope?: string) {}
 
   async consoleVersion(): Promise<string> {
     const [row] = await this.db
       .select({
-        conversations: sql<number | null>`(select max(${conversations.updatedAt}) from ${conversations})`,
-        messages: sql<string | null>`(select max(${messages.createdAt}) || ':' || count(*) from ${messages})`,
-        tickets: sql<number | null>`(select max(${tickets.updatedAt}) from ${tickets})`,
-        drafts: sql<number>`(select count(*) from ${drafts} where ${drafts.status} = 'pending')`,
-        feedback: sql<string | null>`(select max(${messageFeedback.createdAt}) || ':' || count(*) from ${messageFeedback})`,
+        conversations: sql<number | null>`(select max(${conversations.updatedAt}) from ${conversations} where ${demoScopeWhere(conversations.employeeId, this.demoScope)})`,
+        messages: sql<string | null>`(select max("messages"."created_at") || ':' || count(*) from ${messages} inner join ${conversations} on "messages"."conversation_id" = "conversations"."id" where ${demoScopeWhere(conversations.employeeId, this.demoScope)})`,
+        tickets: sql<number | null>`(select max(${tickets.updatedAt}) from ${tickets} where ${demoScopeWhere(tickets.ownerId, this.demoScope)})`,
+        drafts: sql<number>`(select count(*) from ${drafts} where ${drafts.status} = 'pending' and ${demoScopeWhere(drafts.employeeId, this.demoScope)})`,
+        feedback: sql<string | null>`(select max(${messageFeedback.createdAt}) || ':' || count(*) from ${messageFeedback} where ${demoScopeWhere(messageFeedback.employeeId, this.demoScope)})`,
       })
       .from(sql`(select 1)`);
     return Object.values(row).join("|");

@@ -1,5 +1,5 @@
 import { analystMessageSchema } from "@/contracts/chat";
-import { createServices } from "@/infrastructure/container";
+import { servicesFor } from "@/server/services";
 import { handle, parseBody } from "@/server/http";
 import { requireUser } from "@/server/session";
 import { consoleDetail } from "@/server/views";
@@ -9,7 +9,7 @@ export const POST = handle(async (request: Request, { params }: { params: Promis
   const analyst = await requireUser("analyst");
   const { text, suggested } = await parseBody(request, analystMessageSchema);
   const { id } = await params;
-  const services = createServices();
+  const services = servicesFor(analyst);
 
   await services.conversations.postAnalystMessage(id, analyst, text);
   if (suggested) await services.replySuggestions.recordSent(id, analyst, suggested, text);

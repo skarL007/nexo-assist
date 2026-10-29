@@ -24,6 +24,7 @@ const schema = z.object({
   EMBEDDING_MODEL: z.string().default("gemini-embedding-2"),
   DATABASE_URL: z.string().default("file:local.db"),
   DATABASE_AUTH_TOKEN: z.string().optional(),
+  PUBLIC_DEMO: z.enum(["0", "1"]).default("0"),
   AUTH_SECRET: z.string().min(32).default(DEV_SECRET),
   /** Chance de o "sistema legado" de chamados falhar numa chamada (0 a 1). */
   LEGACY_FAILURE_RATE: z.coerce.number().min(0).max(1).default(0.15),

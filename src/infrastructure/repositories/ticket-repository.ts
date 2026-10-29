@@ -4,12 +4,13 @@ import { DomainError } from "@/domain/errors";
 import type { Ticket, TicketType } from "@/domain/ticket";
 import type { Database } from "../db/client";
 import { ticketComments, tickets } from "../db/schema";
+import { demoScopeWhere } from "./demo-scope";
 
 /** Primeiro número de cada tipo quando ainda não há chamados. */
 const FIRST_NUMBER: Record<TicketType, number> = { INC: 20000, REQ: 10000 };
 
 export class DrizzleTicketRepository implements TicketRepository {
-  constructor(private readonly db: Database) {}
+  constructor(private readonly db: Database, private readonly demoScope?: string) {}
 
   async findByCode(code: string): Promise<Ticket | null> {
     const row = await this.db.query.tickets.findFirst({ where: eq(tickets.code, code) });
@@ -21,7 +22,7 @@ export class DrizzleTicketRepository implements TicketRepository {
   }
 
   async listOpenCreatedSince(since: Date): Promise<Ticket[]> {
-    return this.db.select().from(tickets).where(and(ne(tickets.status, "resolved"), gte(tickets.createdAt, since)));
+    return this.db.select().from(tickets).where(and(ne(tickets.status, "resolved"), gte(tickets.createdAt, since), demoScopeWhere(tickets.ownerId, this.demoScope)));
   }
 
   async nextCode(type: TicketType): Promise<string> {

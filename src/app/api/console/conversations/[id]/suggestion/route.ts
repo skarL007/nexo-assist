@@ -1,5 +1,5 @@
 import type { SuggestionView } from "@/contracts/chat";
-import { createServices } from "@/infrastructure/container";
+import { servicesFor } from "@/server/services";
 import { suggestionContext } from "@/lib/report-text";
 import { handle } from "@/server/http";
 import { requireUser } from "@/server/session";
@@ -11,7 +11,7 @@ export const maxDuration = 30;
 export const POST = handle(async (_request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const analyst = await requireUser("analyst");
   const { id } = await params;
-  const services = createServices();
+  const services = servicesFor(analyst);
   const detail = await consoleDetail(services, await services.conversations.get(id));
   const suggestion: SuggestionView = await services.replySuggestions.suggest(id, analyst, suggestionContext(detail));
   return Response.json(suggestion);

@@ -3,6 +3,7 @@ import type { ConversationRepository } from "@/application/ports";
 import type { Conversation } from "@/domain/conversation";
 import type { Database } from "../db/client";
 import { conversations } from "../db/schema";
+import { demoScopeWhere } from "./demo-scope";
 
 type Row = typeof conversations.$inferSelect;
 
@@ -45,10 +46,10 @@ function toRow(c: Conversation): Row {
 }
 
 export class DrizzleConversationRepository implements ConversationRepository {
-  constructor(private readonly db: Database) {}
+  constructor(private readonly db: Database, private readonly demoScope?: string) {}
 
   async findById(id: string): Promise<Conversation | null> {
-    const row = await this.db.query.conversations.findFirst({ where: eq(conversations.id, id) });
+    const row = await this.db.query.conversations.findFirst({ where: and(eq(conversations.id, id), demoScopeWhere(conversations.employeeId, this.demoScope)) });
     return row ? toDomain(row) : null;
   }
 
@@ -61,7 +62,7 @@ export class DrizzleConversationRepository implements ConversationRepository {
   }
 
   async listRecent(limit: number): Promise<Conversation[]> {
-    const rows = await this.db.select().from(conversations).orderBy(desc(conversations.updatedAt)).limit(limit);
+    const rows = await this.db.select().from(conversations).where(demoScopeWhere(conversations.employeeId, this.demoScope)).orderBy(desc(conversations.updatedAt)).limit(limit);
     return rows.map(toDomain);
   }
 

@@ -7,6 +7,7 @@ import { jwtVerify, SignJWT } from "jose";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { env } from "@/config/env";
+import { demoScopeOf } from "@/domain/demo";
 import type { Employee, EmployeeRole } from "@/domain/employee";
 import { createServices } from "@/infrastructure/container";
 import { HttpError } from "./http";
@@ -49,6 +50,7 @@ export async function currentUser(): Promise<Employee | null> {
     const employee = payload.sub ? await createServices().employees.findById(payload.sub) : null;
     // Sessão emitida antes da última troca de senha deixa de valer.
     if (!employee || (payload.iat ?? 0) * 1000 < employee.passwordChangedAt.getTime()) return null;
+    if (env().PUBLIC_DEMO === "1" && !demoScopeOf(employee.id)) return null;
     return employee;
   } catch {
     return null;

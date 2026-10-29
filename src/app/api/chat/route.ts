@@ -5,7 +5,7 @@
 import { runAgentTurn } from "@/agent/run-turn";
 import { sendMessageSchema, type ChatStreamEvent } from "@/contracts/chat";
 import { DomainError } from "@/domain/errors";
-import { createServices } from "@/infrastructure/container";
+import { servicesFor } from "@/server/services";
 import { handle, logError, parseBody } from "@/server/http";
 import { requireUser } from "@/server/session";
 import { conversationView } from "@/server/views";
@@ -14,7 +14,7 @@ export const maxDuration = 60; // segundos (limite da função na Vercel)
 
 export const GET = handle(async () => {
   const employee = await requireUser("employee");
-  const services = createServices();
+  const services = servicesFor(employee);
   return Response.json(await conversationView(services, await services.conversations.findOpen(employee.id)));
 });
 

@@ -1,4 +1,4 @@
-import { createServices } from "@/infrastructure/container";
+import { servicesFor } from "@/server/services";
 import { handle } from "@/server/http";
 import { liveStream } from "@/server/live-stream";
 import { requireUser } from "@/server/session";
@@ -7,7 +7,7 @@ export const maxDuration = 60; // segundos (limite da função na Vercel); o str
 
 /** GET /api/console/stream → SSE: "change" quando algo do console muda (a tela busca de novo). */
 export const GET = handle(async (request: Request) => {
-  await requireUser("analyst");
-  const { changes } = createServices();
+  const analyst = await requireUser("analyst");
+  const { changes } = servicesFor(analyst);
   return liveStream(request, () => changes.consoleVersion());
 });

@@ -15,3 +15,4 @@ Fluxo para qualquer mudança:
 | [02-agent](02-agent.md) | Como o agent decide, as tools, o trace e as garantias |
 | [03-conversa-e-console](03-conversa-e-console.md) | Estados da conversa, transferência, console do analista, API |
 | [04-arquitetura](04-arquitetura.md) | Camadas, dependências e onde cada coisa mora |
+| [05-demo-publica](05-demo-publica.md) | Isolamento de visitantes, exemplos fictícios, expiração e limites globais |

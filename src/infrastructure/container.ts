@@ -28,6 +28,8 @@ import { DrizzleTicketRepository } from "./repositories/ticket-repository";
 import { OtlpTraceExporter, telemetryConfig } from "./telemetry/otlp-exporter";
 
 export interface ServiceOptions {
+  /** Espaço derivado da identidade autenticada da demonstração. */
+  demoScope?: string;
   /** Avisado quando o sistema legado falha e a chamada é repetida. */
   onLegacyRetry?: (attempt: number) => void;
 }
@@ -38,10 +40,10 @@ export function createServices(options: ServiceOptions = {}) {
   const articles = new DrizzleArticleRepository(database);
   const messages = new DrizzleMessageRepository(database);
   const budget = new DrizzleBudgetRepository(database);
-  const legacyTickets = new FlakyTicketRepository(new DrizzleTicketRepository(database), env().LEGACY_FAILURE_RATE);
+  const legacyTickets = new FlakyTicketRepository(new DrizzleTicketRepository(database, options.demoScope), env().LEGACY_FAILURE_RATE);
 
   const tickets = new TicketService(legacyTickets, { onRetry: options.onLegacyRetry });
-  const conversationRepository = new DrizzleConversationRepository(database);
+  const conversationRepository = new DrizzleConversationRepository(database, options.demoScope);
   const conversations = new ConversationService(conversationRepository, messages);
   const drafts = new DraftService(new DrizzleDraftRepository(database), tickets, conversations, messages);
 
@@ -49,12 +51,12 @@ export function createServices(options: ServiceOptions = {}) {
   const config = env();
   const embedder = config.GOOGLE_GENERATIVE_AI_API_KEY ? new GeminiEmbedder(config.EMBEDDING_MODEL, config.GOOGLE_GENERATIVE_AI_API_KEY) : null;
   const knowledge = new KnowledgeService(articles, embedder, (error) => console.error("[embeddings]", error instanceof Error ? error.message : String(error)));
-  const suggestionRepository = new DrizzleSuggestionRepository(database);
-  const insights = new InsightsService(new DrizzleInsightsSource(database), pricePerToken, suggestionRepository);
+  const suggestionRepository = new DrizzleSuggestionRepository(database, options.demoScope);
+  const insights = new InsightsService(new DrizzleInsightsSource(database, options.demoScope), pricePerToken, suggestionRepository);
   const writer = missingApiKey(config.LLM_MODEL, config) ? null : mastraReplyWriter;
   const replySuggestions = new ReplySuggestionService(conversations, budget, writer, suggestionRepository, config.TOTAL_AGENT_TURN_LIMIT);
 
-  const changes = new DrizzleChangeFeed(database);
+  const changes = new DrizzleChangeFeed(database, options.demoScope);
   const telemetrySettings = telemetryConfig(config);
   const telemetry = telemetrySettings ? new OtlpTraceExporter(telemetrySettings) : null;
 
