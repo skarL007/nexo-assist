@@ -238,6 +238,23 @@ export const scenarios: Scenario[] = [
 
   // ── Achados do funcionário simulado de 28/10 (docs/validacao/SIMULACAO.md).
   {
+    name: "Confirmação: resposta sobre prazo não confirma o rascunho",
+    employee: ELISA,
+    turns: [
+      "Preciso de um mouse USB novo, só para mim. O atual quebrou e posso usar o touchpad por enquanto. Sem prazo hoje.",
+      "Pode me explicar o prazo",
+      "Sim, só eu fui afetada",
+      "Ok, entendi o prazo",
+    ],
+    expect: { anyTool: ["draftNewTicket"], noTicketChanges: true },
+  },
+  {
+    name: "Problema misto de computador e Outlook não atualiza notebook lento",
+    employee: ANA,
+    turns: ["Meu computador e o Outlook estão ruins desde ontem; o Outlook fecha com erro. É só comigo, uso o webmail como alternativa e não tenho prazo hoje."],
+    expect: { noUpdateDraftFor: ["INC-20311"], noTicketChanges: true },
+  },
+  {
     // power-bi: com o rascunho na tela, a resposta rápida de urgência virou "sim" e o REQ foi criado.
     name: "Confirmação: resposta rápida de urgência não confirma o rascunho",
     employee: ELISA,

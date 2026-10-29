@@ -48,7 +48,7 @@ export interface SimOutcome {
  * Mensagem que, no turno em que um chamado nasceu, conta como confirmação para o harness.
  * Independente da regra do app (domain/confirmation.ts): aqui só se exige um sinal claro.
  */
-export const LOOKS_LIKE_CONFIRMATION = /\b(sim|pode|confirm\w*|ok|isso)\b/i;
+export const LOOKS_LIKE_CONFIRMATION = /^(?!.*\?)(?!.*\b(?:não|nao|nem|mas|espera|depois|cancelar)\b)(?:\s*(?:sim|ok|okay|confirmo|confirmado|pode sim|pode|isso mesmo)\s*[.!]*\s*|.*\b(?:pode (?:criar|abrir|confirmar|mandar|registrar|enviar|atualizar|reabrir)|confirmo)\b.*)$/i;
 
 export function checkSimRun(expect: SimExpect, outcome: SimOutcome): string[] {
   const failures: string[] = [];

@@ -23,11 +23,10 @@ const BLOCKERS = [
   /\b(mas|porem|so que|entretanto)\b/,
 ];
 
-/** Sinais de confirmação. "pode" sozinho só vale no começo ("pode", "pode sim", "pode criar"). */
+/** Sinais de confirmação: concordância curta inteira, nunca o prefixo de uma resposta sobre outro assunto. */
 const CONFIRMATIONS = [
-  /^(sim|ok|okay|isso|exato|correto|perfeito|certo|beleza|fechado|positivo|confirmado)\b/,
-  /^(isso mesmo|de acordo|tudo certo|(esta|ta) (certo|correto|tudo certo|otimo|bom))\b/,
-  /^pode\b/,
+  /^(sim|ok|okay|isso|exato|correto|perfeito|certo|beleza|fechado|positivo|confirmado|pode|pode sim)$/,
+  /^(isso mesmo|de acordo|tudo certo|(esta|ta) (certo|correto|tudo certo|otimo|bom)|sim esta tudo certo)$/,
   /\bpode (criar|abrir|confirmar|mandar|registrar|seguir|enviar|atualizar|prosseguir|reabrir)\b/,
   /\bconfirm(o|a|ar|ado|ada)\b/,
 ];

@@ -25,6 +25,9 @@ describe("confirmação explícita do rascunho", () => {
   it.each([
     // Achado do funcionário simulado (power-bi): resposta rápida de urgência com o rascunho na tela.
     "Tenho alternativa / Posso aguardar",
+    "Pode me explicar o prazo",
+    "Sim, só eu fui afetada",
+    "Ok, entendi o prazo",
     "Posso aguardar",
     "Só eu",
     "Minha equipe",

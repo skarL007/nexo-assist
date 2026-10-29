@@ -75,3 +75,9 @@ Apenas TI. RH, financeiro e facilities são redirecionados sem abrir chamado.
 - **Funcionário:** ao abrir o chat (com o agent), um aviso por chamado (até 2) com "por quê?", "Falar com um analista" (manda o pedido citando o chamado) e "Dispensar" (vale para a aba). Se o sistema de chamados cair, o chat abre igual, sem o aviso.
 - **Analista:** o painel de chamados da conversa mostra os prazos com o porquê; Indicadores tem a fila "Prazos em risco agora" de todo mundo, vencidos primeiro.
 - Aceite: seed → INC-20311 da Ana (média, atualizado há 6 dias) aparece como "venceu o prazo há …" no chat dela e na fila do console, com "Prioridade Média: resposta em até 3 dias úteis".
+# Regressões de integridade (29/10/2026)
+
+- Com rascunho pendente, “Pode me explicar o prazo”, “Sim, só eu fui afetada” e “Ok, entendi o prazo” não autorizam mutação. Consentimento por texto exige uma confirmação curta e inequívoca ou um pedido explícito da ação; o botão Confirmar continua disponível.
+- Uma referência explícita a falha de Outlook/webmail não complementa um chamado de Hardware, mesmo quando o modelo classifica o relato misto como Hardware ou Software. O serviço deve recusar a proposta antes de gravar comentário; a mesma validação vale ao editar o comentário do rascunho.
+- O avaliador independente deve reprovar criação nos turnos das três frases ambíguas acima, em vez de contar qualquer “pode”, “sim” ou “ok” como consentimento.
+
