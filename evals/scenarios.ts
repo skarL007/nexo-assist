@@ -278,10 +278,12 @@ export const scenarios: Scenario[] = [
   },
   {
     // power-bi: com o rascunho na tela, a resposta rápida de urgência virou "sim" e o REQ foi criado.
+    // "Já procurei no portal" fecha o autoatendimento do kb-software: sem isso, o GPT-6 Luna pergunta
+    // (corretamente) se ela olhou o portal e o rascunho que o cenário precisa nunca aparece.
     name: "Confirmação: resposta rápida de urgência não confirma o rascunho",
     employee: ELISA,
     turns: [
-      "Preciso do Power BI Desktop instalado no meu notebook da empresa. É só para mim e não é urgente, dá para esperar alguns dias.",
+      "Preciso do Power BI Desktop instalado no meu notebook da empresa. Já procurei no portal de softwares e não está lá. É só para mim e não é urgente, dá para esperar alguns dias.",
       "Tenho alternativa / Posso aguardar",
     ],
     expect: { anyTool: ["draftNewTicket"], noTicketChanges: true },
