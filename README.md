@@ -12,7 +12,7 @@ Cada resposta do agent mostra **o que ele entendeu, o que fez e por quê**: pass
 
 [baixar o mp4 (5:28)](docs/demo/nexo-assist-demo.mp4)
 
-O vídeo mostra os números da rodada da tarde de 28/10, com o `outlook-direto` ainda falhando; essa falha foi corrigida depois, e os números atuais estão em [Como garanti a qualidade](#como-garanti-a-qualidade-das-decisões) e em [SIMULACAO](docs/validacao/SIMULACAO.md).
+O vídeo mostra os números da tarde de 28/10. Depois dele: o `outlook-direto` e as três falhas da rodada 3 foram corrigidos em código (404 testes unitários), e o CircleCI, o Docker Hub e o Komodo, que no vídeo aparecem como fluxo configurado, passaram a rodar de verdade em 29/10. Os números atuais estão em [Como garanti a qualidade](#como-garanti-a-qualidade-das-decisões) e em [SIMULACAO](docs/validacao/SIMULACAO.md).
 
 **Demonstração (5:28, com música original de fundo e efeitos sonoros, sem narração):** clique na imagem para assistir no navegador (o GitHub não toca o mp4 do repositório na página). As partes do app são gravações reais com o Gemini: trechos longos aparecem acelerados no máximo 2× e sinalizados ("acelerado N×"), e as esperas pelo modelo foram cortadas, com um aviso do tempo real ("aguardando o modelo · N s"). Diagramas e números são animações, e cada número mostra a fonte no repositório. A música é original, gerada por código para este vídeo. Efeitos sonoros: Pixabay (licença de conteúdo do Pixabay).
 
