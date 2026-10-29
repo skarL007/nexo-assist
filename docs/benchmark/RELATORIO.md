@@ -278,7 +278,7 @@ O que a documentação diz e o que acontece não coincidem em dois casos: o Qwen
 
 ### O que mudou no app para o cache funcionar
 
-O Mastra monta cada chamada assim: `[system: instruções] → [system: briefing do turno] → histórico`, com as 10 tools. O briefing trazia a **hora com minutos**, então o meio do prompt mudava a cada minuto e invalidava o cache de tudo que vinha depois. Duas mudanças, no commit `bd21b04`:
+O Mastra monta cada chamada assim: `[system: instruções] → [system: briefing do turno] → histórico`, com as 10 tools. O briefing trazia a **hora com minutos**, então o meio do prompt mudava a cada minuto e invalidava o cache de tudo que vinha depois. Duas mudanças, no commit `9bd52a3`:
 
 1. **Briefing com a hora cheia** ([`turn-briefing.ts`](../../src/agent/turn-briefing.ts), `formatHour`: "ter., 27/10, 16h"): o prefixo fica idêntico entre os turnos da mesma hora. O briefing serve para o agent saber o dia da semana e o horário comercial, e para isso a resolução de hora basta.
 2. **`session_id` = id da conversa** no pedido ao OpenRouter ([`model-config.ts`](../../src/agent/model-config.ts)): as chamadas de uma conversa vão para o mesmo provedor, que é onde o cache está.

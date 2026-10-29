@@ -52,10 +52,10 @@ Validação local em 28/10/2026, com o `main` buildado a partir de um `git archi
 
 **Primeira execução real (28/10/2026).** O CircleCI rodou pela primeira vez e pegou dois problemas que a máquina local escondia:
 
-1. **`checks` falhou com `TS2304: Cannot find name 'LayoutProps'`.** O Next 16 gera esse tipo global em `.next/types`, que existe na minha máquina, mas não num clone limpo. Reproduzi num clone limpo e corrigi com `"typecheck": "next typegen && tsc --noEmit"` (commit `7d0d2ca`). O `npm run verify` local nunca teria pego isso.
+1. **`checks` falhou com `TS2304: Cannot find name 'LayoutProps'`.** O Next 16 gera esse tipo global em `.next/types`, que existe na minha máquina, mas não num clone limpo. Reproduzi num clone limpo e corrigi com `"typecheck": "next typegen && tsc --noEmit"` (commit `bb5575b`). O `npm run verify` local nunca teria pego isso.
 2. **`image-publish` falhou com `DOCKERHUB_USERNAME: unbound variable`**, porque o contexto `dockerhub` ainda não existia. Criei o contexto com a restrição de branch e o dono colocou o token.
 
-Na nova execução do pipeline #2, todos os jobs passaram: `checks`, `e2e`, build, prova de fumaça e publicação. O Docker Hub tem `skarl007/nexo-assist` com as tags `latest` e `7d0d2ca` (115,5 MB comprimida).
+Na nova execução do pipeline #2, todos os jobs passaram: `checks`, `e2e`, build, prova de fumaça e publicação. O Docker Hub tem `skarl007/nexo-assist` com as tags `latest` e a do SHA do commit daquela execução (115,5 MB comprimida).
 
 **Primeiro Deploy no Komodo (29/10/2026).** Fluxo completo: Variables criadas, sync `circleci` executado (criou a stack e o procedure), Deploy pela interface. O contêiner ficou `healthy` em 11 segundos. O log mostrou as migrações aplicadas e o seed no banco vazio. Em http://localhost:3300, o login da funcionária de exemplo funcionou, e o agent respondeu pela central de ajuda com o Gemini, com o painel "por quê?".
 

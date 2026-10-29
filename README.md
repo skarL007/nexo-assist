@@ -6,51 +6,33 @@ Agent de atendimento do service desk de TI da Nexo. O funcionário descreve o pr
 
 Cada resposta do agent mostra **o que ele entendeu, o que fez e por quê**: passos ao vivo, decisão com confiança, chamadas de tool com entrada e saída, regras que agiram, tokens e latência.
 
+**Demo pública:** https://nexo-assist-puce.vercel.app. Na tela de login, entre como **Ana · funcionária** ou **Rafael · analista** (um clique, dados fictícios, qualquer senha). Cada navegador recebe um **espaço próprio**, com uma cópia dos dados de exemplo: o que você fizer não aparece para outro avaliador. Para controlar o custo, a demo aceita até **100 mensagens por dia**, somando todos os visitantes. Depois disso, o chat avisa que o limite de hoje acabou.
+
+**Vídeo (5:28):** [assistir no navegador](https://skarl007.github.io/nexo-assist/#video) · [estudo de caso](https://skarl007.github.io/nexo-assist/)
+
 **Stack:** TypeScript estrito · Next.js 16 (App Router) · Mastra (agent) · Google Gemini 3.5 Flash · Drizzle + libSQL (SQLite local, Turso no deploy) · Redux Toolkit + RTK Query · Zod · shadcn/ui + Tailwind · Vitest · Playwright.
 
-[![Vídeo de demonstração do Nexo Assist (5:28)](docs/demo/poster.png)](https://skarl007.github.io/nexo-assist/#video)
+![Painel "por quê?" aberto num rascunho de chamado: o que o agent entendeu, a intenção, a confiança, o motivo, as ações com resultado e as regras do sistema que agiram](docs/demo/por-que.jpg)
 
-[baixar o mp4 (5:28)](docs/demo/nexo-assist-demo.mp4)
-
-O vídeo mostra os números da tarde de 28/10. Depois dele: o `outlook-direto` e as três falhas da rodada 3 foram corrigidos em código (404 testes unitários), e o CircleCI, o Docker Hub e o Komodo, que no vídeo aparecem como fluxo configurado, passaram a rodar de verdade em 29/10. Os números atuais estão em [Como garanti a qualidade](#como-garanti-a-qualidade-das-decisões) e em [SIMULACAO](docs/validacao/SIMULACAO.md).
-
-**Demonstração (5:28, com música original de fundo e efeitos sonoros, sem narração):** clique na imagem para assistir no navegador (o GitHub não toca o mp4 do repositório na página). As partes do app são gravações reais com o Gemini: trechos longos aparecem acelerados no máximo 2× e sinalizados ("acelerado N×"), e as esperas pelo modelo foram cortadas, com um aviso do tempo real ("aguardando o modelo · N s"). Diagramas e números são animações, e cada número mostra a fonte no repositório. A música é original, gerada por código para este vídeo. Efeitos sonoros: Pixabay (licença de conteúdo do Pixabay).
-
-- 0:00 Abertura: o problema, a solução e o que há de novo
-- 0:25 1. O funcionário resolve sozinho: central de ajuda, "Isso resolveu?" e o painel "por quê?"
-- 1:01 2. Prazo em risco e incidente em massa
-- 1:53 3. Console do analista: relatório, sugestão de resposta, tempo real (SSE) e indicadores
-- 2:56 4. Busca híbrida na central
-- 3:28 5. Qualidade: testes, evals, funcionário simulado (pass^k) e red team
-- 4:10 6. Arquitetura
-- 4:41 7. Entrega: imagem Docker, CircleCI e Komodo (fluxo configurado, em diagrama)
-- 5:16 8. Os números
-
-**Demo pública:** https://nexo-assist-puce.vercel.app. Na tela de login, entre como **Ana · funcionária** ou **Rafael · analista** (um clique, dados fictícios). Para controlar o custo, a demo aceita até **100 mensagens por dia**, somando todos os visitantes; depois disso o chat avisa que o limite de hoje acabou.
-
-### Comece por aqui (3 minutos)
-
-1. **Veja o agent decidir:** o [roteiro de 3 minutos](#roteiro-de-3-minutos) no app, com o painel "por quê?" em cada resposta.
-2. **Veja o que é regra em código, não prompt:** a tabela [O que é garantido em código](#o-que-é-garantido-em-código-não-depende-do-prompt).
-3. **Veja as provas:** [`docs/validacao/`](docs/validacao/README.md). Cada melhoria tem pergunta, método, números e limites:
-   - busca: 84% → 94%;
-   - tempo real: ~1,6 s → ~0,4 s;
-   - red-team: 21/21, mapeado ao OWASP.
-4. **Rode tudo sem LLM:** `npm run verify` (tipos, lint, 404 testes unitários e 39 E2E).
-5. **Por que existe cada peça:** a [pesquisa de fronteira](docs/pesquisa/FRONTEIRA.md), com o que ServiceNow, Zendesk, Intercom e Atlassian fazem, e o que virou código aqui.
+*Cada resposta do agent tem um "por quê?": o que ele entendeu, quais ferramentas chamou e quais regras do sistema interferiram. Captura da demo pública.*
 
 ---
 
-## Sumário
+## Onde cada pedido do desafio está
 
-1. [Como rodar](#como-rodar) · [Roteiro de 3 minutos](#roteiro-de-3-minutos)
-2. [Arquitetura](#arquitetura)
-3. [Como o agent decide](#como-o-agent-decide)
-4. [Como garanti a qualidade das decisões](#como-garanti-a-qualidade-das-decisões)
-5. [Escolha do modelo](#escolha-do-modelo)
-6. [Deploy e segurança](#deploy-e-segurança)
-7. [Trade-offs](#trade-offs)
-8. [O que eu faria com mais tempo](#o-que-eu-faria-com-mais-tempo)
+| O desafio pede | Onde ver |
+|---|---|
+| Login, chat, cards, seleção de chamado, rascunho, respostas rápidas, limite de 30 mensagens | [Roteiro de 3 minutos](#roteiro-de-3-minutos) · `src/features/chat/`, `src/components/conversation/` |
+| Agent que decide seguindo o Anexo A | [Como o agent decide](#como-o-agent-decide) · [O que é garantido em código](#o-que-é-garantido-em-código-não-depende-do-prompt) |
+| Serviço de chamados simulado, separado, com legado instável | [Arquitetura](#arquitetura) · `src/application/ticket-service.ts`, `FlakyTicketRepository` |
+| Transferência e console do analista (assumir, devolver, encerrar) | [Estados da conversa](#estados-da-conversa) · `src/features/console/` |
+| **Visibilidade das decisões** | Botão **"por quê?"** em cada resposta (`components/conversation/decision-details.tsx`) e passos acima da resposta (`agent-steps.tsx`) |
+| Persistência após reinício | SQLite/Turso. A prova de fumaça do CI reinicia o container e confere os dados |
+| Rodar com poucos comandos + `.env.example` | [Como rodar](#como-rodar) |
+| Como garanti a qualidade das decisões | [Qualidade](#como-garanti-a-qualidade-das-decisões) |
+| Escolha do modelo | [Escolha do modelo](#escolha-do-modelo) |
+| Deploy com chaves protegidas e uso limitado | [Deploy e segurança](#deploy-e-segurança) |
+| Trade-offs e o que faria com mais tempo | [Trade-offs](#trade-offs) · [Com mais tempo](#o-que-eu-faria-com-mais-tempo) |
 
 ---
 
@@ -65,11 +47,21 @@ npm run db:setup              # cria o banco local (local.db) com os dados de ex
 npm run dev                   # http://localhost:3000 (outra porta: npm run dev -- -p 3001)
 ```
 
-Ou com Docker, sem instalar Node: `docker build -t nexo-assist . && docker run --rm -p 127.0.0.1:3000:3000 -e AUTH_SECRET=SEGREDO_COM_32_OU_MAIS_CARACTERES -e GOOGLE_GENERATIVE_AI_API_KEY=SUA_CHAVE -v nexo-data:/data nexo-assist` (o banco fica no volume e recebe os dados de exemplo no primeiro start; gere o segredo com o comando do `.env.example` e abra http://localhost:3000 no Chrome, Edge ou Firefox).
+Ou com Docker, sem instalar Node:
+
+```bash
+docker build -t nexo-assist .
+docker run --rm -p 127.0.0.1:3000:3000 \
+  -e AUTH_SECRET=SEGREDO_COM_32_OU_MAIS_CARACTERES \
+  -e GOOGLE_GENERATIVE_AI_API_KEY=SUA_CHAVE \
+  -v nexo-data:/data nexo-assist
+```
+
+O banco fica no volume e recebe os dados de exemplo no primeiro start. Gere o segredo com o comando do `.env.example` e abra http://localhost:3000 no Chrome, Edge ou Firefox.
 
 Sem a chave, o login, o console do analista e os testes funcionam; o chat avisa que falta configurar `GOOGLE_GENERATIVE_AI_API_KEY`.
 
-Qualquer senha funciona para os usuários de exemplo (regra do desafio). Na tela de login há botões de acesso rápido.
+Qualquer senha funciona para os usuários de exemplo (regra do desafio). A tela de login tem botões de acesso rápido.
 
 | Quem | E-mail | O que dá para ver |
 |---|---|---|
@@ -80,29 +72,32 @@ Qualquer senha funciona para os usuários de exemplo (regra do desafio). Na tela
 Outros comandos:
 
 ```bash
-npm test                          # 404 testes unitários — sem LLM
+npm run verify                    # tipos + lint + unitários + E2E + E2E da demo — sem LLM
+npm test                          # 427 testes unitários em 62 arquivos — sem LLM
 npx playwright install chromium   # só na primeira vez, antes do E2E
 npm run test:e2e                  # 39 testes E2E contra o build de produção — sem LLM
+npm run test:e2e:demo             # isolamento entre visitantes na demo pública — sem LLM
 npm run eval                      # 32 cenários de decisão do agent com o modelo real (8 de ataque)
 npm run eval:sim                  # funcionário simulado por um modelo, pass^k (τ-bench)
 npm run eval:busca                # busca na central: palavras-chave × híbrida, 50 perguntas
 npm run eval:sugestao             # sugestão de resposta do analista com o modelo real
 npm run otel:local                # coletor OTLP local para ver a telemetria dos turnos
 npm run db:seed                   # volta os dados ao estado inicial
-npm run typecheck && npm run lint
 ```
 
-Para rodar o build local (`npm run build && npm start`), preencha também `AUTH_SECRET` no `.env` (o comando para gerar está no [`.env.example`](.env.example)). Todas as variáveis estão documentadas ali e são validadas com Zod em [`src/config/env.ts`](src/config/env.ts); só ele e o [`proxy.ts`](src/proxy.ts) (porta de acesso) leem `process.env` na aplicação.
+Para rodar o build local (`npm run build && npm start`), preencha também `AUTH_SECRET` no `.env` (o comando que gera o valor está no [`.env.example`](.env.example)). Todas as variáveis estão documentadas ali e são validadas com Zod em [`src/config/env.ts`](src/config/env.ts). Na aplicação, só esse arquivo e o [`proxy.ts`](src/proxy.ts) (porta de acesso) leem `process.env`.
 
 ### Roteiro de 3 minutos
 
 Entre como **Ana** e escreva:
 
 1. **"Qual o horário do service desk?"** → responde pela central de ajuda. Clique em **"por quê?"** para ver a intenção, a confiança, as tools e as regras.
-2. **"Como está o chamado do notebook?"** → encontra o INC-20311 sem o número, mostra que o prazo venceu e oferece um analista.
+2. **"Como está o chamado do notebook?"** → acha o chamado sem o número (INC-20311 no seed local), mostra que o prazo venceu e oferece um analista.
 3. **"Minha VPN dá erro 809, uso Windows 11"** → o artigo vale só para Windows 10, então ele pergunta o que falta e monta um **rascunho**. Use **"Alterar detalhes"** (a prioridade e o prazo mudam ao vivo) e **Confirmar**.
 4. **"Quero falar com um analista"** → a conversa vai para a fila. Entre como **Rafael**: abra o **Relatório** da conversa (o que a pessoa precisa, o que o agent já fez e o que está pendente), assuma, use **"Sugerir resposta"** (o modelo escreve, você revisa) e devolva ao agent. A mensagem chega ao chat da Ana em menos de 1 s (SSE).
-5. Ainda como **Rafael**, repare na fila: o chip **"Frustração alta"** da Carla e o aviso de **possível incidente em massa** (três pessoas com o sistema de ponto fora do ar). Pela regra, o aviso dura 4 horas úteis depois do seed; para vê-lo de novo, rode `npm run db:seed`. Em **Indicadores**: a resolução honesta (confirmada × presumida, sem contar chamado aberto nem quem voltou com o mesmo problema), as lacunas da central e os prazos em risco com a conta explicada.
+5. Ainda como **Rafael**, olhe a fila: o chip **"Frustração alta"** da Carla e o aviso de **possível incidente em massa** (três pessoas com o sistema de ponto fora do ar). Pela regra, o aviso dura 4 horas úteis depois do seed; para vê-lo de novo, rode `npm run db:seed`. Em **Indicadores** estão a resolução honesta (confirmada × presumida, sem contar chamado aberto nem quem voltou com o mesmo problema), as lacunas da central e os prazos em risco com a conta explicada.
+
+Na demo pública, os títulos, os prazos e o roteiro são os mesmos do seed, mas os códigos dos chamados podem ser outros, porque cada espaço de visitante recebe códigos novos ([spec 05](docs/specs/05-demo-publica.md)).
 
 ---
 
@@ -116,7 +111,7 @@ flowchart LR
   end
 
   subgraph Next["Next.js 16 (Vercel)"]
-    PX["proxy.ts<br/>porta de acesso por token"]
+    PX["proxy.ts<br/>porta de acesso"]
     API["app/api<br/>Zod + sessão JWT"]
     AG["agent/<br/>Mastra + 10 tools"]
     APP["application/<br/>TicketService · ConversationService · DraftService"]
@@ -155,14 +150,14 @@ src/
 └── components/       UI compartilhada: mensagens, cards, trace, shadcn/ui
 ```
 
-- **Dependências só apontam para dentro** (`app → agent/application → domain`). O domínio não conhece Next, Mastra nem banco, então prioridade, prazo, reabertura e transições são testados sem mock. A aplicação depende de **portas** ([`application/ports.ts`](src/application/ports.ts)); um único arquivo liga as peças: [`infrastructure/container.ts`](src/infrastructure/container.ts).
-- **O serviço de chamados é separado do agent.** As tools chamam o `TicketService`, o mesmo das rotas e dos botões. O "sistema legado" é um *decorator* (`FlakyTicketRepository`) que falha aleatoriamente (`LEGACY_FAILURE_RATE`, 15%). O serviço tenta de novo, e cada nova tentativa aparece no trace. Se a falha vier depois de o chamado ser gravado, nada é desfeito, para o próximo Confirmar não duplicar.
+- **As dependências só apontam para dentro** (`app → agent/application → domain`). O domínio não conhece Next, Mastra nem banco, então prioridade, prazo, reabertura e transições são testados sem mock. A aplicação depende de **portas** ([`application/ports.ts`](src/application/ports.ts)), e um único arquivo liga as peças: [`infrastructure/container.ts`](src/infrastructure/container.ts). As regras de importação por camada e um guia "onde mexer para…" estão em [`docs/specs/04-arquitetura.md`](docs/specs/04-arquitetura.md).
+- **O serviço de chamados é separado do agent.** As tools chamam o `TicketService`, o mesmo das rotas e dos botões. O "sistema legado" é um *decorator* (`FlakyTicketRepository`) que falha aleatoriamente (`LEGACY_FAILURE_RATE`, 15%). O serviço tenta de novo, e cada nova tentativa aparece no trace. Se a falha vier depois de o chamado ser gravado, nada é desfeito, para que o próximo Confirmar não duplique.
 - **Persistência:** conversas, mensagens (com cards e trace), rascunhos, chamados e o estado de cada conversa ficam no SQLite/Turso e sobrevivem a um restart. Ao voltar outro dia, o funcionário cai na conversa aberta dele.
 - **Tempo real:** `POST /api/chat` responde em NDJSON (`employee_message`, `step`, `card`, `text`, `done`), e o thunk do Redux despacha cada evento. O console e o chat (enquanto um analista atende) abrem um stream SSE. O servidor confere uma assinatura barata do banco a cada 1 s e avisa "mudou"; a tela busca de novo pelas rotas de sempre. A mensagem chega em ~0,3–0,6 s de mediana, contra ~1,6 s no polling antigo, que continua como plano B ([medição](docs/validacao/TEMPO-REAL.md)).
 
 ### Estados da conversa
 
-O agent só responde em **Com o agent**. Nos outros estados a mensagem é salva e ele fica em silêncio. As transições ficam numa tabela em [`domain/conversation.ts`](src/domain/conversation.ts), e o banco só aceita a mudança se o estado ainda for o esperado, então analista e agent não se atropelam.
+O agent só responde no estado **Com o agent**. Nos outros estados, a mensagem é salva e ele fica em silêncio. As transições ficam numa tabela em [`domain/conversation.ts`](src/domain/conversation.ts), e o banco só aceita a mudança se o estado ainda for o esperado, então analista e agent não se atropelam.
 
 ```mermaid
 stateDiagram-v2
@@ -183,7 +178,7 @@ stateDiagram-v2
   closed --> [*]
 ```
 
-A transferência acontece por quatro motivos: o funcionário pediu, caso crítico, chamado com prazo vencido ou o agent sem segurança mesmo depois de perguntar.
+A transferência acontece por quatro motivos, como no Anexo A: o funcionário pediu, caso crítico, chamado com prazo vencido ou o agent sem segurança mesmo depois de perguntar. Ela leva um resumo do caso.
 
 ---
 
@@ -222,53 +217,64 @@ flowchart TD
 
 ### O que é garantido em código (não depende do prompt)
 
-O modelo decide **o que fazer**. As regras do service desk ficam em código testado, para que um prompt mal interpretado não quebre uma regra.
+A decisão de projeto mais importante foi esta: **o modelo decide o que fazer, e as regras do service desk ficam em código testado**. Assim, um prompt mal interpretado não quebra uma regra.
 
 | Regra (Anexo A) | Onde |
 |---|---|
 | Prioridade = impacto × urgência (o modelo informa os dois, o código calcula) | [`domain/priority.ts`](src/domain/priority.ts) |
 | Incidente "sem urgência" sem nada dito sobre alternativa: antes do rascunho, o código mostra "Tenho alternativa / Não tenho alternativa" (uma vez, dentro do limite de perguntas), porque a resposta muda a prioridade | [`domain/workaround.ts`](src/domain/workaround.ts) |
-| Prazo em horas/dias úteis (seg–sex, 8h–18h; crítico 1h corrida) | [`domain/business-time.ts`](src/domain/business-time.ts) |
-| Só cria/atualiza depois da confirmação; `confirmDraft` só aceita rascunho já mostrado, e a confirmação é atômica (clique duplo não cria dois chamados) | [`application/draft-service.ts`](src/application/draft-service.ts) |
-| Sem duplicidade: procura chamado aberto ou resolvido há até 7 dias do mesmo tipo, categoria e com palavra relevante em comum no título | `TicketService.findPossibleDuplicates` |
-| "Alterar detalhes" no card: o servidor recalcula a prioridade (nunca a do navegador) e confere a duplicidade de novo, sem chamar o modelo | [`domain/draft-revision.ts`](src/domain/draft-revision.ts) |
+| Prazo em horas/dias úteis (seg–sex, 8h–18h; crítico 1 h corrida) | [`domain/business-time.ts`](src/domain/business-time.ts) |
+| Só cria ou atualiza depois da confirmação; `confirmDraft` só aceita rascunho já mostrado, e a confirmação é atômica (clique duplo não cria dois chamados) | [`application/draft-service.ts`](src/application/draft-service.ts) |
+| Confirmação só explícita: frases ambíguas ("pode me explicar o prazo?") e respostas que só identificam o chamado ("é esse mesmo") não confirmam; sem confirmação explícita na mensagem, o `confirmDraft` nem fica disponível para o modelo | [`domain/confirmation.ts`](src/domain/confirmation.ts), [`agent/step-policy.ts`](src/agent/step-policy.ts) |
+| Sem duplicidade: procura chamado aberto, ou resolvido há até 7 dias, do mesmo tipo e categoria e com palavra relevante em comum no título | `TicketService.findPossibleDuplicates` |
+| Complemento só no chamado do mesmo assunto (ex.: um relato de Outlook não entra no chamado do notebook) | `DraftService` (`assertSameProblem`) |
+| "Alterar detalhes" no card: o servidor recalcula a prioridade (nunca usa a do navegador) e confere a duplicidade de novo, sem chamar o modelo | [`domain/draft-revision.ts`](src/domain/draft-revision.ts) |
 | Reabrir só até 7 dias | [`domain/ticket.ts`](src/domain/ticket.ts) (`canReopen`) |
 | Sem segurança: pergunta uma vez; se continuar, transfere sozinho | [`domain/conversation.ts`](src/domain/conversation.ts) (`shouldHandOffForLowConfidence`) |
 | Chamado crítico confirmado → transfere sozinho | `DraftService.confirm` |
 | Agent mudo com analista; depois de transferir, não chama mais tools | `run-turn.ts` (`agentCanReply`), [`agent/step-policy.ts`](src/agent/step-policy.ts) |
-| Relatório da conversa para o analista: montado do histórico e dos traces, sem chamar o modelo (não inventa nem gasta o teto) | [`domain/conversation-report.ts`](src/domain/conversation-report.ts) |
-| Incidente em massa: 3+ outras pessoas com o mesmo problema nas últimas 4 h úteis → impacto sobe para "equipe" e a prioridade é recalculada, sem revelar quem relatou | [`domain/known-issue.ts`](src/domain/known-issue.ts) |
-| Frustração alta (ou moderada duas vezes) → o botão "Falar com um analista" aparece; nunca transfere sozinho nem mexe na prioridade | [`domain/frustration.ts`](src/domain/frustration.ts), `run-turn.ts` |
-| Busca na central: híbrida (sentido + palavras), abstém quando o 1º não se destaca do 2º; sem chave, só palavras | [`domain/hybrid-search.ts`](src/domain/hybrid-search.ts) |
-| Aviso de prazo em risco (75% do prazo útil) com a conta explicada | [`domain/sla-risk.ts`](src/domain/sla-risk.ts) |
-| Modelo reserva: se o Gemini 3.5 Flash falhar (ex.: 503), o passo vai para o Flash Lite e o trace diz quem respondeu; o custo usa o preço de quem respondeu | [`agent/model-fallback.ts`](src/agent/model-fallback.ts) |
+| Relatório da conversa para o analista, montado do histórico e dos traces, sem chamar o modelo (não inventa nem gasta o teto) | [`domain/conversation-report.ts`](src/domain/conversation-report.ts) |
+| Incidente em massa: 3+ outras pessoas com o mesmo problema nas últimas 4 h úteis → o impacto sobe para "equipe" e a prioridade é recalculada, sem revelar quem relatou | [`domain/known-issue.ts`](src/domain/known-issue.ts) |
+| Frustração alta (ou moderada duas vezes) → aparece o botão "Falar com um analista"; nunca transfere sozinho nem mexe na prioridade | [`domain/frustration.ts`](src/domain/frustration.ts), `run-turn.ts` |
+| Busca na central: híbrida (sentido + palavras); abstém-se quando o 1º resultado não se destaca do 2º; sem chave, só palavras | [`domain/hybrid-search.ts`](src/domain/hybrid-search.ts) |
+| Aviso de prazo em risco (75% do prazo útil), com a conta explicada | [`domain/sla-risk.ts`](src/domain/sla-risk.ts) |
+| Modelo reserva: se o Gemini 3.5 Flash falhar (ex.: 503), o passo vai para o Flash Lite, e o trace diz quem respondeu; o custo usa o preço de quem respondeu | [`agent/model-fallback.ts`](src/agent/model-fallback.ts) |
 | Entendimento registrado uma vez por turno: chamadas paralelas repetidas não transferem nem avisam de novo | [`agent/turn-context.ts`](src/agent/turn-context.ts) (`recordDecision`) |
 | Privacidade: o funcionário vem do cookie assinado, nunca de argumento do modelo; chamado de outra pessoa responde "não encontrado" | [`agent/turn-context.ts`](src/agent/turn-context.ts), `TicketService.getMine` |
 
 O [`step-policy.ts`](src/agent/step-policy.ts) segue o padrão *action-selector* da literatura de defesa contra injeção ([arXiv 2506.08837](https://arxiv.org/abs/2506.08837)): o código decide quais tools existem em cada passo, e o modelo só escolhe entre elas. Um texto malicioso pode mudar o que o modelo *quer* fazer, mas não o que ele *consegue* fazer.
 
-O prompt ([`agent/instructions.ts`](src/agent/instructions.ts)) cuida só da conversa: perguntar uma coisa por vez, não perguntar o que a mensagem já disse, oferecer respostas rápidas e redirecionar o que não é de TI (falha técnica em sistema de outra área continua sendo TI).
+O prompt ([`agent/instructions.ts`](src/agent/instructions.ts)) cuida só da conversa: perguntar uma coisa por vez, não perguntar o que a mensagem já disse, oferecer respostas rápidas e redirecionar o que não é de TI. Falha técnica em sistema de outra área continua sendo TI.
 
 ---
 
 ## Como garanti a qualidade das decisões
 
+Teste unitário não prova que um LLM decide bem, então a qualidade tem quatro camadas. As duas primeiras rodam sem modelo, a cada push. As outras duas usam o Gemini de verdade e rodam à mão, porque custam dinheiro.
+
 | Camada | O que cobre | Comando |
 |---|---|---|
-| **Testes unitários** (Vitest, 404) | prazos com fim de semana, matriz de prioridade, pergunta sobre alternativa antes da prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória e só explícita, prazo × necessidade, assunto do chamado, categoria E-mail, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, modelo reserva e o estimador pass^k | `npm test` |
-| **E2E** (Playwright, 39) | login (inclusive SSO contra um provedor OIDC falso), permissões, transferência de ponta a ponta, relatório, sugestão de resposta, indicadores, prazos em risco, incidente em massa, frustração, tempo real com latência medida, estados de erro e a página 404, contra o build de produção | `npm run test:e2e` |
-| **Evals** (32 cenários, modelo real; 31/32 na rodada de 29/10, com o "Reabrir chamado resolvido" corrigido e 3/3 repetido; a falha, de impacto no incidente em massa, deu 3/3 repetida e está em [validação](docs/validacao/README.md)) | intenção, tools esperadas e proibidas, transferência (e quando *não* transferir), caso crítico, reabertura, escopo de TI, vazamento de dados, incidente em massa, frustração, os achados do funcionário simulado e 8 ataques mapeados ao OWASP ([red-team](docs/validacao/RED-TEAM.md)) | `npm run eval` |
-| **Funcionário simulado** (pass^k, 10 personas; em 28/10, pass^1 0,72 → 0,93 → 0,93 e pass^3 0,50 → 0,80 → 0,80 nas três rodadas, a terceira com uma persona repetida depois de corrigida; o `outlook-direto` foi de 2/3 para 3/3) | um modelo faz o papel do funcionário, com fatos que só conta se perguntarem, e clica em Confirmar, Descartar ou numa resposta rápida; o estado no banco é conferido em k execuções, cada uma a partir do seed ([resultado e falhas](docs/validacao/SIMULACAO.md)) | `npm run eval:sim` |
-| **Provas de eficácia** | busca híbrida 84% → 94% ([BUSCA](docs/validacao/BUSCA.md)); tempo real ~0,4 s × ~1,6 s ([TEMPO-REAL](docs/validacao/TEMPO-REAL.md)); telemetria e SSO ([OBSERVABILIDADE-E-SSO](docs/validacao/OBSERVABILIDADE-E-SSO.md)) | `docs/validacao/` |
-| **Trace em toda resposta** | qualquer decisão pode ser auditada na própria interface e no console do analista | — |
+| **Testes unitários** (Vitest, 427 em 62 arquivos) | prazos com fim de semana, matriz de prioridade, pergunta sobre alternativa antes da prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória e só explícita, prazo × necessidade, assunto do chamado, categoria E-mail, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, espaço isolado da demo, modelo reserva e o estimador pass^k | `npm test` |
+| **E2E** (Playwright, 39 + 1 da demo) | login (inclusive SSO contra um provedor OIDC falso), permissões, transferência de ponta a ponta, relatório, sugestão de resposta, indicadores, prazos em risco, incidente em massa, frustração, tempo real com latência medida, estados de erro e a página 404, contra o build de produção. A suíte da demo sobe o app com `PUBLIC_DEMO=1` e prova que o visitante B não lê, não assume e não pede sugestão da conversa do visitante A | `npm run test:e2e` · `npm run test:e2e:demo` |
+| **Evals** (32 cenários, modelo real) | intenção, tools esperadas e proibidas, transferência (e quando *não* transferir), caso crítico, reabertura, escopo de TI, vazamento de dados, incidente em massa, frustração, os achados do funcionário simulado e 8 ataques mapeados ao OWASP ([red-team](docs/validacao/RED-TEAM.md)) | `npm run eval` |
+| **Funcionário simulado** (pass^k, 10 personas) | um modelo faz o papel do funcionário, com fatos que só conta se perguntarem, e clica em Confirmar, Descartar ou numa resposta rápida; o estado no banco é conferido em k execuções, cada uma a partir do seed ([resultado e falhas](docs/validacao/SIMULACAO.md)) | `npm run eval:sim` |
 
-O CI roda no [CircleCI](.circleci/config.yml) a cada push: tipos, lint, testes unitários, E2E e o build da imagem Docker com uma prova de fumaça (migra, cria os dados de exemplo, faz login e reinicia sem perder dados), sem segredos do app nem chave de LLM. No `main`, a imagem aprovada vai para o [Docker Hub](https://hub.docker.com/r/skarl007/nexo-assist) com a tag `latest` e o sha do commit, e o Komodo da minha máquina a puxa e reimplanta sozinho (por pull, sem expor nada; rodando desde 29/10/2026). Os evals ficam fora porque chamam o modelo real. Na primeira execução, o CI pegou um erro que a minha máquina escondia: o tipo `LayoutProps` que o Next 16 gera em `.next/` não existe num clone limpo. A correção foi rodar `next typegen` antes do `tsc` ([DEPLOY](docs/DEPLOY.md#docker-circleci-e-komodo)).
+**Resultados com o modelo real:**
 
-Localmente, `npm run verify` roda tipos, lint, testes e E2E antes de cada push.
+- **Evals:** 31/32 na rodada de 29/10. O cenário "Reabrir chamado resolvido" foi corrigido e passou 3/3 repetido. A falha que sobrou (impacto no incidente em massa) deu 3/3 quando repetida e está registrada em [validação](docs/validacao/README.md).
+- **Funcionário simulado (28/10):** pass^1 0,72 → 0,93 → 0,93 e pass^3 0,50 → 0,80 → 0,80 nas três rodadas (a terceira com uma persona repetida depois de corrigida). O `outlook-direto` foi de 2/3 para 3/3.
+- **Outras provas:** busca híbrida 84% → 94% ([BUSCA](docs/validacao/BUSCA.md)); tempo real ~0,4 s × ~1,6 s ([TEMPO-REAL](docs/validacao/TEMPO-REAL.md)); red-team 21/21; telemetria e SSO ([OBSERVABILIDADE-E-SSO](docs/validacao/OBSERVABILIDADE-E-SSO.md)).
+- **Trace em toda resposta:** qualquer decisão pode ser auditada na própria interface e no console do analista.
 
-Os evals pagaram o próprio custo: pegaram o agent abrindo chamado repetido, a latência do "raciocínio" do Gemini (resolvida com `thinkingLevel: "minimal"`), a reabertura de chamado resolvido e o caso crítico que ele não tratava. Uma auditoria com conversas difíceis achou mais dois: mensagem vaga ia direto para um analista, e falha técnica num sistema do RH era recusada como "fora de TI". Cada achado virou regra e cenário novo. O funcionário simulado achou mais quatro: abrir chamado a partir de uma resposta rápida que não era um "sim", anexar um problema novo ao chamado errado, classificar o Outlook como Software e oferecer analista depois de o chamado já atender o pedido. Os quatro viraram regra em código, e o pass^3 subiu de 0,50 para 0,80 com 10 personas. A falha que sobrou (prioridade Baixa porque o agent não perguntou se havia alternativa) virou a quinta regra, e o `outlook-direto` passou 3/3; as três falhas da terceira rodada também viraram regra em código em 29/10: um "Sim, é esse mesmo" não confirma mais uma reabertura (e o `confirmDraft` nem aparece para o modelo sem confirmação explícita), o botão de analista sai quando o turno não tem motivo, e a checagem do `vpn-reuniao` usa o prazo do rascunho quando não há chamado. Repetidos, `senha-sap` e `vpn-reuniao` passaram 3/3 ([SIMULACAO](docs/validacao/SIMULACAO.md)).
+**O que os evals pegaram, e o que virou código.** Os evals pagaram o próprio custo: pegaram o agent abrindo chamado repetido, a latência do "raciocínio" do Gemini (resolvida com `thinkingLevel: "minimal"`), a reabertura de chamado resolvido e o caso crítico que ele não tratava. Uma auditoria com conversas difíceis achou mais dois problemas: mensagem vaga ia direto para um analista, e falha técnica num sistema do RH era recusada como "fora de TI". Cada achado virou regra e cenário novo.
 
-O processo de desenvolvimento (SDD, TDD, skills, MCPs e uso de IA) está em [`docs/PROCESSO-IA.md`](docs/PROCESSO-IA.md), e as especificações em [`docs/specs/`](docs/specs).
+O funcionário simulado achou mais quatro: abrir chamado a partir de uma resposta rápida que não era um "sim", anexar um problema novo ao chamado errado, classificar o Outlook como Software e oferecer analista depois de o chamado já atender o pedido. Os quatro viraram regra em código, e o pass^3 subiu de 0,50 para 0,80. A falha que sobrou (prioridade Baixa porque o agent não perguntou se havia alternativa) virou a quinta regra.
+
+As três falhas da terceira rodada viraram código em 29/10: um "Sim, é esse mesmo" não confirma mais uma reabertura, o botão de analista sai quando o turno não tem motivo, e a checagem do `vpn-reuniao` usa o prazo do rascunho quando não há chamado. Repetidos, `senha-sap` e `vpn-reuniao` passaram 3/3. Depois disso, frases ambíguas ("pode me explicar o prazo?") deixaram de confirmar rascunho, e um relato de Outlook deixou de complementar chamado de outro assunto ([SIMULACAO](docs/validacao/SIMULACAO.md)).
+
+**CI/CD.** O [CircleCI](.circleci/config.yml) roda a cada push: tipos, lint, testes unitários, E2E, E2E da demo e o build da imagem Docker com uma prova de fumaça (migra, cria os dados de exemplo, faz login e reinicia sem perder dados), sem segredos do app nem chave de LLM. No `main`, a imagem aprovada vai para o [Docker Hub](https://hub.docker.com/r/skarl007/nexo-assist) com a tag `latest` e o sha do commit, e o Komodo da minha máquina a puxa e reimplanta sozinho (por pull, sem expor nada; rodando desde 29/10/2026). Os evals ficam fora porque chamam o modelo real. Na primeira execução, o CI pegou um erro que a minha máquina escondia: o tipo `LayoutProps` que o Next 16 gera em `.next/` não existe num clone limpo. A correção foi rodar `next typegen` antes do `tsc` ([DEPLOY](docs/DEPLOY.md#docker-circleci-e-komodo)).
+
+Localmente, `npm run verify` roda tipos, lint, testes unitários, E2E e E2E da demo antes de cada push.
 
 ---
 
@@ -279,26 +285,30 @@ O processo de desenvolvimento (SDD, TDD, skills, MCPs e uso de IA) está em [`do
 - **Tool calling confiável**, inclusive a escolha forçada de tool no primeiro passo, que é a base da transparência.
 - **Latência baixa** com `thinkingLevel: "minimal"`: atendimento precisa de resposta rápida, não de raciocínio longo.
 - **Cerca de 1 centavo de dólar por resposta**, o que permite um deploy aberto para avaliação com custo previsível.
+- **Saldo disponível no Google** quando comecei. Não fico preso a ele: o roteador do Mastra troca o provedor por variável de ambiente.
 
-**Modelo reserva:** quando o Flash falha (no dia 28/10/2026 ele passou mais de uma hora devolvendo 503 "alta demanda" nas chamadas com tools), o passo vai para o **Gemini 3.5 Flash Lite** (`LLM_FALLBACK_MODEL`). O trace mostra quem respondeu, e os evals contam esses turnos à parte para não confundir a medição. O reserva é do mesmo fornecedor: para resistir a uma queda do Google inteiro, basta apontar `LLM_FALLBACK_MODEL` para um modelo do OpenRouter, com a chave dele.
+**Benchmark.** Para trocar a escolha qualitativa por dados, rodei o agent de produção com 7 modelos e medi efetividade, qualidade (G-Eval com 2 juízes), latência e custo real. O **GPT-6 Luna** empatou em efetividade e qualidade com o Gemini 3.5 Flash, dentro dos intervalos de confiança, custando **26× menos**; o Gemini 3.5 Flash Lite é a alternativa sem trocar de fornecedor. Mantive o Gemini em produção porque a vantagem do Luna é de custo, não de qualidade, e trocar perto da entrega exigiria outra chave. O próximo passo é uma rodada de confirmação Luna × Flash Lite e a troca de uma linha. Relatório: [`docs/benchmark/RELATORIO.md`](docs/benchmark/RELATORIO.md); como rodar: [`docs/benchmark/COMO-RODAR.md`](docs/benchmark/COMO-RODAR.md).
 
-Trocar de modelo é uma variável (`LLM_MODEL`), graças ao roteador do Mastra; pelo OpenRouter, `LLM_MODEL=openrouter/<fornecedor>/<modelo>` com `OPENROUTER_API_KEY`. Os evals dizem se a troca piorou alguma decisão.
+**Modelo reserva.** Quando o Flash falha, o passo vai para o **Gemini 3.5 Flash Lite** (`LLM_FALLBACK_MODEL`). Em 28/10/2026, o Flash passou mais de uma hora devolvendo 503 "alta demanda" nas chamadas com tools. O trace mostra quem respondeu, e os evals contam esses turnos à parte para não confundir a medição. O reserva é do mesmo fornecedor; para resistir a uma queda do Google inteiro, basta apontar `LLM_FALLBACK_MODEL` para um modelo do OpenRouter, com a chave dele.
 
-**Benchmark.** Para trocar a escolha qualitativa por dados, rodei o agent de produção com 7 modelos (efetividade, qualidade por G-Eval com 2 juízes, latência e custo real). O **GPT-6 Luna** empatou em efetividade e qualidade com o Gemini 3.5 Flash, dentro dos intervalos de confiança, custando **26× menos**; o Gemini 3.5 Flash Lite é a alternativa sem trocar de fornecedor. Mantive o Gemini em produção porque a vantagem é de custo, não de qualidade, e trocar perto da entrega exigiria outra chave. O próximo passo é uma rodada de confirmação Luna × Flash Lite e a troca de uma linha. Relatório completo: [`docs/benchmark/RELATORIO.md`](docs/benchmark/RELATORIO.md); como rodar: [`docs/benchmark/COMO-RODAR.md`](docs/benchmark/COMO-RODAR.md).
+Trocar de modelo é uma variável (`LLM_MODEL`), graças ao roteador do Mastra. Pelo OpenRouter: `LLM_MODEL=openrouter/<fornecedor>/<modelo>` com `OPENROUTER_API_KEY`. Os evals dizem se a troca piorou alguma decisão.
 
-**Custo sob controle:** histórico de no máximo 20 mensagens (cada uma cortada em 1.500 caracteres), cards resumidos, prioridade, prazo, duplicidade e busca em código (sem token), temperatura 0.2, até 6 passos e 800 tokens de saída por passo.
+**Custo sob controle:** histórico de no máximo 20 mensagens (cada uma cortada em 1.500 caracteres), cards resumidos, prioridade, prazo, duplicidade e busca em código (sem gastar token), temperatura 0,2, até 6 passos e 800 tokens de saída por passo.
 
 ---
 
 ## Deploy e segurança
 
-O deploy roda na **Vercel** com o banco no **Turso**, publicado a partir de um `git archive` do último commit (nunca sobe arquivo fora do git). Os passos, os comandos e o histórico das revisões de segurança estão em [`docs/DEPLOY.md`](docs/DEPLOY.md).
+O deploy roda na **Vercel** com o banco no **Turso**. Ele é publicado a partir de um `git archive` do último commit, então nunca sobe arquivo fora do git. Os passos, os comandos e o histórico das revisões de segurança estão em [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
+Desde 29/10/2026 a demo está **aberta ao público** de propósito (`PUBLIC_DEMO=1`), para quem avalia não precisar de link. Abrir é uma decisão explícita: sem essa variável, a porta de acesso continua fechando na Vercel mesmo que `ACCESS_TOKEN` falte, porque esquecer uma variável não pode abrir o modelo pago.
 
 | Risco | Proteção |
 |---|---|
-| Qualquer pessoa usar o agent (e a minha cota) | **Porta de acesso com link temporário** em [`proxy.ts`](src/proxy.ts): sem `?access=` válido, nenhuma página ou API responde (401). O link leva `<validade>.<HMAC>`, assinado com um segredo que nunca sai do servidor ([`server/access-gate.ts`](src/server/access-gate.ts)); vira um cookie httpOnly que vence junto e sai da URL. Sem o segredo na Vercel, a porta fecha. |
-| Vazamento de chave | Chaves só em variáveis de ambiente do servidor, validadas com Zod. Nada com prefixo `NEXT_PUBLIC_`. `.env` fora do git; o JavaScript entregue foi conferido sem chaves. Se faltar a chave no deploy, o funcionário vê só "indisponível"; o nome da variável fica no log. |
-| Custo inesperado | 30 mensagens por sessão, 40 por hora e 120 por dia por pessoa, **100 mensagens por dia no deploy inteiro** (`DAILY_AGENT_TURN_LIMIT`, janela de 24 horas) e **teto total de 1000 turnos** (`TOTAL_AGENT_TURN_LIMIT`, cerca de US$ 10,60), reservado no banco num único comando antes de chamar o modelo; 800 tokens por passo; a chamada é cancelada quando a aba fecha. Ao atingir o teto, o chat avisa e não chama o modelo. "Alterar detalhes" não chama o modelo, mas tem teto de 20 rascunhos por conversa. |
+| Um avaliador ver ou mexer nos dados de outro | **Espaço isolado por visitante** ([spec 05](docs/specs/05-demo-publica.md)): cada navegador recebe um identificador aleatório assinado (7 dias) e uma cópia dos dados de exemplo; repositórios, rotas e o turno do agent filtram por esse espaço. No máximo 20 espaços novos por hora; os expirados são apagados. Provado por `npm run test:e2e:demo`. |
+| Qualquer pessoa gastar a minha cota | **100 mensagens por dia no deploy inteiro** (`DAILY_AGENT_TURN_LIMIT`, janela de 24 h), 30 por sessão, 40 por hora e 120 por dia por pessoa, e **teto total de 1000 turnos** (`TOTAL_AGENT_TURN_LIMIT`, cerca de US$ 10,60), reservado no banco num único comando antes de chamar o modelo; 800 tokens por passo; a chamada é cancelada quando a aba fecha. Ao atingir o teto, o chat avisa e não chama o modelo. "Alterar detalhes" não chama o modelo, mas tem teto de 20 rascunhos por conversa. |
+| Fechar a demo de novo | **Porta de acesso com link temporário** em [`proxy.ts`](src/proxy.ts): sem `PUBLIC_DEMO`, nenhuma página ou API responde sem `?access=` válido (401). O link leva `<validade>.<HMAC>`, assinado com um segredo que nunca sai do servidor ([`server/access-gate.ts`](src/server/access-gate.ts)), e vira um cookie httpOnly que vence junto e sai da URL. |
+| Vazamento de chave | Chaves só em variáveis de ambiente do servidor, validadas com Zod. Nada com prefixo `NEXT_PUBLIC_`. `.env` fora do git; o JavaScript entregue foi conferido sem chaves. Se faltar a chave no deploy, o funcionário vê só "indisponível", e o nome da variável fica no log. |
 | Requisição forjada de outro site (CSRF) | Toda mutação exige mesma origem (`Sec-Fetch-Site`/`Origin`); as que têm corpo exigem JSON validado por Zod ([`server/http.ts`](src/server/http.ts)). |
 | Ação em nome de outra pessoa | A identidade vem só do JWT da sessão (algoritmo fixo HS256). O modelo nunca recebe nem informa id de funcionário. |
 | O modelo agir quando devia perguntar | As tools liberadas em cada passo são decididas em código ([`agent/step-policy.ts`](src/agent/step-policy.ts)): no turno de esclarecimento, só botões de resposta; depois de transferir, nenhuma. |
@@ -307,26 +317,27 @@ O deploy roda na **Vercel** com o banco no **Turso**, publicado a partir de um `
 | Dados pessoais na telemetria e nos indicadores | A telemetria OpenTelemetry/Langfuse é opcional e, por padrão, não leva texto da conversa nem argumentos de tools; o funcionário vira um pseudônimo. As frases de exemplo das lacunas da central mascaram e-mail, CPF, telefone e números. O incidente em massa não revela quem relatou. |
 | Clickjacking e afins | CSP, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, HSTS e sem `X-Powered-By` ([`next.config.ts`](next.config.ts)). |
 
-Houve quatro rodadas de revisão de segurança (antes do deploy, depois do deploy, uma com 42 verificações de fora contra produção e uma com skills de auditoria de terceiros); o detalhe está em [`docs/DEPLOY.md`](docs/DEPLOY.md).
+Houve quatro rodadas de revisão de segurança: antes do deploy, depois do deploy, uma com 42 verificações de fora contra produção e uma com skills de auditoria de terceiros. O detalhe está em [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 ---
 
 ## Trade-offs
 
-- **SSE com conferência no servidor, não push de verdade:** a Vercel não tem fila compartilhada entre funções, então o stream confere uma assinatura do banco a cada 1 s. Isso dá menos de 1 s de latência, mas cada aba aberta faz uma consulta leve por segundo; com muitos analistas, o certo seria Redis pub/sub. O polling continua como plano B.
+- **SSE com conferência no servidor, não push de verdade:** a Vercel não tem fila compartilhada entre funções, então o stream confere uma assinatura do banco a cada 1 s. Isso dá menos de 1 s de latência, mas cada aba aberta faz uma consulta leve por segundo. Com muitos analistas, o certo seria Redis pub/sub. O polling continua como plano B.
 - **Busca híbrida com embeddings em cache no banco:** o acerto subiu de 84% para 94% nas 50 perguntas ([medição](docs/validacao/BUSCA.md)). Sem a chave, ou se o Gemini falhar, ela volta para as palavras-chave.
 - **Duplicidade por regra simples** (mesmo tipo, categoria e palavra em comum no título), com a decisão final para o modelo: barato e transparente, mas pode deixar passar um duplicado escrito com outras palavras.
 - **Histórico próprio em vez da memória do Mastra:** o console do analista lê e escreve na mesma conversa, então uma única tabela `messages` é a fonte da verdade.
+- **Stream NDJSON próprio em vez do `useChat`:** o estado do chat fica no Redux Toolkit, e os eventos `step`/`card` mostram as ações em tempo real.
 - **Limites contados no próprio banco** em vez de Redis: um serviço a menos, consistente entre instâncias serverless.
-- **Porta de acesso por link** em vez de contas para avaliadores: zero atrito e suficiente para proteger a cota. Para produção, seria SSO. O teto total é compartilhado: quem tem o link pode gastá-lo.
+- **Demo pública com espaço por visitante** em vez de contas para avaliadores: zero atrito, sem um avaliador ver os dados do outro, e o custo preso no teto diário. Para produção, seria SSO. O teto é compartilhado: quem chegar primeiro pode gastá-lo.
 - **CSP sem nonce** (`'unsafe-inline'` em scripts): mantém as páginas estáticas e o deploy simples.
-- **Login sem senha real**, como pede o desafio. **SSO OpenID Connect opcional** (PKCE, state, nonce, JWKS), testado de ponta a ponta contra um provedor falso. Ele não foi testado contra Entra ID ou Okta de verdade, por falta de conta ([detalhes](docs/validacao/OBSERVABILIDADE-E-SSO.md)).
-- **Sair não revoga o JWT no servidor:** um token copiado antes continua válido até vencer (8 horas, ou 7 dias com "Manter conectado"). Revogar exigiria uma lista consultada a cada pedido, e os avaliadores entram todos como a mesma Ana: revogar derrubaria os outros.
+- **Login sem senha real**, como pede o desafio. **SSO OpenID Connect opcional** (PKCE, state, nonce, JWKS), testado de ponta a ponta contra um provedor falso. Não foi testado contra Entra ID ou Okta de verdade, por falta de conta ([detalhes](docs/validacao/OBSERVABILIDADE-E-SSO.md)).
+- **Sair não revoga o JWT no servidor:** um token copiado antes continua válido até vencer (8 horas, ou 7 dias com "Manter conectado"). Revogar exigiria uma lista consultada a cada pedido.
 - **Interface pensada para desktop** (como o protótipo): o chat funciona no celular, mas o console do analista precisa de tela larga.
 
 ## O que eu faria com mais tempo
 
-- **Terminar o achado da telemetria:** no passo 0, o Gemini às vezes chama `recordUnderstanding` várias vezes em paralelo. Hoje só a primeira chamada vale, e as outras aparecem como regra no trace. Mas elas ainda gastam tokens de saída; o próximo passo é testar um prompt ou parâmetro que evite chamadas paralelas e medir os tokens por turno.
+- **Terminar o achado da telemetria:** no passo 0, o Gemini às vezes chama `recordUnderstanding` várias vezes em paralelo. Hoje só a primeira chamada vale, e as outras aparecem como regra no trace, mas ainda gastam tokens de saída. O próximo passo é testar um prompt ou parâmetro que evite chamadas paralelas e medir os tokens por turno.
 - Evals e simulação no CI com limiar mínimo (hoje rodam à mão porque chamam o modelo real).
 - Duplicidade por similaridade de sentido, reaproveitando os embeddings da busca.
 - Artigo da central gerado a partir de chamado resolvido, como rascunho para o analista revisar (fecha o ciclo com as lacunas).
@@ -334,12 +345,55 @@ Houve quatro rodadas de revisão de segurança (antes do deploy, depois do deplo
 - Rate limit por IP na borda.
 - Layout de celular completo e revisão de acessibilidade (contraste, leitor de tela).
 
+---
+
+## Como usei IA neste projeto
+
+O desafio pede o uso de IA para programar, e eu usei. O código foi escrito com o Claude Code em incrementos pequenos, cada um verificado por typecheck, lint e testes antes do commit; o histórico do git mostra essa sequência. Usei o MCP Context7 para ler a documentação atual do Mastra e do Next 16, e o MCP Playwright para comparar as telas com o protótipo.
+
+O que ficou comigo foram as decisões e a conferência:
+
+- **Regras do service desk em código, não no prompt.** Prioridade, SLA, duplicidade e confirmação antes de abrir chamado são funções testadas; o modelo pede, o sistema decide.
+- **Passo 0 forçado.** O agent registra o que entendeu antes de agir, e é daí que sai o painel "por quê?".
+- **Benchmark antes de escolher modelo.** Rodei 7 modelos no agent de produção e mantive o Gemini pelos motivos descritos acima.
+- **Funcionário simulado.** Criei um usuário artificial para conversar com o agent e achar falhas que os evals de casos fixos não pegavam.
+- **Demo aberta com teto.** Sem cadastro, com limite de mensagens e um espaço isolado por visitante.
+
+No primeiro ciclo, as specs (`docs/specs/`) foram consolidadas a partir do PRD junto com o código e os testes. Depois disso, cada mudança começa pela spec, depois vem o teste que falha e depois o código (SDD + TDD). O processo completo, com ferramentas e decisões, está em [`docs/PROCESSO-IA.md`](docs/PROCESSO-IA.md). As convenções para quem for alterar o projeto estão em [`AGENTS.md`](AGENTS.md) e [`.claude/skills/`](.claude/skills).
+
+---
+
+## Vídeo de demonstração
+
+[![Vídeo de demonstração do Nexo Assist (5:28)](docs/demo/poster.png)](https://skarl007.github.io/nexo-assist/#video)
+
+[Assistir no navegador](https://skarl007.github.io/nexo-assist/#video) (o GitHub não toca o mp4 do repositório na página) · [baixar o mp4](docs/demo/nexo-assist-demo.mp4)
+
+<details>
+<summary>Capítulos e como o vídeo foi feito</summary>
+
+5:28, com música original de fundo e efeitos sonoros, sem narração. As partes do app são gravações reais com o Gemini: trechos longos aparecem acelerados no máximo 2× e sinalizados ("acelerado N×"), e as esperas pelo modelo foram cortadas, com um aviso do tempo real ("aguardando o modelo · N s"). Diagramas e números são animações, e cada número mostra a fonte no repositório. A música é original, gerada por código para este vídeo. Efeitos sonoros: Pixabay (licença de conteúdo do Pixabay).
+
+- 0:00 Abertura: o problema, a solução e o que há de novo
+- 0:25 1. O funcionário resolve sozinho: central de ajuda, "Isso resolveu?" e o painel "por quê?"
+- 1:01 2. Prazo em risco e incidente em massa
+- 1:53 3. Console do analista: relatório, sugestão de resposta, tempo real (SSE) e indicadores
+- 2:56 4. Busca híbrida na central
+- 3:28 5. Qualidade: testes, evals, funcionário simulado (pass^k) e red team
+- 4:10 6. Arquitetura
+- 4:41 7. Entrega: imagem Docker, CircleCI e Komodo (fluxo configurado, em diagrama)
+- 5:16 8. Os números
+
+O vídeo mostra os números da tarde de 28/10. Depois dele, o `outlook-direto` e as três falhas da rodada 3 foram corrigidos em código; o CircleCI, o Docker Hub e o Komodo, que no vídeo aparecem como fluxo configurado, passaram a rodar de verdade em 29/10; e entraram a confirmação só com frase explícita, o complemento só no chamado do mesmo assunto e o espaço isolado por visitante na demo. Os números atuais estão neste README e em [SIMULACAO](docs/validacao/SIMULACAO.md).
+
+</details>
+
 ## Documentação
 
-- [`docs/specs/`](docs/specs): especificações (SDD) de regras, agent, conversa/console e arquitetura.
+- [`docs/specs/`](docs/specs): especificações (SDD) de regras, agent, conversa/console, arquitetura e demo pública.
 - [`docs/DEPLOY.md`](docs/DEPLOY.md): passos do deploy e histórico de segurança.
 - [`docs/validacao/`](docs/validacao): provas de eficácia, com método, números e limites (busca, tempo real, red-team, simulação, telemetria e SSO).
-- [`docs/pesquisa/FRONTEIRA.md`](docs/pesquisa/FRONTEIRA.md): o que a fronteira dos produtos de service desk com IA faz (2025–2026) e o que virou código aqui.
+- [`docs/pesquisa/FRONTEIRA.md`](docs/pesquisa/FRONTEIRA.md): o que ServiceNow, Zendesk, Intercom e Atlassian fazem com IA no service desk (2025–2026) e o que virou código aqui.
 - [`docs/benchmark/`](docs/benchmark): benchmark de modelos.
 - [`docs/PROCESSO-IA.md`](docs/PROCESSO-IA.md): como IA, MCPs, skills, TDD e SDD foram usados.
-- [`AGENTS.md`](AGENTS.md) e [`.claude/skills/`](.claude/skills): convenções e roteiros para quem (ou qual IA) for alterar o projeto.
+- [`AGENTS.md`](AGENTS.md) e [`.claude/skills/`](.claude/skills): convenções e roteiros para quem for alterar o projeto.
