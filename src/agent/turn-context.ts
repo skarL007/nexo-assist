@@ -45,11 +45,14 @@ export class TurnRecorder {
   offerAnalyst = false;
   /** O prazo de um chamado consultado neste turno atende a necessidade informada: sem oferta de analista por prazo. */
   deadlineCoversNeed = false;
+  /** Um chamado consultado neste turno está vencido: o botão de analista que o modelo puser vale. */
+  overdueSeen = false;
 
   /**
    * Fecha a oferta de analista do turno. Com motivo do código, o botão aparece mesmo que a
-   * resposta esqueça de oferecer. Com o prazo atendendo e nenhum outro motivo, o botão de
-   * analista sai das respostas rápidas (pedido explícito do funcionário continua transferindo).
+   * resposta esqueça de oferecer. Sem motivo (prazo que não atende, chamado vencido consultado
+   * no turno, frustração), o botão de analista sai das respostas rápidas (pedido explícito do
+   * funcionário continua transferindo).
    */
   finishAnalystOffer() {
     if (this.handedOff) return;
@@ -59,7 +62,7 @@ export class TurnRecorder {
       else if (!replies.options.includes(OFFER_ANALYST_OPTION)) replies.options.push(OFFER_ANALYST_OPTION);
       return;
     }
-    if (!this.deadlineCoversNeed) return;
+    if (this.overdueSeen && !this.deadlineCoversNeed) return;
     let removed = false;
     for (let i = this.cards.length - 1; i >= 0; i--) {
       const card = this.cards[i];
@@ -70,7 +73,12 @@ export class TurnRecorder {
       if (kept.length) card.options = kept;
       else this.cards.splice(i, 1);
     }
-    if (removed) this.guardrail("O prazo do chamado atende a necessidade informada: o botão de analista saiu das respostas rápidas.");
+    if (removed)
+      this.guardrail(
+        this.deadlineCoversNeed
+          ? "O prazo do chamado atende a necessidade informada: o botão de analista saiu das respostas rápidas."
+          : "Oferta de analista sem motivo (prazo que não atende, chamado vencido ou frustração): o botão saiu das respostas rápidas.",
+      );
   }
 
   card(card: Card) {

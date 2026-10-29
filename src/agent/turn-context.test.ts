@@ -50,4 +50,21 @@ describe("oferta de analista no fim do turno", () => {
     recorder.finishAnalystOffer();
     expect(replies(recorder)).toEqual(["Falar com um analista"]);
   });
+
+  it("sem motivo nenhum no turno, o botão de analista sai", () => {
+    // Achado do funcionário simulado (senha-sap): reabriu o chamado e ofereceu analista "se precisar de prioridade imediata".
+    const recorder = new TurnRecorder();
+    recorder.card({ kind: "quick_replies", options: ["Falar com um analista", "Não, obrigado"] });
+    recorder.finishAnalystOffer();
+    expect(replies(recorder)).toEqual(["Não, obrigado"]);
+    expect(recorder.guardrails.join(" ")).toMatch(/sem motivo/i);
+  });
+
+  it("chamado vencido consultado no turno justifica o botão que o modelo pôs", () => {
+    const recorder = new TurnRecorder();
+    recorder.overdueSeen = true;
+    recorder.card({ kind: "quick_replies", options: ["Falar com um analista", "Adicionar informação", "Não, obrigado"] });
+    recorder.finishAnalystOffer();
+    expect(replies(recorder)).toEqual(["Falar com um analista", "Adicionar informação", "Não, obrigado"]);
+  });
 });

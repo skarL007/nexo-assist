@@ -27,6 +27,7 @@ export const listMyTickets = createTool({
         `${snapshots.length} ${onlyOpen ? "aberto(s)" : "no total"}${reopenable.length ? ` · ${reopenable.length} resolvido(s) que pode(m) ser reaberto(s)` : ""}`,
       );
       if (showAsChoice && snapshots.length > 1) turn.recorder.card({ kind: "ticket_choice", tickets: snapshots });
+      if (snapshots.some((t) => t.overdue)) turn.recorder.overdueSeen = true;
 
       const summary = (t: ReturnType<typeof tickets.snapshot>) => ({
         code: t.code,
@@ -66,6 +67,7 @@ export const getTicket = createTool({
         turn.recorder.step("calculou o prazo", `${snapshot.overdue ? "Vencido desde" : "Vence"} ${formatDateTime(snapshot.deadline)}`);
       }
       turn.recorder.card({ kind: "ticket", ticket: snapshot });
+      if (snapshot.overdue) turn.recorder.overdueSeen = true;
       const need = snapshot.overdue ? undefined : judgeDeadline(turn, snapshot.deadline ? new Date(snapshot.deadline) : null, neededBy);
 
       return {
