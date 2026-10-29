@@ -41,11 +41,15 @@ Remove-Item "$tmp.zip"
 Copy-Item ".vercel\project.json" "$tmp\.vercel\project.json"   # só o vínculo do projeto, sem env
 Push-Location $tmp
 try {
-  # npx: funciona com ou sem a CLI global da Vercel no PATH.
-  npx --yes vercel deploy --prod --yes
-  if ($LASTEXITCODE -ne 0) { throw "deploy falhou" }
+  # npx: funciona com ou sem a CLI global da Vercel no PATH. Ela escreve o progresso no stderr,
+  # o que o PowerShell 5.1 com Stop trata como erro: aqui vale só o código de saída.
+  $ErrorActionPreference = "Continue"
+  npx --yes vercel deploy --prod --yes 2>&1 | Out-Host
+  $code = $LASTEXITCODE
+  $ErrorActionPreference = "Stop"
+  if ($code -ne 0) { throw "deploy falhou" }
 } finally {
   Pop-Location
-  Remove-Item -Recurse -Force $tmp
+  Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue  # o npx às vezes ainda segura a pasta
 }
-Write-Host "Pronto. Gere um link de acesso: npm run access-link -- 14400"
+Write-Host "Pronto. Com PUBLIC_DEMO=1 o app já está aberto; sem ela, gere um link: npm run access-link -- 14400"
