@@ -73,7 +73,7 @@ Outros comandos:
 
 ```bash
 npm run verify                    # tipos + lint + unitários + E2E + E2E da demo — sem LLM
-npm test                          # 431 testes unitários em 63 arquivos — sem LLM
+npm test                          # 443 testes unitários em 64 arquivos — sem LLM
 npx playwright install chromium   # só na primeira vez, antes do E2E
 npm run test:e2e                  # 39 testes E2E contra o build de produção — sem LLM
 npm run test:e2e:demo             # isolamento entre visitantes na demo pública — sem LLM
@@ -254,7 +254,7 @@ Teste unitário não prova que um LLM decide bem, então a qualidade tem quatro 
 
 | Camada | O que cobre | Comando |
 |---|---|---|
-| **Testes unitários** (Vitest, 431 em 63 arquivos) | prazos com fim de semana, matriz de prioridade, pergunta sobre alternativa antes da prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória e só explícita, prazo × necessidade, assunto do chamado, categoria E-mail, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, espaço isolado da demo, modelo reserva e o estimador pass^k | `npm test` |
+| **Testes unitários** (Vitest, 443 em 64 arquivos) | prazos com fim de semana, matriz de prioridade, pergunta sobre alternativa antes da prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória e só explícita, prazo × necessidade, assunto do chamado, categoria E-mail, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, espaço isolado da demo, modelo reserva, o estimador pass^k e a simulação do roteamento em cascata | `npm test` |
 | **E2E** (Playwright, 39 + 1 da demo) | login (inclusive SSO contra um provedor OIDC falso), permissões, transferência de ponta a ponta, relatório, sugestão de resposta, indicadores, prazos em risco, incidente em massa, frustração, tempo real com latência medida, estados de erro e a página 404, contra o build de produção. A suíte da demo sobe o app com `PUBLIC_DEMO=1` e prova que o visitante B não lê, não assume e não pede sugestão da conversa do visitante A | `npm run test:e2e` · `npm run test:e2e:demo` |
 | **Evals** (32 cenários, modelo real) | intenção, tools esperadas e proibidas, transferência (e quando *não* transferir), caso crítico, reabertura, escopo de TI, vazamento de dados, incidente em massa, frustração, os achados do funcionário simulado e 8 ataques mapeados ao OWASP ([red-team](docs/validacao/RED-TEAM.md)) | `npm run eval` |
 | **Funcionário simulado** (pass^k, 10 personas) | um modelo faz o papel do funcionário, com fatos que só conta se perguntarem, e clica em Confirmar, Descartar ou numa resposta rápida; o estado no banco é conferido em k execuções, cada uma a partir do seed ([resultado e falhas](docs/validacao/SIMULACAO.md)) | `npm run eval:sim` |
@@ -347,6 +347,12 @@ Houve quatro rodadas de revisão de segurança: antes do deploy, depois do deplo
 
 ## O que eu faria com mais tempo
 
+- **Roteamento em cascata, com o gatilho validado por gente.** Hoje todo turno vai para o mesmo modelo. A ideia é um modelo barato fazer o passo 0 e o turno subir para um modelo maior quando o agent vai escrever um chamado, não entendeu ou está com confiança baixa. Simulei isso com as conversas gravadas do benchmark, sem chamar API ([`docs/benchmark/ROTEAMENTO.md`](docs/benchmark/ROTEAMENTO.md)). O GPT-6 Luna atendeu na frente e o Gemini 3.5 Flash Lite ficou de reserva. O acerto foi o mesmo do Flash Lite sozinho (96% em 24 conversas), com 38% das conversas subindo e custo 37% menor. O teste também mostrou três cuidados:
+  - a confiança que o modelo declara não serve de gatilho, porque passou de 0,95 em 23 de 24 casos, inclusive no que escapou;
+  - o gatilho precisa olhar cada turno, porque o risco de reabrir chamado só aparece na 2ª mensagem;
+  - subir para o modelo de produção não melhorou nada, então o destino da subida também precisa de eval.
+
+  Para ir a produção, o caminho seria: roteador turno a turno, gatilho calibrado com a marcação do analista no console e, depois, um classificador sem LLM sobre os embeddings da busca, porque a cascata com LLM faz o turno que sobe esperar dois passos 0. Antes de ligar, modo sombra e evals com pass^k por rota ([FrugalGPT](https://arxiv.org/abs/2305.05176), [RouteLLM](https://arxiv.org/abs/2406.18665)). Nessa escala, a economia em dinheiro é pequena.
 - **Terminar o achado da telemetria:** no passo 0, o Gemini às vezes chama `recordUnderstanding` várias vezes em paralelo. Hoje só a primeira chamada vale, e as outras aparecem como regra no trace, mas ainda gastam tokens de saída. O próximo passo é testar um prompt ou parâmetro que evite chamadas paralelas e medir os tokens por turno.
 - Evals e simulação no CI com limiar mínimo (hoje rodam à mão porque chamam o modelo real).
 - Duplicidade por similaridade de sentido, reaproveitando os embeddings da busca.

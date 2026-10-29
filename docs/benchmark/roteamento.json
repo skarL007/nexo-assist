@@ -1,0 +1,446 @@
+{
+  "cheap": "gpt-6-luna",
+  "strong": [
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash"
+  ],
+  "trigger": {
+    "intents": [
+      "new_ticket",
+      "ticket_update",
+      "confirm_or_choose",
+      "unclear"
+    ],
+    "minConfidence": 0.5
+  },
+  "baselines": [
+    {
+      "name": "GPT-6 Luna só",
+      "summary": {
+        "conversations": 24,
+        "passRate": {
+          "mean": 0.875,
+          "low": 0.75,
+          "high": 1
+        },
+        "escalationRate": 0,
+        "per1000AtendimentosUsd": 1.2221105357142856,
+        "latency": {
+          "p50": 5737.625350000002,
+          "p95": 9418.525009999994
+        }
+      }
+    },
+    {
+      "name": "Gemini 3.5 Flash Lite só",
+      "summary": {
+        "conversations": 24,
+        "passRate": {
+          "mean": 0.9583333333333334,
+          "low": 0.875,
+          "high": 1
+        },
+        "escalationRate": 0,
+        "per1000AtendimentosUsd": 7.2369,
+        "latency": {
+          "p50": 5540.077799999997,
+          "p95": 9734.820465000004
+        }
+      }
+    },
+    {
+      "name": "Gemini 3.5 Flash (produção) só",
+      "summary": {
+        "conversations": 24,
+        "passRate": {
+          "mean": 0.8333333333333334,
+          "low": 0.6666666666666666,
+          "high": 0.9583333333333334
+        },
+        "escalationRate": 0,
+        "per1000AtendimentosUsd": 31.933124999999993,
+        "latency": {
+          "p50": 6922.2564999999995,
+          "p95": 11113.63765
+        }
+      }
+    }
+  ],
+  "cascades": [
+    {
+      "name": "GPT-6 Luna → Gemini 3.5 Flash Lite",
+      "summary": {
+        "conversations": 24,
+        "passRate": {
+          "mean": 0.9583333333333334,
+          "low": 0.875,
+          "high": 1
+        },
+        "escalationRate": 0.375,
+        "per1000AtendimentosUsd": 4.540508035714285,
+        "latency": {
+          "p50": 5846.177349999998,
+          "p95": 10974.311129999984
+        }
+      }
+    },
+    {
+      "name": "GPT-6 Luna → Gemini 3.5 Flash (produção)",
+      "summary": {
+        "conversations": 24,
+        "passRate": {
+          "mean": 0.8333333333333334,
+          "low": 0.6666666666666666,
+          "high": 0.9583333333333334
+        },
+        "escalationRate": 0.375,
+        "per1000AtendimentosUsd": 16.929211607142857,
+        "latency": {
+          "p50": 6425.309200000005,
+          "p95": 12411.797835000012
+        }
+      }
+    }
+  ],
+  "confusion": {
+    "first": {
+      "tp": 8,
+      "fn": 1,
+      "fp": 1,
+      "tn": 14,
+      "missed": [
+        "PRD · Reabrir chamado resolvido há até 7 dias"
+      ]
+    },
+    "any": {
+      "tp": 9,
+      "fn": 0,
+      "fp": 1,
+      "tn": 14,
+      "missed": []
+    }
+  },
+  "withIntents": [
+    {
+      "minConfidence": 0.5,
+      "confusion": {
+        "tp": 8,
+        "fn": 1,
+        "fp": 1,
+        "tn": 14,
+        "missed": [
+          "PRD · Reabrir chamado resolvido há até 7 dias"
+        ]
+      },
+      "summary": {
+        "conversations": 24,
+        "passRate": {
+          "mean": 0.9583333333333334,
+          "low": 0.875,
+          "high": 1
+        },
+        "escalationRate": 0.375,
+        "per1000AtendimentosUsd": 4.540508035714285,
+        "latency": {
+          "p50": 5846.177349999998,
+          "p95": 10974.311129999984
+        }
+      }
+    },
+    {
+      "minConfidence": 0.8,
+      "confusion": {
+        "tp": 8,
+        "fn": 1,
+        "fp": 1,
+        "tn": 14,
+        "missed": [
+          "PRD · Reabrir chamado resolvido há até 7 dias"
+        ]
+      },
+      "summary": {
+        "conversations": 24,
+        "passRate": {
+          "mean": 0.9583333333333334,
+          "low": 0.875,
+          "high": 1
+        },
+        "escalationRate": 0.375,
+        "per1000AtendimentosUsd": 4.540508035714285,
+        "latency": {
+          "p50": 5846.177349999998,
+          "p95": 10974.311129999984
+        }
+      }
+    },
+    {
+      "minConfidence": 0.9,
+      "confusion": {
+        "tp": 8,
+        "fn": 1,
+        "fp": 1,
+        "tn": 14,
+        "missed": [
+          "PRD · Reabrir chamado resolvido há até 7 dias"
+        ]
+      },
+      "summary": {
+        "conversations": 24,
+        "passRate": {
+          "mean": 0.9583333333333334,
+          "low": 0.875,
+          "high": 1
+        },
+        "escalationRate": 0.375,
+        "per1000AtendimentosUsd": 4.540508035714285,
+        "latency": {
+          "p50": 5846.177349999998,
+          "p95": 10974.311129999984
+        }
+      }
+    },
+    {
+      "minConfidence": 0.95,
+      "confusion": {
+        "tp": 8,
+        "fn": 1,
+        "fp": 1,
+        "tn": 14,
+        "missed": [
+          "PRD · Reabrir chamado resolvido há até 7 dias"
+        ]
+      },
+      "summary": {
+        "conversations": 24,
+        "passRate": {
+          "mean": 0.9583333333333334,
+          "low": 0.875,
+          "high": 1
+        },
+        "escalationRate": 0.375,
+        "per1000AtendimentosUsd": 4.540508035714285,
+        "latency": {
+          "p50": 5846.177349999998,
+          "p95": 10974.311129999984
+        }
+      }
+    },
+    {
+      "minConfidence": 0.99,
+      "confusion": {
+        "tp": 9,
+        "fn": 0,
+        "fp": 3,
+        "tn": 12,
+        "missed": []
+      },
+      "summary": {
+        "conversations": 24,
+        "passRate": {
+          "mean": 0.9583333333333334,
+          "low": 0.875,
+          "high": 1
+        },
+        "escalationRate": 0.5,
+        "per1000AtendimentosUsd": 5.565675000000001,
+        "latency": {
+          "p50": 6474.500050000004,
+          "p95": 11488.719164999999
+        }
+      }
+    }
+  ],
+  "confidenceOnly": [
+    {
+      "minConfidence": 0.5,
+      "confusion": {
+        "tp": 0,
+        "fn": 9,
+        "fp": 0,
+        "tn": 15,
+        "missed": [
+          "Complementar chamado existente",
+          "Problema parecido com chamado aberto (duplicidade)",
+          "Abrir chamado conversando (pergunta o que falta e monta rascunho)",
+          "PRD · Reabrir chamado resolvido há até 7 dias",
+          "PRD · Confirmar o rascunho por texto",
+          "PRD · Caso crítico para a empresa toda",
+          "Complementar chamado existente",
+          "Problema parecido com chamado aberto (duplicidade)",
+          "Abrir chamado conversando (pergunta o que falta e monta rascunho)"
+        ]
+      },
+      "summary": {
+        "conversations": 24,
+        "passRate": {
+          "mean": 0.875,
+          "low": 0.75,
+          "high": 1
+        },
+        "escalationRate": 0,
+        "per1000AtendimentosUsd": 1.2221105357142856,
+        "latency": {
+          "p50": 5737.625350000002,
+          "p95": 9418.525009999994
+        }
+      }
+    },
+    {
+      "minConfidence": 0.8,
+      "confusion": {
+        "tp": 0,
+        "fn": 9,
+        "fp": 1,
+        "tn": 14,
+        "missed": [
+          "Complementar chamado existente",
+          "Problema parecido com chamado aberto (duplicidade)",
+          "Abrir chamado conversando (pergunta o que falta e monta rascunho)",
+          "PRD · Reabrir chamado resolvido há até 7 dias",
+          "PRD · Confirmar o rascunho por texto",
+          "PRD · Caso crítico para a empresa toda",
+          "Complementar chamado existente",
+          "Problema parecido com chamado aberto (duplicidade)",
+          "Abrir chamado conversando (pergunta o que falta e monta rascunho)"
+        ]
+      },
+      "summary": {
+        "conversations": 24,
+        "passRate": {
+          "mean": 0.875,
+          "low": 0.75,
+          "high": 1
+        },
+        "escalationRate": 0.041666666666666664,
+        "per1000AtendimentosUsd": 1.4206874999999999,
+        "latency": {
+          "p50": 5846.177349999998,
+          "p95": 9418.525009999994
+        }
+      }
+    },
+    {
+      "minConfidence": 0.9,
+      "confusion": {
+        "tp": 0,
+        "fn": 9,
+        "fp": 1,
+        "tn": 14,
+        "missed": [
+          "Complementar chamado existente",
+          "Problema parecido com chamado aberto (duplicidade)",
+          "Abrir chamado conversando (pergunta o que falta e monta rascunho)",
+          "PRD · Reabrir chamado resolvido há até 7 dias",
+          "PRD · Confirmar o rascunho por texto",
+          "PRD · Caso crítico para a empresa toda",
+          "Complementar chamado existente",
+          "Problema parecido com chamado aberto (duplicidade)",
+          "Abrir chamado conversando (pergunta o que falta e monta rascunho)"
+        ]
+      },
+      "summary": {
+        "conversations": 24,
+        "passRate": {
+          "mean": 0.875,
+          "low": 0.75,
+          "high": 1
+        },
+        "escalationRate": 0.041666666666666664,
+        "per1000AtendimentosUsd": 1.4206874999999999,
+        "latency": {
+          "p50": 5846.177349999998,
+          "p95": 9418.525009999994
+        }
+      }
+    },
+    {
+      "minConfidence": 0.95,
+      "confusion": {
+        "tp": 0,
+        "fn": 9,
+        "fp": 1,
+        "tn": 14,
+        "missed": [
+          "Complementar chamado existente",
+          "Problema parecido com chamado aberto (duplicidade)",
+          "Abrir chamado conversando (pergunta o que falta e monta rascunho)",
+          "PRD · Reabrir chamado resolvido há até 7 dias",
+          "PRD · Confirmar o rascunho por texto",
+          "PRD · Caso crítico para a empresa toda",
+          "Complementar chamado existente",
+          "Problema parecido com chamado aberto (duplicidade)",
+          "Abrir chamado conversando (pergunta o que falta e monta rascunho)"
+        ]
+      },
+      "summary": {
+        "conversations": 24,
+        "passRate": {
+          "mean": 0.875,
+          "low": 0.75,
+          "high": 1
+        },
+        "escalationRate": 0.041666666666666664,
+        "per1000AtendimentosUsd": 1.4206874999999999,
+        "latency": {
+          "p50": 5846.177349999998,
+          "p95": 9418.525009999994
+        }
+      }
+    },
+    {
+      "minConfidence": 0.99,
+      "confusion": {
+        "tp": 5,
+        "fn": 4,
+        "fp": 3,
+        "tn": 12,
+        "missed": [
+          "Complementar chamado existente",
+          "PRD · Confirmar o rascunho por texto",
+          "Complementar chamado existente",
+          "Abrir chamado conversando (pergunta o que falta e monta rascunho)"
+        ]
+      },
+      "summary": {
+        "conversations": 24,
+        "passRate": {
+          "mean": 0.9166666666666666,
+          "low": 0.7916666666666666,
+          "high": 1
+        },
+        "escalationRate": 0.3333333333333333,
+        "per1000AtendimentosUsd": 4.069343035714287,
+        "latency": {
+          "p50": 6125.925749999988,
+          "p95": 11488.719164999999
+        }
+      }
+    }
+  ],
+  "stepZeroConfidence": [
+    0.99,
+    0.99,
+    0.98,
+    1,
+    0.99,
+    0.99,
+    0.99,
+    0.99,
+    0.95,
+    0.98,
+    0.98,
+    0.99,
+    0.98,
+    0.79,
+    0.98,
+    0.99,
+    0.99,
+    1,
+    0.99,
+    0.99,
+    0.99,
+    0.99,
+    0.96,
+    0.99
+  ]
+}
