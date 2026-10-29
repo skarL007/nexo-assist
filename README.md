@@ -73,7 +73,7 @@ Outros comandos:
 
 ```bash
 npm run verify                    # tipos + lint + unitários + E2E + E2E da demo — sem LLM
-npm test                          # 427 testes unitários em 62 arquivos — sem LLM
+npm test                          # 431 testes unitários em 63 arquivos — sem LLM
 npx playwright install chromium   # só na primeira vez, antes do E2E
 npm run test:e2e                  # 39 testes E2E contra o build de produção — sem LLM
 npm run test:e2e:demo             # isolamento entre visitantes na demo pública — sem LLM
@@ -254,7 +254,7 @@ Teste unitário não prova que um LLM decide bem, então a qualidade tem quatro 
 
 | Camada | O que cobre | Comando |
 |---|---|---|
-| **Testes unitários** (Vitest, 427 em 62 arquivos) | prazos com fim de semana, matriz de prioridade, pergunta sobre alternativa antes da prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória e só explícita, prazo × necessidade, assunto do chamado, categoria E-mail, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, espaço isolado da demo, modelo reserva e o estimador pass^k | `npm test` |
+| **Testes unitários** (Vitest, 431 em 63 arquivos) | prazos com fim de semana, matriz de prioridade, pergunta sobre alternativa antes da prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória e só explícita, prazo × necessidade, assunto do chamado, categoria E-mail, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, espaço isolado da demo, modelo reserva e o estimador pass^k | `npm test` |
 | **E2E** (Playwright, 39 + 1 da demo) | login (inclusive SSO contra um provedor OIDC falso), permissões, transferência de ponta a ponta, relatório, sugestão de resposta, indicadores, prazos em risco, incidente em massa, frustração, tempo real com latência medida, estados de erro e a página 404, contra o build de produção. A suíte da demo sobe o app com `PUBLIC_DEMO=1` e prova que o visitante B não lê, não assume e não pede sugestão da conversa do visitante A | `npm run test:e2e` · `npm run test:e2e:demo` |
 | **Evals** (32 cenários, modelo real) | intenção, tools esperadas e proibidas, transferência (e quando *não* transferir), caso crítico, reabertura, escopo de TI, vazamento de dados, incidente em massa, frustração, os achados do funcionário simulado e 8 ataques mapeados ao OWASP ([red-team](docs/validacao/RED-TEAM.md)) | `npm run eval` |
 | **Funcionário simulado** (pass^k, 10 personas) | um modelo faz o papel do funcionário, com fatos que só conta se perguntarem, e clica em Confirmar, Descartar ou numa resposta rápida; o estado no banco é conferido em k execuções, cada uma a partir do seed ([resultado e falhas](docs/validacao/SIMULACAO.md)) | `npm run eval:sim` |
@@ -288,6 +288,16 @@ Localmente, `npm run verify` roda tipos, lint, testes unitários, E2E e E2E da d
 - **Saldo disponível no Google** quando comecei. Não fico preso a ele: o roteador do Mastra troca o provedor por variável de ambiente.
 
 **Benchmark.** Para trocar a escolha qualitativa por dados, rodei o agent de produção com 7 modelos e medi efetividade, qualidade (G-Eval com 2 juízes), latência e custo real. O **GPT-6 Luna** empatou em efetividade e qualidade com o Gemini 3.5 Flash, dentro dos intervalos de confiança, custando **26× menos**; o Gemini 3.5 Flash Lite é a alternativa sem trocar de fornecedor. Mantive o Gemini em produção porque a vantagem do Luna é de custo, não de qualidade, e trocar perto da entrega exigiria outra chave. O próximo passo é uma rodada de confirmação Luna × Flash Lite e a troca de uma linha. Relatório: [`docs/benchmark/RELATORIO.md`](docs/benchmark/RELATORIO.md); como rodar: [`docs/benchmark/COMO-RODAR.md`](docs/benchmark/COMO-RODAR.md).
+
+| | GPT-6 Luna (1º) | Gemini 3.5 Flash Lite (2º) | Gemini 3.5 Flash, produção (5º) |
+|---|---|---|---|
+| Efetividade [IC 95%] | 88% [75–100%] | **96%** [88–100%] | 83% [67–96%] |
+| Qualidade G-Eval, 1 a 5 [IC 95%] | **4,73** [4,64–4,80] | 4,67 [4,58–4,75] | 4,72 [4,61–4,81] |
+| Latência p50 · p95 | 5,7 s · **9,4 s** | **5,5 s** · 9,7 s | 6,9 s · 11,1 s |
+| Custo por 1.000 atendimentos | **US$ 1,22** | US$ 7,24 | US$ 31,93 |
+| Score composto | **0,867** | | 0,725 |
+
+O G-Eval usa 7 critérios de 1 a 5 tirados do PRD (qualidade da decisão, regras do service desk, condução da conversa, clareza, transparência do raciocínio, tom e português do Brasil). Ele lê também o registro de entendimento do passo 0, o mesmo do painel "por quê?". A nota vem de um painel de 2 juízes (Kimi K3 e GLM-5.3) de famílias que não concorrem, em avaliação cega e calibrado com 3 conversas escritas à mão. O composto pesa efetividade 40, qualidade 30, latência 15 e custo 15; o Luna fica em 1º em 81% de 10 mil combinações de pesos sorteadas. Os intervalos são largos porque a amostra é pequena: por isso a recomendação é confirmar antes de trocar. O estudo inteiro custou US$ 1,80.
 
 **Modelo reserva.** Quando o Flash falha, o passo vai para o **Gemini 3.5 Flash Lite** (`LLM_FALLBACK_MODEL`). Em 28/10/2026, o Flash passou mais de uma hora devolvendo 503 "alta demanda" nas chamadas com tools. O trace mostra quem respondeu, e os evals contam esses turnos à parte para não confundir a medição. O reserva é do mesmo fornecedor; para resistir a uma queda do Google inteiro, basta apontar `LLM_FALLBACK_MODEL` para um modelo do OpenRouter, com a chave dele.
 
