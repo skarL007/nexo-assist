@@ -75,7 +75,7 @@ Outros comandos:
 npm run verify                    # tipos + lint + unitários + E2E + E2E da demo — sem LLM
 npm test                          # 457 testes unitários em 65 arquivos — sem LLM
 npx playwright install chromium   # só na primeira vez, antes do E2E
-npm run test:e2e                  # 39 testes E2E contra o build de produção — sem LLM
+npm run test:e2e                  # 42 testes E2E contra o build de produção — sem LLM
 npm run test:e2e:demo             # isolamento entre visitantes na demo pública — sem LLM
 npm run eval                      # 36 cenários de decisão do agent com o modelo real (8 de ataque)
 npm run eval:sim                  # funcionário simulado por um modelo, pass^k (τ-bench)
@@ -256,7 +256,7 @@ Teste unitário não prova que um LLM decide bem, então a qualidade tem quatro 
 | Camada | O que cobre | Comando |
 |---|---|---|
 | **Testes unitários** (Vitest, 457 em 65 arquivos) | verificações de diagnóstico e a sincronização da central sem apagar dados, prazos com fim de semana, matriz de prioridade, pergunta sobre alternativa antes da prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória e só explícita, prazo × necessidade, assunto do chamado, categoria E-mail, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, espaço isolado da demo, modelo reserva, o estimador pass^k e a simulação do roteamento em cascata | `npm test` |
-| **E2E** (Playwright, 39 + 1 da demo) | login (inclusive SSO contra um provedor OIDC falso), permissões, transferência de ponta a ponta, relatório, sugestão de resposta, indicadores, prazos em risco, incidente em massa, frustração, tempo real com latência medida, estados de erro e a página 404, contra o build de produção. A suíte da demo sobe o app com `PUBLIC_DEMO=1` e prova que o visitante B não lê, não assume e não pede sugestão da conversa do visitante A | `npm run test:e2e` · `npm run test:e2e:demo` |
+| **E2E** (Playwright, 42 + 1 da demo) | login (inclusive SSO contra um provedor OIDC falso), link para o estudo de caso e prévia ao compartilhar (Open Graph), permissões, transferência de ponta a ponta, relatório, sugestão de resposta, indicadores, prazos em risco, incidente em massa, frustração, tempo real com latência medida, estados de erro e a página 404, contra o build de produção. A suíte da demo sobe o app com `PUBLIC_DEMO=1` e prova que o visitante B não lê, não assume e não pede sugestão da conversa do visitante A | `npm run test:e2e` · `npm run test:e2e:demo` |
 | **Evals** (36 cenários, modelo real) | intenção, tools esperadas e proibidas, verificações de diagnóstico e o "já tentado" no chamado, transferência (e quando *não* transferir), caso crítico, reabertura, escopo de TI, vazamento de dados, incidente em massa, frustração, os achados do funcionário simulado e 8 ataques mapeados ao OWASP ([red-team](docs/validacao/RED-TEAM.md)) | `npm run eval` |
 | **Funcionário simulado** (pass^k, 10 personas) | um modelo faz o papel do funcionário, com fatos que só conta se perguntarem, e clica em Confirmar, Descartar ou numa resposta rápida; o estado no banco é conferido em k execuções, cada uma a partir do seed ([resultado e falhas](docs/validacao/SIMULACAO.md)) | `npm run eval:sim` |
 

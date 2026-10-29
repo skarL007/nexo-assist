@@ -2,6 +2,7 @@
 
 import { ArrowUp } from "lucide-react";
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import { AboutPrototypeLink } from "@/components/nexo/about-prototype-link";
 import { Button } from "@/components/ui/button";
 
 export interface ComposerHandle {
@@ -69,7 +70,9 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
       </form>
       <p className="flex justify-between gap-4 text-xs text-muted-foreground">
         {/* As mensagens vão para um modelo de IA externo: nada de senha ou dado pessoal real. */}
-        <span>Protótipo com dados fictícios · não envie senhas nem dados pessoais.</span>
+        <span>
+          Protótipo com dados fictícios · não envie senhas nem dados pessoais. <AboutPrototypeLink />
+        </span>
         <span className="shrink-0">
           {limit - remaining}/{limit} mensagens nesta sessão
         </span>

@@ -23,6 +23,12 @@ with_agent ──handoff──▶ waiting_analyst ──assume──▶ with_ana
 - Os números do painel do login são **deste ambiente**, dos últimos 30 dias: tempo médio de resposta do agent, % resolvido sem analista e analistas no service desk (antes eram os do protótipo, fixos). Sem dados, aparece "—". Se o banco falhar, o login abre mesmo assim.
 - **SSO opcional (OpenID Connect).** Com `OIDC_ISSUER`, `OIDC_CLIENT_ID` e `OIDC_CLIENT_SECRET` definidos, o login mostra "Entrar com {OIDC_LABEL}" (ex.: Microsoft Entra, Google Workspace, Okta). Fluxo authorization code com PKCE (S256), `state` e `nonce` num cookie assinado de 10 minutos. O `id_token` é validado (assinatura pelo JWKS do provedor, `iss`, `aud`, `exp`, `nonce`, e-mail verificado e, com `OIDC_ALLOWED_DOMAIN`, o domínio). Entra só quem já é funcionário da base (ninguém é criado pelo SSO). Aceite: `e2e/sso.spec.ts` contra um provedor OIDC falso: Ana entra pelo SSO e cai no chat; e-mail fora da base volta ao login com "Seu e-mail não está no service desk"; `state` adulterado é recusado. Sem as variáveis, nada muda.
 
+## Quem chega sem contexto
+
+- O link "Sobre este protótipo ↗" leva ao estudo de caso (`https://skarl007.github.io/nexo-assist/`) em nova aba (`target="_blank"`, `rel="noopener noreferrer"`). Aparece no quadro "Ambiente de demonstração" do login e na nota embaixo da caixa de mensagem ("Protótipo com dados fictícios · …"), sem quebrar o layout em 375 px.
+- Quem compartilha o endereço da demo vê uma prévia com o título "Nexo Assist", a descrição "Service desk de TI da Nexo, numa conversa." e uma tela real do produto em 1200x630 (`src/app/opengraph-image.png` e `twitter-image.png`, cartão `summary_large_image`). As URLs da prévia são absolutas, a partir de `https://nexo-assist-puce.vercel.app`.
+- Aceite: `e2e/about-prototype.spec.ts`: o login e o chat da Ana mostram o link com esse endereço, `target="_blank"` e `rel="noopener noreferrer"`; o `<head>` do login tem `og:image` absoluto de 1200x630 e `twitter:card` `summary_large_image`; `/opengraph-image.png` e `/twitter-image.png` respondem 200 com `image/png`.
+
 ## "Isso resolveu?"
 
 - Embaixo da última resposta do agent (as que passaram pelo modelo) aparece "Isso resolveu? Sim / Não". "Não" oferece "Falar com um analista" (manda o pedido como mensagem) e "Na verdade, resolveu". Avaliar de novo troca a anterior.

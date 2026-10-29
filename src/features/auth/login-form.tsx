@@ -3,6 +3,7 @@
 import { Eye, EyeOff, Loader2, Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { AboutPrototypeLink } from "@/components/nexo/about-prototype-link";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -137,6 +138,9 @@ export function LoginForm() {
             </button>
           ))}
         </div>
+        <p>
+          <AboutPrototypeLink />
+        </p>
       </div>
     </form>
   );
