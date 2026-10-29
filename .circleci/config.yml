@@ -44,6 +44,10 @@ jobs:
           name: E2E (Playwright contra o build de produção, sem LLM)
           command: npm run test:e2e
           no_output_timeout: 15m
+      - run:
+          name: E2E da demo pública (PUBLIC_DEMO=1, isolamento entre visitantes)
+          command: npm run test:e2e:demo
+          no_output_timeout: 15m
       - store_artifacts:
           path: test-results
           destination: playwright-traces

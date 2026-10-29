@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:e2e:demo": "playwright test -c playwright.demo.config.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file-if-exists=.env scripts/migrate.ts",
     "db:seed": "tsx --env-file-if-exists=.env scripts/seed.ts",
@@ -21,7 +22,7 @@
     "access-link": "tsx --env-file=.env.deploy.local scripts/access-link.ts",
     "eval:busca": "tsx --env-file-if-exists=.env evals/retrieval/run.ts",
     "eval:sugestao": "tsx --env-file-if-exists=.env evals/suggestion/run.ts",
-    "verify": "npm run typecheck && npm run lint && npm test && npm run test:e2e",
+    "verify": "npm run typecheck && npm run lint && npm test && npm run test:e2e && npm run test:e2e:demo",
     "eval:sim": "tsx --env-file-if-exists=.env evals/sim/run.ts",
     "otel:local": "tsx scripts/otel-local.ts"
   },
