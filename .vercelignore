@@ -8,6 +8,7 @@
 # Não fazem parte do app publicado.
 docs
 e2e
+e2e-demo
 evals
 test-results
 playwright-report
