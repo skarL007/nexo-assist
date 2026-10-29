@@ -4,7 +4,7 @@
 #   powershell -ExecutionPolicy Bypass -File scripts\deploy-prod.ps1           # migra + publica
 #   powershell -ExecutionPolicy Bypass -File scripts\deploy-prod.ps1 -Seed     # migra + seed + publica
 #
-# Precisa de: .vercel\env.production (vercel env pull) e a CLI da Vercel logada.
+# Precisa de: .vercel\env.production (vercel env pull) e a CLI da Vercel logada (npx vercel login).
 # Nenhum segredo é impresso: o AUTH_SECRET abaixo é descartável, só para a validação do env passar.
 param([switch]$Seed)
 $ErrorActionPreference = "Stop"
@@ -41,7 +41,8 @@ Remove-Item "$tmp.zip"
 Copy-Item ".vercel\project.json" "$tmp\.vercel\project.json"   # só o vínculo do projeto, sem env
 Push-Location $tmp
 try {
-  vercel deploy --prod --yes
+  # npx: funciona com ou sem a CLI global da Vercel no PATH.
+  npx --yes vercel deploy --prod --yes
   if ($LASTEXITCODE -ne 0) { throw "deploy falhou" }
 } finally {
   Pop-Location
