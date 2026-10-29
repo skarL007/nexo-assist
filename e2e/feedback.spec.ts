@@ -56,6 +56,8 @@ test('"Isso resolveu?": o funcionário avalia, a avaliação fica gravada e o an
 
 test("não dá para avaliar a resposta de outra pessoa", async ({ page }) => {
   await login(page, ELISA);
+  // Espera o login terminar: o page.request não espera a tela, e sem o cookie a rota responde 401.
+  await expect(page).toHaveURL(/\/atendimento$/);
   const response = await page.request.post("/api/chat/feedback", {
     data: { messageId: "conv-carla-m1", helpful: false },
     headers: { Origin: new URL(page.url()).origin },

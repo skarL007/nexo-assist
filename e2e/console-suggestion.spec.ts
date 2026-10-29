@@ -50,6 +50,8 @@ test("analista pede uma sugestão, revisa o aviso, edita e envia", async ({ page
 
 test("analista que não assumiu a conversa não pede sugestão", async ({ page }) => {
   await login(page, RAFAEL);
+  // Espera o login terminar: o page.request não espera a tela, e sem o cookie a rota responde 401.
+  await expect(page).toHaveURL(/\/console$/);
   const response = await page.request.post("/api/console/conversations/conv-bruno/suggestion", { headers: { Origin: new URL(page.url()).origin } });
   expect(response.status()).toBe(403);
 });
