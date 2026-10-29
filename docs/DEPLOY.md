@@ -33,6 +33,8 @@ O deploy roda na **Vercel** com o banco no **Turso** (libSQL, compatível com o 
 powershell -ExecutionPolicy Bypass -File scripts\deploy-prod.ps1 -Seed   # sem -Seed, mantém as conversas de produção
 ```
 
+Para conferir se a demo está no ar sem gastar o teto do modelo, `node scripts/checar-demo.mjs` abre a tela de login, entra como Ana, lê a conversa pela API (passa pelo banco) e confere o estudo de caso no portfólio. Sai com código 1 se algo falhar. Rodo depois de cada deploy e de tempos em tempos enquanto a demo está com avaliadores.
+
 ## Docker, CircleCI e Komodo
 
 Além da Vercel, o app roda numa imagem Docker no Komodo da minha máquina. A produção continua na Vercel, publicada à mão com `scripts/deploy-prod.ps1`; o CI nunca publica na Vercel. O `output: "standalone"` do Next só é ligado quando o build recebe `NEXT_OUTPUT=standalone`, o que só o `Dockerfile` faz, então o `npm run build` da Vercel não muda.
