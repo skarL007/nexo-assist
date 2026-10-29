@@ -16,7 +16,7 @@
 Em uma frase: **o Luna entrega a mesma efetividade e a mesma qualidade do modelo atual (as diferenças ficam dentro dos intervalos de confiança), responde mais rápido e custa 26× menos.** O Gemini 3.5 Flash Lite é a alternativa sem trocar de fornecedor, com a maior efetividade do teste.
 
 - **Recomendação** ([seção 10](#10-recomendação-e-projeção-de-negócio)): adotar o GPT-6 Luna depois de rodar `npm run eval` com ele e de uma rodada de confirmação Luna × Lite, porque os ICs de efetividade dos dois se sobrepõem. O `LLM_MODEL` padrão **não foi alterado** nesta branch.
-- **Achados que valem para qualquer modelo** ([seção 9](#9-achados-e-falhas)): o prompt atual impede reabrir chamado resolvido (0 de 7 modelos passa, e a causa está no prompt, não nos modelos), e 4 de 7 modelos não agem num caso crítico para a empresa toda.
+- **Achados que valem para qualquer modelo** ([seção 9](#9-achados-e-falhas)): na época, o prompt impedia reabrir chamado resolvido (0 de 7 modelos passou, e a causa estava no prompt, não nos modelos), e 4 de 7 modelos não agiam num caso crítico para a empresa toda. **Os dois foram corrigidos depois deste benchmark** (`f7bd083` e `f0d0232`, em 27/10), e hoje os dois cenários passam nos evals; veja a nota na seção 9.
 - **Engenharia de cache** ([seção 8](#8-engenharia-de-cache)): prefixo do prompt estável entre turnos + roteamento fixo por conversa. O Luna pagou metade do que pagaria sem cache, e o cache aumenta a vantagem dele no composto (0,844 → 0,867).
 - **Gasto real:** US$ 1,7955 dos US$ 2,00 da chave (teto próprio: US$ 1,80), sendo US$ 1,2999 na rodada definitiva; crédito restante US$ 0,2045 ([seção 12](#12-orçamento-e-reprodutibilidade)).
 
@@ -330,6 +330,12 @@ O custo do composto é o **custo pago, já com cache**, porque é o que a empres
 ## 9. Achados e falhas
 
 **Do agent (valem para qualquer modelo):**
+
+> **Corrigidos depois deste benchmark.** Os achados 1 e 2 abaixo descrevem o agent como estava na rodada (27/10). Os dois viraram correção no mesmo dia:
+> - **Reabertura** (`f7bd083`): a regra dos 7 dias foi para o código. `TicketService.listReopenable` devolve os resolvidos há até 7 dias, e `listMyTickets` passou a trazer esses chamados junto com os abertos. Em 29/10, "é esse mesmo" deixou de confirmar a reabertura (`92a0fd7`). O cenário "Reabrir chamado resolvido" passa 3/3 nos evals, e a persona `senha-sap` do funcionário simulado reabre o INC-20150 ([validação](../validacao/README.md)).
+> - **Caso crítico** (`f0d0232`): com a empresa toda ou uma área inteira parada, as instruções mandam montar o rascunho na hora, com impacto `company` e urgência `blocked`, sem perguntar mais nada; ao confirmar, o sistema transfere para um analista.
+>
+> Os números das tabelas não foram refeitos depois das correções: eles comparam os modelos nas mesmas condições, e as duas falhas valiam para todos.
 
 1. **O prompt impede reabrir chamado resolvido: 0 de 7 modelos passa.** O Anexo A diz que "chamados resolvidos há até 7 dias podem ser reabertos", e a tool suporta isso (`draftTicketUpdate` com `reopen`). Mas a instrução para problema relatado manda consultar `listMyTickets (onlyOpen)` ([`instructions.ts:21-23`](../../src/agent/instructions.ts)), e `onlyOpen` é `true` por padrão ([`tools/tickets.ts:13`](../../src/agent/tools/tickets.ts)): o INC-20150 (senha do SAP, resolvido há 4 dias) nunca aparece. O único que achou o chamado foi o Lite, que listou todos (`onlyOpen=false`), montou a atualização com reabertura e mesmo assim reprovou, porque no 1º turno também abriu um rascunho novo. Os outros responderam com o artigo de desbloqueio do SAP, o que é razoável. **Sugestão:** instruir `onlyOpen=false` quando o funcionário diz "de novo" ou "voltou", ou levar a regra dos 7 dias para o código, como pede o `AGENTS.md`.
 2. **Caso crítico: 4 de 7 não agem.** Com "ninguém da empresa consegue emitir nota fiscal agora", produção, Luna e Qwen ainda perguntam a urgência ou o que já foi tentado, e o Mistral escreve "Vou abrir um chamado urgente" sem chamar tool nenhuma. As instruções listam as perguntas de urgência para "problema novo" sem um atalho para o caso evidente. **Sugestão:** impacto "toda a empresa" + parado → rascunho com prioridade crítica ou transferência, sem mais perguntas.
