@@ -26,7 +26,7 @@ O vídeo mostra os números da tarde de 28/10. Depois dele: o `outlook-direto` e
 - 4:41 7. Entrega: imagem Docker, CircleCI e Komodo (fluxo configurado, em diagrama)
 - 5:16 8. Os números
 
-**App no ar:** https://nexo-assist-puce.vercel.app, com um link de acesso temporário enviado junto com o repositório.
+**Demo pública:** https://nexo-assist-puce.vercel.app. Na tela de login, entre como **Ana · funcionária** ou **Rafael · analista** (um clique, dados fictícios). Para controlar o custo, a demo aceita até **100 mensagens por dia**, somando todos os visitantes; depois disso o chat avisa que o limite de hoje acabou.
 
 ### Comece por aqui (3 minutos)
 

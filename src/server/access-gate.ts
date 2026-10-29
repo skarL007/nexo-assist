@@ -5,6 +5,7 @@
  * O token vira um cookie httpOnly com a mesma validade, e o link fica limpo.
  * Sem ACCESS_TOKEN configurado, a porta fica aberta no desenvolvimento local e
  * fechada no deploy: esquecer a variável não pode deixar o modelo pago público.
+ * Para abrir de propósito, PUBLIC_DEMO=1 (o teto DAILY_AGENT_TURN_LIMIT segura o custo).
  *
  * Lógica pura (sem Next) para poder ser testada; quem aplica é `src/proxy.ts`.
  * Os links são gerados por `npm run access-link` (scripts/access-link.ts).
@@ -51,8 +52,11 @@ export function decideAccess(input: {
   now: Date;
   /** Rodando na Vercel (process.env.VERCEL). */
   deployed?: boolean;
+  /** Demo pública ligada de propósito (PUBLIC_DEMO=1): abre sem link; o teto diário de mensagens continua valendo. */
+  publicDemo?: boolean;
 }): AccessDecision {
-  const { secret, tokenFromUrl, tokenFromCookie, now, deployed = false } = input;
+  const { secret, tokenFromUrl, tokenFromCookie, now, deployed = false, publicDemo = false } = input;
+  if (publicDemo) return { kind: "open" };
   if (!secret) return deployed ? { kind: "deny" } : { kind: "open" };
   if (tokenFromUrl !== null) {
     const expiresAt = validUntil(secret, tokenFromUrl, now);

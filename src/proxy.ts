@@ -14,6 +14,7 @@ export function proxy(request: NextRequest) {
     tokenFromCookie: request.cookies.get(ACCESS_COOKIE)?.value,
     now,
     deployed: !!process.env.VERCEL,
+    publicDemo: process.env.PUBLIC_DEMO === "1",
   });
 
   switch (decision.kind) {

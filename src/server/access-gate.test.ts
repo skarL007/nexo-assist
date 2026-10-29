@@ -19,6 +19,15 @@ describe("porta de acesso com link temporário", () => {
     expect(decideAccess({ secret: undefined, tokenFromUrl: null, tokenFromCookie: undefined, now: NOW, deployed: true })).toEqual({ kind: "deny" });
   });
 
+  it("demo pública ligada de propósito (PUBLIC_DEMO=1): abre na Vercel mesmo com o segredo configurado, sem precisar de link", () => {
+    expect(decideAccess({ secret: SECRET, tokenFromUrl: null, tokenFromCookie: undefined, now: NOW, deployed: true, publicDemo: true })).toEqual({ kind: "open" });
+    expect(decideAccess({ secret: undefined, tokenFromUrl: null, tokenFromCookie: undefined, now: NOW, deployed: true, publicDemo: true })).toEqual({ kind: "open" });
+  });
+
+  it("sem a chave da demo pública, nada muda: na Vercel continua exigindo o link", () => {
+    expect(decideAccess({ secret: SECRET, tokenFromUrl: null, tokenFromCookie: undefined, now: NOW, deployed: true, publicDemo: false })).toEqual({ kind: "deny" });
+  });
+
   it("libera o link assinado dentro da validade e diz até quando vale", () => {
     expect(decide(valid)).toEqual({ kind: "grant", expiresAt: in5min });
   });

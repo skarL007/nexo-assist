@@ -1,6 +1,6 @@
 # Deploy e histórico de segurança
 
-O deploy roda na **Vercel** com o banco no **Turso** (libSQL, compatível com o SQLite local). App: https://nexo-assist-puce.vercel.app, atrás de um link de acesso temporário.
+O deploy roda na **Vercel** com o banco no **Turso** (libSQL, compatível com o SQLite local). App: https://nexo-assist-puce.vercel.app, **aberto ao público desde 29/10/2026** (`PUBLIC_DEMO=1`), com teto de **100 mensagens em 24 horas** somando todos os visitantes (`DAILY_AGENT_TURN_LIMIT=100`), além dos limites por pessoa e do teto total (`TOTAL_AGENT_TURN_LIMIT`). Atingido o teto, o chat avisa que o limite de hoje acabou e nada chama o modelo. Para voltar a exigir o link de acesso, apague `PUBLIC_DEMO` na Vercel e publique de novo.
 
 ## Como fiz o deploy
 
