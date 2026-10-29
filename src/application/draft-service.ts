@@ -8,7 +8,7 @@ import { describeChanges, MAX_DRAFTS_PER_CONVERSATION, reviseNewTicket, type New
 import { DomainError } from "@/domain/errors";
 import type { Card, DraftSnapshot, DraftStatus, NewTicketFields, TicketUpdateFields, TraceStep, TurnTrace } from "@/domain/message";
 import { SLA_LABEL, slaDeadline } from "@/domain/priority";
-import { canReopen, CATEGORY_LABEL, sameSubject, type Category, type Ticket } from "@/domain/ticket";
+import { canReopen, categoryForTitle, CATEGORY_LABEL, sameSubject, type Category, type Ticket } from "@/domain/ticket";
 import type { ConversationService } from "./conversation-service";
 import { systemClock, type Clock, type Draft, type DraftRepository, type MessageRepository } from "./ports";
 import type { TicketService } from "./ticket-service";
@@ -53,7 +53,7 @@ export class DraftService {
     employeeId: string,
     input: { ticketCode: string; comment: string; category?: Category },
   ): Promise<DraftSnapshot> {
-    if (input.category) await this.assertSameProblem(employeeId, input.ticketCode, input.category);
+    await this.assertSameProblem(employeeId, input.ticketCode, input.category, input.comment);
     const fields = await this.updateFields(employeeId, input.ticketCode, input.comment);
     await this.drafts.replacePending(conversationId);
     const draft = await this.drafts.insert({
@@ -138,6 +138,7 @@ export class DraftService {
     const before = current.fields as TicketUpdateFields;
     const comment = edit.comment.trim();
     if (comment === before.comment) throw new DomainError("invalid_input", "Nada mudou no rascunho.");
+    await this.assertSameProblem(employeeId, before.ticketCode, undefined, comment);
     const fields = await this.updateFields(employeeId, before.ticketCode, comment);
     return {
       fields,
@@ -149,8 +150,13 @@ export class DraftService {
   }
 
   /** Problema de outro assunto vira chamado novo, não comentário no chamado existente. */
-  private async assertSameProblem(employeeId: string, ticketCode: string, reported: Category): Promise<void> {
+  private async assertSameProblem(employeeId: string, ticketCode: string, reported: Category | undefined, comment: string): Promise<void> {
     const ticket = await this.tickets.getMine(employeeId, ticketCode);
+    // O texto de Outlook é evidência independente da categoria escolhida pelo modelo.
+    if (categoryForTitle(comment, "other") === "email" && ticket.category !== "email" && ticket.category !== "access") {
+      throw new DomainError("different_problem", `O ${ticket.code} é de ${CATEGORY_LABEL[ticket.category]}; o relato inclui um problema de E-mail. Proponha um chamado separado para o e-mail.`);
+    }
+    if (!reported) return;
     if (sameSubject(ticket.category, reported)) return;
     throw new DomainError(
       "different_problem",

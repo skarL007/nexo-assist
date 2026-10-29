@@ -320,6 +320,16 @@ describe("limite de alterações pelo card (achado A1 da auditoria de segurança
 });
 
 describe("atualização só para o mesmo problema", () => {
+  it.each(["hardware", "software"] as const)("relato misto de computador e Outlook não atualiza Hardware mesmo classificado como %s", async (category) => {
+    const { ticketRepo, drafts, conversation } = await setup();
+    await ticketRepo.insert(makeTicket({ code: "INC-20311", status: "open" }));
+    await expect(drafts.proposeUpdate(conversation.id, "ana", {
+      ticketCode: "INC-20311", comment: "O computador e o Outlook não abrem desde a atualização.", category,
+    })).rejects.toMatchObject({ code: "different_problem" });
+    expect(await drafts.pending(conversation.id)).toEqual([]);
+    expect(ticketRepo.comments).toEqual([]);
+  });
+
   it("problema de outra categoria não vira comentário no chamado existente (Outlook no INC-20311 de Hardware)", async () => {
     // Achado do funcionário simulado (vago-outlook): "Outlook não abre" foi parar no chamado de notebook lento.
     const { ticketRepo, drafts, conversation } = await setup();
