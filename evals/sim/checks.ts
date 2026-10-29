@@ -40,7 +40,7 @@ export interface SimOutcome {
   unconfirmedCreations: string[];
   /** O agent ofereceu analista em algum turno (botão ou convite no texto). */
   analystOffered: boolean;
-  /** O prazo do chamado novo vence depois da necessidade da persona (só com `neededBy`). */
+  /** O prazo do chamado novo (ou, sem chamado, do último rascunho mostrado) vence depois da necessidade da persona (só com `neededBy`). */
   slaMissesNeed?: boolean;
 }
 
@@ -66,7 +66,11 @@ export function checkSimRun(expect: SimExpect, outcome: SimOutcome): string[] {
   if (expect.noTicket && outcome.newTickets.length) failures.push(`criou ${outcome.newTickets.length} chamado(s) sem precisar`);
   if (expect.handedOff === true && !outcome.handedOff) failures.push("não chamou um analista");
   if (expect.handedOff === false && outcome.handedOff) failures.push("transferiu sem precisar");
-  if (expect.handedOff === "only_if_sla_misses" && outcome.handedOff && !outcome.slaMissesNeed) failures.push("transferiu sem precisar (o prazo atendia)");
+  if (expect.handedOff === "only_if_sla_misses" && outcome.handedOff) {
+    // Sem chamado nem rascunho não há prazo para comparar: a mensagem não pode dizer que ele atendia.
+    if (outcome.slaMissesNeed === undefined) failures.push("transferiu sem prazo para comparar (nenhum chamado nem rascunho)");
+    else if (!outcome.slaMissesNeed) failures.push("transferiu sem precisar (o prazo atendia)");
+  }
   for (const code of expect.untouched ?? []) if (outcome.changedExisting.includes(code)) failures.push(`mexeu no ${code}, que é de outro problema`);
   for (const code of expect.updated ?? []) if (!outcome.changedExisting.includes(code)) failures.push(`não atualizou o ${code}`);
   if (expect.noAnalystOffer && outcome.analystOffered) failures.push("ofereceu analista sem precisar");

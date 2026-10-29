@@ -72,6 +72,12 @@ describe("checagens dos achados de 28/10", () => {
     expect(checkSimRun(expectation, { ...base, handedOff: false, slaMissesNeed: false })).toEqual([]);
   });
 
+  it("transferiu sem chamado nem rascunho para comparar: não afirma que o prazo atendia", () => {
+    // Achado da rodada 3 (vpn-reuniao #3): sem chamado criado, a mensagem dizia "o prazo atendia", o que não era verdade.
+    const expectation = { handedOff: "only_if_sla_misses" as const };
+    expect(checkSimRun(expectation, { ...base, handedOff: true })).toEqual(["transferiu sem prazo para comparar (nenhum chamado nem rascunho)"]);
+  });
+
   it("oferta de analista quando o prazo atende", () => {
     expect(checkSimRun({ noAnalystOffer: true }, { ...base, analystOffered: true })).toEqual(["ofereceu analista sem precisar"]);
   });

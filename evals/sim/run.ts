@@ -73,6 +73,7 @@ async function main() {
     const ticketCount = async () => (await services.tickets.listMine(employee.id)).length;
     const unconfirmedCreations: string[] = [];
     let analystOffered = false;
+    let lastDraftDeadline: string | null = null;
 
     const transcript: string[] = [];
     const replies: string[] = [];
@@ -129,6 +130,7 @@ async function main() {
 
       const buttons = last?.cards.flatMap((c) => (c.kind === "quick_replies" ? c.options : [])) ?? [];
       const draft = (await services.drafts.pending(open.id)).at(-1);
+      if (draft?.kind === "create" && draft.deadline) lastDraftDeadline = draft.deadline;
       const screen = [
         buttons.length ? `Respostas rápidas na tela: ${buttons.map((b) => `"${b}"`).join(", ")}` : "Sem respostas rápidas na tela.",
         draft ? `Rascunho pendente na tela: ${JSON.stringify(draft.fields)}` : "Sem rascunho pendente.",
@@ -143,7 +145,8 @@ async function main() {
     const after = await services.tickets.listMine(employee.id);
     const created = after.filter((t) => !before.has(t.code));
     const need = persona.expect.neededBy ? parseNeededBy(persona.expect.neededBy, runStart) : null;
-    const deadline = created[0] ? services.tickets.snapshot(created[0]).deadline : null;
+    // Sem chamado criado (ex.: clicou em analista antes de confirmar), vale o prazo do último rascunho mostrado.
+    const deadline = created[0] ? services.tickets.snapshot(created[0]).deadline : lastDraftDeadline;
     const outcome: SimOutcome = {
       newTickets: created.map((t) => ({ type: t.type, category: t.category, priority: t.priority })),
       changedExisting: after.filter((t) => seeded.has(t.code) && seeded.get(t.code) !== fingerprint(t)).map((t) => t.code),
