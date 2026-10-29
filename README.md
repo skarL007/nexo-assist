@@ -36,7 +36,7 @@ O vídeo mostra os números da rodada da tarde de 28/10, com o `outlook-direto` 
    - busca: 84% → 94%;
    - tempo real: ~1,6 s → ~0,4 s;
    - red-team: 21/21, mapeado ao OWASP.
-4. **Rode tudo sem LLM:** `npm run verify` (tipos, lint, 393 testes unitários e 39 E2E).
+4. **Rode tudo sem LLM:** `npm run verify` (tipos, lint, 404 testes unitários e 39 E2E).
 5. **Por que existe cada peça:** a [pesquisa de fronteira](docs/pesquisa/FRONTEIRA.md), com o que ServiceNow, Zendesk, Intercom e Atlassian fazem, e o que virou código aqui.
 
 ---
@@ -80,7 +80,7 @@ Qualquer senha funciona para os usuários de exemplo (regra do desafio). Na tela
 Outros comandos:
 
 ```bash
-npm test                          # 393 testes unitários — sem LLM
+npm test                          # 404 testes unitários — sem LLM
 npx playwright install chromium   # só na primeira vez, antes do E2E
 npm run test:e2e                  # 39 testes E2E contra o build de produção — sem LLM
 npm run eval                      # 32 cenários de decisão do agent com o modelo real (8 de ataque)
@@ -255,9 +255,9 @@ O prompt ([`agent/instructions.ts`](src/agent/instructions.ts)) cuida só da con
 
 | Camada | O que cobre | Comando |
 |---|---|---|
-| **Testes unitários** (Vitest, 393) | prazos com fim de semana, matriz de prioridade, pergunta sobre alternativa antes da prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória e só explícita, prazo × necessidade, assunto do chamado, categoria E-mail, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, modelo reserva e o estimador pass^k | `npm test` |
+| **Testes unitários** (Vitest, 404) | prazos com fim de semana, matriz de prioridade, pergunta sobre alternativa antes da prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória e só explícita, prazo × necessidade, assunto do chamado, categoria E-mail, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, modelo reserva e o estimador pass^k | `npm test` |
 | **E2E** (Playwright, 39) | login (inclusive SSO contra um provedor OIDC falso), permissões, transferência de ponta a ponta, relatório, sugestão de resposta, indicadores, prazos em risco, incidente em massa, frustração, tempo real com latência medida, estados de erro e a página 404, contra o build de produção | `npm run test:e2e` |
-| **Evals** (32 cenários, modelo real; 31/32 na rodada de 28/10 à noite, a falha explicada em [validação](docs/validacao/README.md)) | intenção, tools esperadas e proibidas, transferência (e quando *não* transferir), caso crítico, reabertura, escopo de TI, vazamento de dados, incidente em massa, frustração, os achados do funcionário simulado e 8 ataques mapeados ao OWASP ([red-team](docs/validacao/RED-TEAM.md)) | `npm run eval` |
+| **Evals** (32 cenários, modelo real; 31/32 na rodada de 29/10, com o "Reabrir chamado resolvido" corrigido e 3/3 repetido; a falha, de impacto no incidente em massa, deu 3/3 repetida e está em [validação](docs/validacao/README.md)) | intenção, tools esperadas e proibidas, transferência (e quando *não* transferir), caso crítico, reabertura, escopo de TI, vazamento de dados, incidente em massa, frustração, os achados do funcionário simulado e 8 ataques mapeados ao OWASP ([red-team](docs/validacao/RED-TEAM.md)) | `npm run eval` |
 | **Funcionário simulado** (pass^k, 10 personas; em 28/10, pass^1 0,72 → 0,93 → 0,93 e pass^3 0,50 → 0,80 → 0,80 nas três rodadas, a terceira com uma persona repetida depois de corrigida; o `outlook-direto` foi de 2/3 para 3/3) | um modelo faz o papel do funcionário, com fatos que só conta se perguntarem, e clica em Confirmar, Descartar ou numa resposta rápida; o estado no banco é conferido em k execuções, cada uma a partir do seed ([resultado e falhas](docs/validacao/SIMULACAO.md)) | `npm run eval:sim` |
 | **Provas de eficácia** | busca híbrida 84% → 94% ([BUSCA](docs/validacao/BUSCA.md)); tempo real ~0,4 s × ~1,6 s ([TEMPO-REAL](docs/validacao/TEMPO-REAL.md)); telemetria e SSO ([OBSERVABILIDADE-E-SSO](docs/validacao/OBSERVABILIDADE-E-SSO.md)) | `docs/validacao/` |
 | **Trace em toda resposta** | qualquer decisão pode ser auditada na própria interface e no console do analista | — |
@@ -266,7 +266,7 @@ O CI roda no [CircleCI](.circleci/config.yml) a cada push: tipos, lint, testes u
 
 Localmente, `npm run verify` roda tipos, lint, testes e E2E antes de cada push.
 
-Os evals pagaram o próprio custo: pegaram o agent abrindo chamado repetido, a latência do "raciocínio" do Gemini (resolvida com `thinkingLevel: "minimal"`), a reabertura de chamado resolvido e o caso crítico que ele não tratava. Uma auditoria com conversas difíceis achou mais dois: mensagem vaga ia direto para um analista, e falha técnica num sistema do RH era recusada como "fora de TI". Cada achado virou regra e cenário novo. O funcionário simulado achou mais quatro: abrir chamado a partir de uma resposta rápida que não era um "sim", anexar um problema novo ao chamado errado, classificar o Outlook como Software e oferecer analista depois de o chamado já atender o pedido. Os quatro viraram regra em código, e o pass^3 subiu de 0,50 para 0,80 com 10 personas. A falha que sobrou (prioridade Baixa porque o agent não perguntou se havia alternativa) virou a quinta regra, e o `outlook-direto` passou 3/3; as duas falhas da terceira rodada são de oferta de analista e estão explicadas em [SIMULACAO](docs/validacao/SIMULACAO.md).
+Os evals pagaram o próprio custo: pegaram o agent abrindo chamado repetido, a latência do "raciocínio" do Gemini (resolvida com `thinkingLevel: "minimal"`), a reabertura de chamado resolvido e o caso crítico que ele não tratava. Uma auditoria com conversas difíceis achou mais dois: mensagem vaga ia direto para um analista, e falha técnica num sistema do RH era recusada como "fora de TI". Cada achado virou regra e cenário novo. O funcionário simulado achou mais quatro: abrir chamado a partir de uma resposta rápida que não era um "sim", anexar um problema novo ao chamado errado, classificar o Outlook como Software e oferecer analista depois de o chamado já atender o pedido. Os quatro viraram regra em código, e o pass^3 subiu de 0,50 para 0,80 com 10 personas. A falha que sobrou (prioridade Baixa porque o agent não perguntou se havia alternativa) virou a quinta regra, e o `outlook-direto` passou 3/3; as três falhas da terceira rodada também viraram regra em código em 29/10: um "Sim, é esse mesmo" não confirma mais uma reabertura (e o `confirmDraft` nem aparece para o modelo sem confirmação explícita), o botão de analista sai quando o turno não tem motivo, e a checagem do `vpn-reuniao` usa o prazo do rascunho quando não há chamado. Repetidos, `senha-sap` e `vpn-reuniao` passaram 3/3 ([SIMULACAO](docs/validacao/SIMULACAO.md)).
 
 O processo de desenvolvimento (SDD, TDD, skills, MCPs e uso de IA) está em [`docs/PROCESSO-IA.md`](docs/PROCESSO-IA.md), e as especificações em [`docs/specs/`](docs/specs).
 
