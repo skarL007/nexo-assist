@@ -9,6 +9,7 @@
  */
 import { RequestContext } from "@mastra/core/request-context";
 import type { ChatStreamEvent } from "@/contracts/chat";
+import { reserveModelTurn } from "@/application/model-budget";
 import { env } from "@/config/env";
 import { isExplicitConfirmation } from "@/domain/confirmation";
 import { demoScopeOf } from "@/domain/demo";
@@ -232,14 +233,7 @@ async function assertWithinPersonalLimits(services: Services, employeeId: string
  * para pedidos simultâneos e conta também o turno que falhar ou for cancelado.
  */
 async function assertWithinBudget(services: Services) {
-  const last24h = await services.messages.countByRoleSince("employee", new Date(Date.now() - DAY_MS));
-  if (last24h > env().DAILY_AGENT_TURN_LIMIT) {
-    throw new DomainError("daily_limit", "O Nexo Assist atingiu o limite de uso de hoje. Fale com o service desk pelo ramal 4000.");
-  }
-  const totalLimit = env().TOTAL_AGENT_TURN_LIMIT;
-  if (totalLimit !== undefined && !(await services.budget.reserve("model_turns", totalLimit))) {
-    throw new DomainError("daily_limit", "O Nexo Assist atingiu o limite de uso desta demonstração. Fale com o service desk pelo ramal 4000.");
-  }
+  await reserveModelTurn(services.budget, { daily: env().DAILY_AGENT_TURN_LIMIT, total: env().TOTAL_AGENT_TURN_LIMIT }, new Date());
 }
 
 function fallbackReply(recorder: TurnRecorder): string {

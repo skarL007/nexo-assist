@@ -127,9 +127,6 @@ export class InMemoryMessageRepository implements MessageRepository {
   async countByRole(conversationId: string, role: MessageRole) {
     return this.items.filter((m) => m.conversationId === conversationId && m.role === role).length;
   }
-  async countByRoleSince(role: MessageRole) {
-    return this.items.filter((m) => m.role === role).length;
-  }
   async countByEmployeeSince() {
     return this.items.filter((m) => m.role === "employee").length;
   }

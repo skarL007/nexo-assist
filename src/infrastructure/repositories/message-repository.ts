@@ -113,12 +113,4 @@ export class DrizzleMessageRepository implements MessageRepository {
       .where(and(eq(conversations.employeeId, employeeId), eq(messages.role, "employee"), gte(messages.createdAt, since)));
     return row?.total ?? 0;
   }
-
-  async countByRoleSince(role: MessageRole, since: Date): Promise<number> {
-    const [row] = await this.db
-      .select({ total: count() })
-      .from(messages)
-      .where(and(eq(messages.role, role), gte(messages.createdAt, since)));
-    return row?.total ?? 0;
-  }
 }
