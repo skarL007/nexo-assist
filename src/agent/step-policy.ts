@@ -3,6 +3,7 @@
  * Passo 0: só recordUnderstanding. Depois, as outras: o registro é um só por turno.
  * No turno de esclarecimento (baixa confiança), só respostas rápidas: a pergunta pode
  * vir com botões, mas nada de rascunho, confirmação ou transferência.
+ * Se a mensagem do turno não confirma de forma explícita, sem confirmDraft.
  * Depois de transferir para um analista, nenhuma.
  */
 import type { ToolCallLog } from "@/domain/message";
@@ -12,11 +13,14 @@ const ACTION_TOOLS = (Object.keys(nexoTools) as NexoToolName[]).filter((name) =>
 
 const CLARIFYING_TOOLS: NexoToolName[] = ["offerQuickReplies"];
 
-export function stepPolicy(stepNumber: number, handedOff: boolean, clarifying = false) {
+/** Sem confirmação explícita na mensagem do turno, o modelo nem vê o confirmDraft. */
+const ACTION_TOOLS_NO_CONFIRM = ACTION_TOOLS.filter((name) => name !== "confirmDraft");
+
+export function stepPolicy(stepNumber: number, handedOff: boolean, clarifying = false, canConfirm = true) {
   if (stepNumber === 0) return { toolChoice: { type: "tool" as const, toolName: "recordUnderstanding" as const } };
   if (handedOff) return { toolChoice: "none" as const };
   if (clarifying) return { activeTools: CLARIFYING_TOOLS };
-  return { activeTools: ACTION_TOOLS };
+  return { activeTools: canConfirm ? ACTION_TOOLS : ACTION_TOOLS_NO_CONFIRM };
 }
 
 /**

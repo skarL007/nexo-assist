@@ -16,6 +16,8 @@ describe("confirmação explícita do rascunho", () => {
     "sim, está tudo certo",
     "pode sim",
     "Perfeito, pode registrar",
+    "sim, é esse, pode reabrir",
+    "É esse mesmo, confirmo",
   ])("%s → confirma", (text) => {
     expect(isExplicitConfirmation(text)).toBe(true);
   });
@@ -35,6 +37,12 @@ describe("confirmação explícita do rascunho", () => {
     "não pode criar ainda",
     "quero alterar a descrição",
     "o outlook não abre",
+    // Achado do eval "Reabrir chamado resolvido": responde "é este chamado?", não confirma a reabertura.
+    "Sim, é esse mesmo.",
+    "é esse mesmo",
+    "sim, é este",
+    "Isso, é ele",
+    "sim, é o mesmo",
     "",
   ])("%s → não confirma", (text) => {
     expect(isExplicitConfirmation(text)).toBe(false);

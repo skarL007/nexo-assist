@@ -10,6 +10,7 @@
 import { RequestContext } from "@mastra/core/request-context";
 import type { ChatStreamEvent } from "@/contracts/chat";
 import { env } from "@/config/env";
+import { isExplicitConfirmation } from "@/domain/confirmation";
 import { agentCanReply, EMPLOYEE_MESSAGES_PER_DAY, EMPLOYEE_MESSAGES_PER_HOUR } from "@/domain/conversation";
 import type { Employee } from "@/domain/employee";
 import { DomainError } from "@/domain/errors";
@@ -156,6 +157,7 @@ async function* streamAgent(
   const { recorder } = turn;
   const requestContext = new RequestContext();
   requestContext.set(TURN_KEY, turn);
+  const canConfirm = isExplicitConfirmation(turn.employeeText);
 
   const stream = await nexoAgent().stream(messages, {
     requestContext,
@@ -166,7 +168,7 @@ async function* streamAgent(
     // O modelo "pensa" antes de responder; para atendimento, raciocínio mínimo basta e corta a latência.
     providerOptions: providerOptionsFor(env().LLM_MODEL, env().OPENROUTER_REASONING_EFFORT, turn.conversationId),
     // Passo 0: obriga o modelo a registrar o que entendeu. Depois de transferir, não age mais.
-    prepareStep: ({ stepNumber }) => stepPolicy(firstStep + stepNumber, recorder.handedOff, recorder.clarifying),
+    prepareStep: ({ stepNumber }) => stepPolicy(firstStep + stepNumber, recorder.handedOff, recorder.clarifying, canConfirm),
   });
 
   const startedCalls = new Map<string, { at: number; input: unknown }>();

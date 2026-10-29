@@ -12,6 +12,14 @@ describe("stepPolicy", () => {
     expect(activeTools).toEqual(expect.arrayContaining(["listMyTickets", "draftNewTicket", "confirmDraft", "transferToAnalyst"]));
   });
 
+  it("mensagem que não confirma de forma explícita: confirmDraft nem aparece para o modelo", () => {
+    // Achado do eval "Reabrir chamado resolvido": "Sim, é esse mesmo" virava confirmDraft.
+    const { activeTools } = stepPolicy(1, false, false, false);
+    expect(activeTools).not.toContain("confirmDraft");
+    expect(activeTools).toEqual(expect.arrayContaining(["draftTicketUpdate", "cancelDraft", "transferToAnalyst"]));
+    expect(stepPolicy(1, false, false, true).activeTools).toContain("confirmDraft");
+  });
+
   it("no turno de esclarecimento (baixa confiança), só pode oferecer respostas rápidas: nada de rascunho, confirmação ou transferência", () => {
     expect(stepPolicy(1, false, true)).toEqual({ activeTools: ["offerQuickReplies"] });
   });

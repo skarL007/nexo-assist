@@ -32,10 +32,19 @@ const CONFIRMATIONS = [
   /\bconfirm(o|a|ar|ado|ada)\b/,
 ];
 
+/**
+ * Resposta que só identifica o chamado ("é esse mesmo", "é este", "é ele"): responde "é este chamado?",
+ * não confirma o rascunho. Achado do eval "Reabrir chamado resolvido".
+ */
+const IDENTITY = /\b(e (esse|este|essa|esta|ele|ela|o mesmo|a mesma)|(esse|este|essa|esta) mesm[oa])\b/;
+/** Pedido de ação que, junto da identificação, confirma ("sim, é esse, pode reabrir"). */
+const ACTION = /\bpode (criar|abrir|confirmar|mandar|registrar|seguir|enviar|atualizar|prosseguir|reabrir)\b|\bconfirm(o|a|ar|ado|ada)\b/;
+
 export function isExplicitConfirmation(text: string): boolean {
   const normalized = normalize(text);
   if (!normalized) return false;
   if (BLOCKERS.some((pattern) => pattern.test(normalized))) return false;
   const words = normalized.replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+  if (IDENTITY.test(words) && !ACTION.test(words)) return false;
   return CONFIRMATIONS.some((pattern) => pattern.test(words));
 }
