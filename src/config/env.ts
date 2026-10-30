@@ -20,7 +20,9 @@ const schema = z.object({
   LLM_MODEL: z.string().default("google/gemini-3.5-flash"),
   /** Modelo reserva quando o principal falha (ex.: 503 "alta demanda"). "off" desliga. */
   LLM_FALLBACK_MODEL: z.string().default(DEFAULT_FALLBACK_MODEL),
-  /** Modelo de embeddings do Gemini para a busca híbrida na central (usa a mesma chave do Google). */
+  /** Embeddings pelo OpenRouter, 1º provedor da busca híbrida (usa a OPENROUTER_API_KEY). "off" desliga. Outro modelo pede nova margem: `npm run eval:busca`. */
+  OPENROUTER_EMBEDDING_MODEL: z.string().default("google/gemini-embedding-2"),
+  /** Modelo de embeddings do Gemini direto, 2º provedor da busca híbrida (usa a mesma chave do Google). */
   EMBEDDING_MODEL: z.string().default("gemini-embedding-2"),
   DATABASE_URL: z.string().default("file:local.db"),
   DATABASE_AUTH_TOKEN: z.string().optional(),

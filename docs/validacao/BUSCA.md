@@ -82,8 +82,8 @@ Escolhi 0,02 no meio de uma **faixa estável**: de 0,015 a 0,03 o resultado é o
 
 ## Resiliência e custo
 
-- **Cache dos vetores:** os vetores dos artigos ficam no banco (`article_embeddings`) com o hash do texto, e só são recalculados quando o artigo muda. A cada busca, só a pergunta é transformada em vetor.
-- **Falha dos embeddings:** se a chamada falhar ou passar de 4 s, a busca volta para palavras-chave. O trace mostra "busca só por palavras (embeddings indisponíveis)". Os dois casos têm teste em [`application/knowledge-service.test.ts`](../../src/application/knowledge-service.test.ts).
+- **Cache dos vetores:** os vetores dos artigos ficam no banco (`article_embeddings`), por modelo e com o hash do texto, e só são recalculados quando o artigo muda. A cada busca, só a pergunta é transformada em vetor.
+- **Falha dos embeddings:** se um provedor falhar ou passar de 4 s, a busca tenta o próximo ([provedores](#provedor-dos-embeddings-30102026)); sem nenhum, volta para palavras-chave. O trace mostra "busca só por palavras (embeddings indisponíveis)". Os casos têm teste em [`application/knowledge-service.test.ts`](../../src/application/knowledge-service.test.ts).
 - **Explicação no trace:** o painel "por quê?" mostra por que cada artigo veio, por exemplo `"VPN com erro 809" (termos: vpn, 809; sentido 0,81)`.
 
 ## Com o agent de verdade (evals)
@@ -111,3 +111,35 @@ Erros que ficaram na calibração, além dos dois de VPN já descritos acima:
 - **"como faço para ter um mouse sem fio"** vai para "Teclado ou mouse parou de responder" em vez de "Pedir equipamento".
 
 O texto das verificações entra no embedding só dos artigos que as têm. Os artigos antigos mantêm o mesmo hash e não são recalculados. Medi com e sem esse texto numa versão intermediária dos artigos, e o acerto geral foi o mesmo nos três conjuntos.
+
+## Provedor dos embeddings (30/10/2026)
+
+**Pergunta:** os créditos do Google acabaram em 29/10 (402), e a produção passou a buscar só por palavras. Dá para voltar à busca híbrida sem depender de um único provedor, sem recalibrar e a custo desprezível?
+
+**Resposta:** sim. O OpenRouter, que já atende o LLM da demo, oferece o mesmo `gemini-embedding-2`. Com ele, a busca repete exatamente o resultado do Gemini direto, com a mesma margem de 0,02. Agora a busca tenta o OpenRouter, depois o Gemini direto e, sem nenhum dos dois, as palavras-chave.
+
+### Como medi
+
+Comparei cinco modelos do OpenRouter, todos com as 63 perguntas dos três conjuntos, os 14 artigos e a mesma busca híbrida da produção, varrendo a margem. Rodar [`compare-models.ts`](../../evals/retrieval/compare-models.ts) com os cinco custou US$ 0,0004.
+
+| Modelo (pelo OpenRouter) | Melhor margem | Calibração | Separado | Diagnóstico | Total | US$ por 1M tokens |
+|---|---|---|---|---|---|---|
+| **google/gemini-embedding-2** | **0,015–0,02** | **85%** | **100%** | **100%** | **58/63 (92%)** | 0,20 |
+| baai/bge-m3 | 0,04 | 76% | 100% | 100% | 55/63 (87%) | 0,01 |
+| intfloat/multilingual-e5-large | 0,01–0,02 | 82–88% | 94–100% | 69–85% | 54/63 (86%) | 0,01 |
+| qwen/qwen3-embedding-8b | 0,08 | 76% | 94% | 100% | 54/63 (86%) | 0,01 |
+| openai/text-embedding-3-small | 0,04–0,08 | 73–76% | 88–94% | 100% | 53/63 (84%) | 0,02 |
+| Só palavras-chave (produção de 29/10 a 30/10) | 0,02 | 79% | 82% | 54% | 47/63 (75%) | 0 |
+
+`npm run eval:busca` (pelo OpenRouter, o padrão agora) repete a primeira linha: 85%, 100% e 100%, com os mesmos cinco erros da calibração descritos acima. Para medir pelo Gemini direto: `npm run eval:busca -- --provider=google`.
+
+### Leitura
+
+- **Por que o Gemini e não o bge-m3, 20 vezes mais barato:** o bge-m3 acerta 3 perguntas a menos e exigiria trocar a margem para 0,04. Como também passa pelo OpenRouter, não protege contra o OpenRouter fora do ar. A diferença de preço não importa nesse volume: o teto da demo (2000 turnos, ~30 tokens por pergunta) custa cerca de US$ 0,012 com o Gemini e US$ 0,0006 com o bge-m3.
+- **Faixa estável mais estreita:** pelo OpenRouter, o resultado é o mesmo de 0,015 a 0,02; com 0,025 a calibração cai para 82%. Pelo Gemini direto, com 9 artigos, a faixa ia de 0,015 a 0,03. A margem ficou em 0,02 porque é o valor já usado e medido; se novos artigos mudarem a distribuição, é o primeiro número a remedir.
+- **Sem tipo de tarefa:** o endpoint do OpenRouter não recebe `RETRIEVAL_QUERY` nem `RETRIEVAL_DOCUMENT`, e mesmo assim o resultado foi igual. Os vetores ficam em cache com outro nome de modelo (`openrouter/google/gemini-embedding-2`), sem misturar com os do Gemini direto.
+- **Latência:** mediana de 994 ms por pergunta medida do Brasil (10 perguntas, máximo 1,4 s), dentro do tempo máximo de 4 s.
+
+### Disjuntor
+
+Um provedor que falha fica de fora por um tempo, na memória da instância: 15 min com 401, 402 ou 403 (sem crédito ou sem permissão) e 1 min com timeout, 429, 5xx ou erro de rede. Sem isso, cada mensagem esperaria uma chamada que vai falhar de novo. Testes em [`application/provider-breaker.test.ts`](../../src/application/provider-breaker.test.ts) e [`application/knowledge-service.test.ts`](../../src/application/knowledge-service.test.ts).

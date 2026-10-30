@@ -1,16 +1,19 @@
 /**
  * Benchmark de recuperação da central: palavras-chave × só sentido × híbrida.
  *
- *   npm run eval:busca
+ *   npm run eval:busca                        # pelo OpenRouter (1º provedor da produção)
+ *   npm run eval:busca -- --provider=google   # pelo Gemini direto (2º provedor)
  *
  * Calcula os embeddings dos artigos e das perguntas (chamadas em lote, frações de centavo),
  * mede hit@1, hit@3, MRR e abstenção no conjunto de calibração e no conjunto separado
  * (escrito depois da escolha da margem), e varre a margem para mostrar a faixa estável.
  */
 import { articleText, MIN_MARGIN } from "@/application/knowledge-service";
+import type { Embedder } from "@/application/ports";
 import { env } from "@/config/env";
 import { hybridSearch } from "@/domain/hybrid-search";
 import { GeminiEmbedder } from "@/infrastructure/ai/gemini-embedder";
+import { OpenRouterEmbedder } from "@/infrastructure/ai/openrouter-embedder";
 import { articles } from "@/infrastructure/db/seed-data";
 import { scoreRetrieval, type RetrievalScore } from "./metrics";
 import { diagnosticQueries, holdoutQueries, retrievalQueries, type RetrievalQuery } from "./queries";
@@ -20,10 +23,22 @@ const pct = (v: number) => `${Math.round(v * 100)}%`;
 const row = (name: string, s: RetrievalScore) => `| ${name} | ${pct(s.hitAt1)} | ${pct(s.hitAt3)} | ${s.mrr.toFixed(2)} | ${pct(s.abstention)} | ${pct(s.accuracy)} |`;
 const header = "| Busca | hit@1 | hit@3 | MRR | abstenção | acerto geral |\n|---|---|---|---|---|---|";
 
+function embedderFor(provider: string): Embedder {
+  const config = env();
+  if (provider === "openrouter") {
+    if (!config.OPENROUTER_API_KEY) throw new Error("Defina OPENROUTER_API_KEY no .env para medir pelo OpenRouter.");
+    return new OpenRouterEmbedder(config.OPENROUTER_EMBEDDING_MODEL, config.OPENROUTER_API_KEY);
+  }
+  if (provider === "google") {
+    if (!config.GOOGLE_GENERATIVE_AI_API_KEY) throw new Error("Defina GOOGLE_GENERATIVE_AI_API_KEY no .env para medir pelo Gemini direto.");
+    return new GeminiEmbedder(config.EMBEDDING_MODEL, config.GOOGLE_GENERATIVE_AI_API_KEY);
+  }
+  throw new Error(`--provider deve ser openrouter ou google (veio "${provider}").`);
+}
+
 async function main() {
-  const key = env().GOOGLE_GENERATIVE_AI_API_KEY;
-  if (!key) throw new Error("Defina GOOGLE_GENERATIVE_AI_API_KEY no .env para rodar o benchmark de busca.");
-  const embedder = new GeminiEmbedder(env().EMBEDDING_MODEL, key);
+  const provider = process.argv.find((a) => a.startsWith("--provider="))?.split("=")[1] ?? "openrouter";
+  const embedder = embedderFor(provider);
   const docVectors = await embedder.embed(articles.map(articleText), "document");
   const vectors = new Map(articles.map((a, i) => [a.id, docVectors[i]]));
   const noVectors = new Map<string, number[]>();

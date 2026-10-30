@@ -19,7 +19,7 @@ mensagem → limites → salva → (conversa com analista? para aqui)
 | Tool | Faz | Passos visíveis |
 |---|---|---|
 | `recordUnderstanding` | Registra intenção, entendimento, confiança, motivo. Confiança < 0,5 → na primeira vez, uma pergunta de esclarecimento; se a resposta anterior do agent também foi sem segurança, transfere (`shouldHandOffForLowConfidence`) | "chamou um analista" (se transferir) |
-| `searchHelpCenter` | Busca híbrida: sentido (embeddings `gemini-embedding-2`, vetores dos artigos em cache no banco) + bônus de palavras-chave. Nenhum artigo quando o 1º não se destaca do 2º (margem < 0,02). Sem embeddings, só palavras ([validação](../validacao/BUSCA.md)) | "buscou na central de ajuda" (com termos e sentido de cada artigo) |
+| `searchHelpCenter` | Busca híbrida: sentido (embeddings `gemini-embedding-2` pelo OpenRouter ou pelo Google, vetores dos artigos em cache no banco) + bônus de palavras-chave. Nenhum artigo quando o 1º não se destaca do 2º (margem < 0,02). Sem nenhum provedor de embeddings, só palavras ([provedores](#provedores-dos-embeddings), [validação](../validacao/BUSCA.md)) | "buscou na central de ajuda" (com termos e sentido de cada artigo) |
 | `askDiagnosticCheck` | Pede uma verificação de um artigo (id conferido na central), com botões fixos; no máximo 3 por conversa ([verificações](#verificações-de-diagnóstico)) | "pediu uma verificação" |
 | `listMyTickets` | Lista chamados do funcionário; `showAsChoice` mostra seleção | "consultou seus chamados" |
 | `getTicket` | Um chamado + prazo | "consultou o INC-…", "calculou o prazo" |
@@ -92,6 +92,12 @@ Na primeira dúvida (confiança < 0,5), o turno só pode fazer uma pergunta: a p
 ## Modelo reserva
 
 Se o modelo principal (`LLM_MODEL`) falhar num passo (ex.: Gemini 3.5 Flash com 503 "alta demanda"), o Mastra tenta de novo uma vez e, se continuar falhando, faz o passo no **modelo reserva** (`LLM_FALLBACK_MODEL`, padrão `google/gemini-3.5-flash-lite`). O turno segue no reserva até o fim. O trace registra o modelo que respondeu (`model`), o que falhou (`fallbackFrom`) e um guardrail explicando a troca; o custo nos indicadores usa o preço do modelo que respondeu. Sem a chave do reserva, ou com `LLM_FALLBACK_MODEL=off`, não há reserva. O uso de tokens é somado passo a passo (o total do stream perde os campos depois de uma nova tentativa). Aceite: `agent/model-fallback.test.ts` (cadeia de modelos, leitura do passo e nota do trace) e, com o modelo real, um turno com o principal indisponível termina respondido pelo reserva e com o trace dizendo isso.
+
+## Provedores dos embeddings
+
+A busca por sentido tenta os provedores em ordem: o OpenRouter (`OPENROUTER_EMBEDDING_MODEL`, padrão `google/gemini-embedding-2`, com a `OPENROUTER_API_KEY`), depois o Gemini direto (`EMBEDDING_MODEL`, com a `GOOGLE_GENERATIVE_AI_API_KEY`). Sem nenhum dos dois, ou com todos falhando, é a busca por palavras. Cada provedor tem os próprios vetores em cache no banco (o do OpenRouter fica como `openrouter/<modelo>`). Os dois chamam o mesmo modelo, e a margem de 0,02 vale para os dois (medido em [BUSCA.md](../validacao/BUSCA.md)); outro modelo pede nova medição com `npm run eval:busca`.
+
+Um provedor que falha fica de fora por um tempo (disjuntor na memória da instância): 15 min com 401, 402 ou 403 (sem crédito ou sem permissão), 1 min com timeout, 429, 5xx ou erro de rede. Nesse tempo a busca vai direto ao próximo, sem esperar uma chamada que vai falhar de novo. `OPENROUTER_EMBEDDING_MODEL=off` tira o OpenRouter da lista. Aceite: `application/knowledge-service.test.ts` (1º provedor fora → o 2º responde, com o próprio cache; 402 deixa o provedor de fora por 15 min e um timeout por 1 min; todos fora → palavras-chave, avisando cada erro), `application/provider-breaker.test.ts` e `infrastructure/ai/openrouter-embedder.test.ts` (pedido, ordem da resposta e erro com o status HTTP).
 
 ## Verificações de diagnóstico
 

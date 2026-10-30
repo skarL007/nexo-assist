@@ -1,8 +1,9 @@
 /**
  * Embeddings do Gemini pela API REST (sem SDK extra). A chave vai no cabeçalho,
- * nunca na URL, e a chamada tem tempo máximo: se demorar, a busca segue só por palavras.
+ * nunca na URL, e a chamada tem tempo máximo: se demorar, a busca passa ao próximo provedor.
  */
 import type { Embedder } from "@/application/ports";
+import { EmbeddingHttpError } from "@/application/provider-breaker";
 
 const API = "https://generativelanguage.googleapis.com/v1beta/models";
 /** 768 dimensões: o modelo treina por camadas (Matryoshka), então o corte perde pouco e ocupa 1/4. */
@@ -29,7 +30,7 @@ export class GeminiEmbedder implements Embedder {
         })),
       }),
     });
-    if (!response.ok) throw new Error(`Embeddings ${response.status}`);
+    if (!response.ok) throw new EmbeddingHttpError(response.status);
     const body = (await response.json()) as { embeddings?: { values: number[] }[] };
     if (!body.embeddings || body.embeddings.length !== texts.length) throw new Error("Embeddings: resposta incompleta");
     return body.embeddings.map((e) => e.values);
