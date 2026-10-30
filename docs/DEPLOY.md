@@ -21,7 +21,7 @@ O deploy roda na **Vercel** com o banco no **Turso** (libSQL, compatível com o 
      ```bash
      node -e "process.stdout.write(require('crypto').randomBytes(36).toString('base64url'))" | vercel env add AUTH_SECRET production --sensitive
      ```
-   - Completam a lista `LLM_MODEL`, `DAILY_AGENT_TURN_LIMIT=100` (mensagens em 24 horas, somando todo mundo) e `TOTAL_AGENT_TURN_LIMIT=1000` (trava final: 10 dias de avaliação a 100 por dia). Os dois são `Config`, não segredo, para dar para conferir o valor com `vercel env pull`.
+   - Completam a lista `LLM_MODEL`, `DAILY_AGENT_TURN_LIMIT=100` (mensagens em 24 horas, somando todo mundo) e `TOTAL_AGENT_TURN_LIMIT` (trava final). Desde 30/10/2026: `LLM_MODEL=openrouter/openai/gpt-6-luna`, `LLM_FALLBACK_MODEL=openrouter/google/gemini-3.5-flash-lite`, `OPENROUTER_API_KEY` (colada pelo dono) e `TOTAL_AGENT_TURN_LIMIT=2000`, que com o Luna fica abaixo de US$ 1. A CLI da Vercel criou essas variáveis como `Secret`: o valor não aparece no `vercel env pull`.
 4. Publiquei pela CLI (`vercel deploy --prod`) a partir de um `git archive` do último commit, para nunca subir arquivo que não está versionado. O [`.vercelignore`](../.vercelignore) também barra `.env` e bancos locais.
 5. As funções rodam em `iad1` (Washington), na mesma região do banco. A "Vercel Authentication" protege só os previews; a produção fica atrás do nosso token.
 

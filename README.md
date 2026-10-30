@@ -10,7 +10,7 @@ Cada resposta do agent mostra **o que ele entendeu, o que fez e por quê**: pass
 
 **Vídeo (5:28):** [assistir no navegador](https://skarl007.github.io/nexo-assist/#video) · [estudo de caso](https://skarl007.github.io/nexo-assist/)
 
-**Stack:** TypeScript estrito · Next.js 16 (App Router) · Mastra (agent) · Google Gemini 3.5 Flash · Drizzle + libSQL (SQLite local, Turso no deploy) · Redux Toolkit + RTK Query · Zod · shadcn/ui + Tailwind · Vitest · Playwright.
+**Stack:** TypeScript estrito · Next.js 16 (App Router) · Mastra (agent) · GPT-6 Luna via OpenRouter (Gemini 3.5 Flash até 30/10) · Drizzle + libSQL (SQLite local, Turso no deploy) · Redux Toolkit + RTK Query · Zod · shadcn/ui + Tailwind · Vitest · Playwright.
 
 ![Painel "por quê?" aberto num rascunho de chamado: o que o agent entendeu, a intenção, a confiança, o motivo, as ações com resultado e as regras do sistema que agiram](docs/demo/por-que.jpg)
 
@@ -38,7 +38,7 @@ Cada resposta do agent mostra **o que ele entendeu, o que fez e por quê**: pass
 
 ## Como rodar
 
-Pré-requisitos: Node 22.9+ e uma chave do Gemini ([Google AI Studio](https://aistudio.google.com/apikey)).
+Pré-requisitos: Node 22.9+ e uma chave do Gemini ([Google AI Studio](https://aistudio.google.com/apikey)), usada pelo modelo padrão local e pelos embeddings da busca. Para rodar como a produção, defina também `OPENROUTER_API_KEY` e `LLM_MODEL=openrouter/openai/gpt-6-luna`.
 
 ```bash
 npm install
@@ -73,11 +73,11 @@ Outros comandos:
 
 ```bash
 npm run verify                    # tipos + lint + unitários + E2E + E2E da demo — sem LLM
-npm test                          # 443 testes unitários em 64 arquivos — sem LLM
+npm test                          # 457 testes unitários em 65 arquivos — sem LLM
 npx playwright install chromium   # só na primeira vez, antes do E2E
 npm run test:e2e                  # 39 testes E2E contra o build de produção — sem LLM
 npm run test:e2e:demo             # isolamento entre visitantes na demo pública — sem LLM
-npm run eval                      # 32 cenários de decisão do agent com o modelo real (8 de ataque)
+npm run eval                      # 36 cenários de decisão do agent com o modelo real (8 de ataque)
 npm run eval:sim                  # funcionário simulado por um modelo, pass^k (τ-bench)
 npm run eval:busca                # busca na central: palavras-chave × híbrida, 50 perguntas
 npm run eval:sugestao             # sugestão de resposta do analista com o modelo real
@@ -120,7 +120,7 @@ flowchart LR
     LEG["FlakyTicketRepository<br/>legado instável simulado"]
   end
 
-  GEM[("Google Gemini<br/>3.5 Flash")]
+  GEM[("LLM: GPT-6 Luna<br/>via OpenRouter")]
   DB[("SQLite local<br/>Turso no deploy")]
 
   UI --> PX
@@ -203,7 +203,7 @@ flowchart TD
   D -- não --> E{"Intenção"}
   E -- dúvida --> Q["searchHelpCenter<br/>responde com o artigo"]
   E -- status --> S["listMyTickets / getTicket<br/>se vencido, oferece analista"]
-  E -- problema novo --> N["listMyTickets: já existe?<br/>searchHelpCenter: autoatendimento?<br/>pergunta o que falta"]
+  E -- problema novo --> N["listMyTickets: já existe?<br/>searchHelpCenter: autoatendimento?<br/>askDiagnosticCheck: uma verificação por vez<br/>pergunta o que falta"]
   N --> DR["draftNewTicket<br/>prioridade e prazo calculados em código"]
   E -- complementar ou reabrir --> U["draftTicketUpdate<br/>reabre só até 7 dias"]
   DR --> CF{"Funcionário confirma?"}
@@ -237,8 +237,9 @@ A decisão de projeto mais importante foi esta: **o modelo decide o que fazer, e
 | Incidente em massa: 3+ outras pessoas com o mesmo problema nas últimas 4 h úteis → o impacto sobe para "equipe" e a prioridade é recalculada, sem revelar quem relatou | [`domain/known-issue.ts`](src/domain/known-issue.ts) |
 | Frustração alta (ou moderada duas vezes) → aparece o botão "Falar com um analista"; nunca transfere sozinho nem mexe na prioridade | [`domain/frustration.ts`](src/domain/frustration.ts), `run-turn.ts` |
 | Busca na central: híbrida (sentido + palavras); abstém-se quando o 1º resultado não se destaca do 2º; sem chave, só palavras | [`domain/hybrid-search.ts`](src/domain/hybrid-search.ts) |
+| Verificações de diagnóstico (formato KCS: cabo, tomada, monitor...): uma por vez, só ids que existem na central, no máximo 3 por conversa; se nada resolver, o chamado leva o "já tentado", montado do histórico com o texto do artigo (o modelo não precisa lembrar nem consegue inventar) | [`domain/diagnostics.ts`](src/domain/diagnostics.ts), [`agent/tools/help-center.ts`](src/agent/tools/help-center.ts) |
 | Aviso de prazo em risco (75% do prazo útil), com a conta explicada | [`domain/sla-risk.ts`](src/domain/sla-risk.ts) |
-| Modelo reserva: se o Gemini 3.5 Flash falhar (ex.: 503), o passo vai para o Flash Lite, e o trace diz quem respondeu; o custo usa o preço de quem respondeu | [`agent/model-fallback.ts`](src/agent/model-fallback.ts) |
+| Modelo reserva: se o modelo principal falhar (ex.: 503), o passo vai para o reserva (`LLM_FALLBACK_MODEL`), e o trace diz quem respondeu; o custo usa o preço de quem respondeu | [`agent/model-fallback.ts`](src/agent/model-fallback.ts) |
 | Entendimento registrado uma vez por turno: chamadas paralelas repetidas não transferem nem avisam de novo | [`agent/turn-context.ts`](src/agent/turn-context.ts) (`recordDecision`) |
 | Privacidade: o funcionário vem do cookie assinado, nunca de argumento do modelo; chamado de outra pessoa responde "não encontrado" | [`agent/turn-context.ts`](src/agent/turn-context.ts), `TicketService.getMine` |
 
@@ -250,20 +251,21 @@ O prompt ([`agent/instructions.ts`](src/agent/instructions.ts)) cuida só da con
 
 ## Como garanti a qualidade das decisões
 
-Teste unitário não prova que um LLM decide bem, então a qualidade tem quatro camadas. As duas primeiras rodam sem modelo, a cada push. As outras duas usam o Gemini de verdade e rodam à mão, porque custam dinheiro.
+Teste unitário não prova que um LLM decide bem, então a qualidade tem quatro camadas. As duas primeiras rodam sem modelo, a cada push. As outras duas usam o modelo de verdade e rodam à mão, porque custam dinheiro.
 
 | Camada | O que cobre | Comando |
 |---|---|---|
-| **Testes unitários** (Vitest, 443 em 64 arquivos) | prazos com fim de semana, matriz de prioridade, pergunta sobre alternativa antes da prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória e só explícita, prazo × necessidade, assunto do chamado, categoria E-mail, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, espaço isolado da demo, modelo reserva, o estimador pass^k e a simulação do roteamento em cascata | `npm test` |
+| **Testes unitários** (Vitest, 457 em 65 arquivos) | verificações de diagnóstico e a sincronização da central sem apagar dados, prazos com fim de semana, matriz de prioridade, pergunta sobre alternativa antes da prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória e só explícita, prazo × necessidade, assunto do chamado, categoria E-mail, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, espaço isolado da demo, modelo reserva, o estimador pass^k e a simulação do roteamento em cascata | `npm test` |
 | **E2E** (Playwright, 39 + 1 da demo) | login (inclusive SSO contra um provedor OIDC falso), permissões, transferência de ponta a ponta, relatório, sugestão de resposta, indicadores, prazos em risco, incidente em massa, frustração, tempo real com latência medida, estados de erro e a página 404, contra o build de produção. A suíte da demo sobe o app com `PUBLIC_DEMO=1` e prova que o visitante B não lê, não assume e não pede sugestão da conversa do visitante A | `npm run test:e2e` · `npm run test:e2e:demo` |
-| **Evals** (32 cenários, modelo real) | intenção, tools esperadas e proibidas, transferência (e quando *não* transferir), caso crítico, reabertura, escopo de TI, vazamento de dados, incidente em massa, frustração, os achados do funcionário simulado e 8 ataques mapeados ao OWASP ([red-team](docs/validacao/RED-TEAM.md)) | `npm run eval` |
+| **Evals** (36 cenários, modelo real) | intenção, tools esperadas e proibidas, verificações de diagnóstico e o "já tentado" no chamado, transferência (e quando *não* transferir), caso crítico, reabertura, escopo de TI, vazamento de dados, incidente em massa, frustração, os achados do funcionário simulado e 8 ataques mapeados ao OWASP ([red-team](docs/validacao/RED-TEAM.md)) | `npm run eval` |
 | **Funcionário simulado** (pass^k, 10 personas) | um modelo faz o papel do funcionário, com fatos que só conta se perguntarem, e clica em Confirmar, Descartar ou numa resposta rápida; o estado no banco é conferido em k execuções, cada uma a partir do seed ([resultado e falhas](docs/validacao/SIMULACAO.md)) | `npm run eval:sim` |
 
 **Resultados com o modelo real:**
 
-- **Evals:** 31/32 na rodada de 29/10. O cenário "Reabrir chamado resolvido" foi corrigido e passou 3/3 repetido. A falha que sobrou (impacto no incidente em massa) deu 3/3 quando repetida e está registrada em [validação](docs/validacao/README.md).
+- **Evals:** 36/36 com o GPT-6 Luna em 30/10 (US$ 0,04 a rodada). Na primeira rodada com ele, o cenário da resposta rápida de urgência falhou 3 de 3: o Luna perguntava se a funcionária já tinha olhado o portal de softwares, como o artigo manda, e o rascunho que o cenário precisa não aparecia. O cenário passou a dizer que ela já procurou no portal. Com o Gemini 3.5 Flash, a última rodada completa deu 35/36 em 29/10, antes da tool de verificações.
+- **Verificações de diagnóstico:** a primeira versão pedia ao modelo a lista do que já foi tentado. No eval ele a ignorou 3 vezes em 3, então a lista passou a sair do histórico, em código, e os cenários novos foram para 6/6.
 - **Funcionário simulado (28/10):** pass^1 0,72 → 0,93 → 0,93 e pass^3 0,50 → 0,80 → 0,80 nas três rodadas (a terceira com uma persona repetida depois de corrigida). O `outlook-direto` foi de 2/3 para 3/3.
-- **Outras provas:** busca híbrida 84% → 94% ([BUSCA](docs/validacao/BUSCA.md)); tempo real ~0,4 s × ~1,6 s ([TEMPO-REAL](docs/validacao/TEMPO-REAL.md)); red-team 21/21; telemetria e SSO ([OBSERVABILIDADE-E-SSO](docs/validacao/OBSERVABILIDADE-E-SSO.md)).
+- **Outras provas:** busca híbrida 84% → 94% com 9 artigos; com os 5 artigos de diagnóstico (14 no total), 100% no conjunto separado e no de diagnóstico e 85% na calibração ([BUSCA](docs/validacao/BUSCA.md)); tempo real ~0,4 s × ~1,6 s ([TEMPO-REAL](docs/validacao/TEMPO-REAL.md)); red-team 21/21; telemetria e SSO ([OBSERVABILIDADE-E-SSO](docs/validacao/OBSERVABILIDADE-E-SSO.md)).
 - **Trace em toda resposta:** qualquer decisão pode ser auditada na própria interface e no console do analista.
 
 **O que os evals pegaram, e o que virou código.** Os evals pagaram o próprio custo: pegaram o agent abrindo chamado repetido, a latência do "raciocínio" do Gemini (resolvida com `thinkingLevel: "minimal"`), a reabertura de chamado resolvido e o caso crítico que ele não tratava. Uma auditoria com conversas difíceis achou mais dois problemas: mensagem vaga ia direto para um analista, e falha técnica num sistema do RH era recusada como "fora de TI". Cada achado virou regra e cenário novo.
@@ -280,14 +282,11 @@ Localmente, `npm run verify` roda tipos, lint, testes unitários, E2E e E2E da d
 
 ## Escolha do modelo
 
-**Gemini 3.5 Flash** (`google/gemini-3.5-flash`):
+**Em produção desde 30/10/2026: GPT-6 Luna** (`openrouter/openai/gpt-6-luna`), com o **Gemini 3.5 Flash Lite** pelo mesmo OpenRouter como reserva.
 
-- **Tool calling confiável**, inclusive a escolha forçada de tool no primeiro passo, que é a base da transparência.
-- **Latência baixa** com `thinkingLevel: "minimal"`: atendimento precisa de resposta rápida, não de raciocínio longo.
-- **Cerca de 1 centavo de dólar por resposta**, o que permite um deploy aberto para avaliação com custo previsível.
-- **Saldo disponível no Google** quando comecei. Não fico preso a ele: o roteador do Mastra troca o provedor por variável de ambiente.
+Comecei no **Gemini 3.5 Flash** (`google/gemini-3.5-flash`): tool calling confiável (inclusive a escolha forçada de tool no primeiro passo, a base da transparência), latência baixa com `thinkingLevel: "minimal"`, cerca de 1 centavo de dólar por resposta e saldo disponível no Google. Em 29/10 os créditos pré-pagos do Google acabaram no meio de um eval (HTTP 402). Como o benchmark já tinha apontado o Luna, a troca foi uma variável: o eval completo com ele deu 36/36, e a demo pública passou a responder com ele.
 
-**Benchmark.** Para trocar a escolha qualitativa por dados, rodei o agent de produção com 7 modelos e medi efetividade, qualidade (G-Eval com 2 juízes), latência e custo real. O **GPT-6 Luna** empatou em efetividade e qualidade com o Gemini 3.5 Flash, dentro dos intervalos de confiança, custando **26× menos**; o Gemini 3.5 Flash Lite é a alternativa sem trocar de fornecedor. Mantive o Gemini em produção porque a vantagem do Luna é de custo, não de qualidade, e trocar perto da entrega exigiria outra chave. O próximo passo é uma rodada de confirmação Luna × Flash Lite e a troca de uma linha. Relatório: [`docs/benchmark/RELATORIO.md`](docs/benchmark/RELATORIO.md); como rodar: [`docs/benchmark/COMO-RODAR.md`](docs/benchmark/COMO-RODAR.md).
+**Benchmark.** Para trocar a escolha qualitativa por dados, rodei o agent de produção com 7 modelos e medi efetividade, qualidade (G-Eval com 2 juízes), latência e custo real. O **GPT-6 Luna** empatou em efetividade e qualidade com o Gemini 3.5 Flash, dentro dos intervalos de confiança, custando **26× menos**; o Gemini 3.5 Flash Lite é a alternativa sem trocar de fornecedor. Antes de trocar, faltava confirmar o Luna nos evals; essa rodada (36/36) foi feita na troca. Relatório: [`docs/benchmark/RELATORIO.md`](docs/benchmark/RELATORIO.md); como rodar: [`docs/benchmark/COMO-RODAR.md`](docs/benchmark/COMO-RODAR.md).
 
 | | GPT-6 Luna (1º) | Gemini 3.5 Flash Lite (2º) | Gemini 3.5 Flash, produção (5º) |
 |---|---|---|---|
@@ -299,7 +298,7 @@ Localmente, `npm run verify` roda tipos, lint, testes unitários, E2E e E2E da d
 
 O G-Eval usa 7 critérios de 1 a 5 tirados do PRD (qualidade da decisão, regras do service desk, condução da conversa, clareza, transparência do raciocínio, tom e português do Brasil). Ele lê também o registro de entendimento do passo 0, o mesmo do painel "por quê?". A nota vem de um painel de 2 juízes (Kimi K3 e GLM-5.3) de famílias que não concorrem, em avaliação cega e calibrado com 3 conversas escritas à mão. O composto pesa efetividade 40, qualidade 30, latência 15 e custo 15; o Luna fica em 1º em 81% de 10 mil combinações de pesos sorteadas. Os intervalos são largos porque a amostra é pequena: por isso a recomendação é confirmar antes de trocar. O estudo inteiro custou US$ 1,80.
 
-**Modelo reserva.** Quando o Flash falha, o passo vai para o **Gemini 3.5 Flash Lite** (`LLM_FALLBACK_MODEL`). Em 28/10/2026, o Flash passou mais de uma hora devolvendo 503 "alta demanda" nas chamadas com tools. O trace mostra quem respondeu, e os evals contam esses turnos à parte para não confundir a medição. O reserva é do mesmo fornecedor; para resistir a uma queda do Google inteiro, basta apontar `LLM_FALLBACK_MODEL` para um modelo do OpenRouter, com a chave dele.
+**Modelo reserva.** Quando o principal falha, o passo vai para o reserva (`LLM_FALLBACK_MODEL`, hoje `openrouter/google/gemini-3.5-flash-lite`: outro fornecedor de modelo, mesma chave). Em 28/10/2026, o Gemini Flash passou mais de uma hora devolvendo 503 "alta demanda" nas chamadas com tools. O trace mostra quem respondeu, e os evals contam esses turnos à parte para não confundir a medição.
 
 Trocar de modelo é uma variável (`LLM_MODEL`), graças ao roteador do Mastra. Pelo OpenRouter: `LLM_MODEL=openrouter/<fornecedor>/<modelo>` com `OPENROUTER_API_KEY`. Os evals dizem se a troca piorou alguma decisão.
 
@@ -316,7 +315,7 @@ Desde 29/10/2026 a demo está **aberta ao público** de propósito (`PUBLIC_DEMO
 | Risco | Proteção |
 |---|---|
 | Um avaliador ver ou mexer nos dados de outro | **Espaço isolado por visitante** ([spec 05](docs/specs/05-demo-publica.md)): cada navegador recebe um identificador aleatório assinado (7 dias) e uma cópia dos dados de exemplo; repositórios, rotas e o turno do agent filtram por esse espaço. No máximo 20 espaços novos por hora; os expirados são apagados. Provado por `npm run test:e2e:demo`. |
-| Qualquer pessoa gastar a minha cota | **100 mensagens por dia no deploy inteiro** (`DAILY_AGENT_TURN_LIMIT`, janela de 24 h), 30 por sessão, 40 por hora e 120 por dia por pessoa, e **teto total de 1000 turnos** (`TOTAL_AGENT_TURN_LIMIT`, cerca de US$ 10,60), reservado no banco num único comando antes de chamar o modelo; 800 tokens por passo; a chamada é cancelada quando a aba fecha. Ao atingir o teto, o chat avisa e não chama o modelo. "Alterar detalhes" não chama o modelo, mas tem teto de 20 rascunhos por conversa. |
+| Qualquer pessoa gastar a minha cota | **100 mensagens por dia no deploy inteiro** (`DAILY_AGENT_TURN_LIMIT`, janela de 24 h), 30 por sessão, 40 por hora e 120 por dia por pessoa, e **teto total de 2000 turnos** (`TOTAL_AGENT_TURN_LIMIT`, menos de US$ 1 com o Luna), reservado no banco num único comando antes de chamar o modelo; 800 tokens por passo; a chamada é cancelada quando a aba fecha. Ao atingir o teto, o chat avisa e não chama o modelo. "Alterar detalhes" não chama o modelo, mas tem teto de 20 rascunhos por conversa. |
 | Fechar a demo de novo | **Porta de acesso com link temporário** em [`proxy.ts`](src/proxy.ts): sem `PUBLIC_DEMO`, nenhuma página ou API responde sem `?access=` válido (401). O link leva `<validade>.<HMAC>`, assinado com um segredo que nunca sai do servidor ([`server/access-gate.ts`](src/server/access-gate.ts)), e vira um cookie httpOnly que vence junto e sai da URL. |
 | Vazamento de chave | Chaves só em variáveis de ambiente do servidor, validadas com Zod. Nada com prefixo `NEXT_PUBLIC_`. `.env` fora do git; o JavaScript entregue foi conferido sem chaves. Se faltar a chave no deploy, o funcionário vê só "indisponível", e o nome da variável fica no log. |
 | Requisição forjada de outro site (CSRF) | Toda mutação exige mesma origem (`Sec-Fetch-Site`/`Origin`); as que têm corpo exigem JSON validado por Zod ([`server/http.ts`](src/server/http.ts)). |
@@ -371,7 +370,7 @@ O que ficou comigo foram as decisões e a conferência:
 
 - **Regras do service desk em código, não no prompt.** Prioridade, SLA, duplicidade e confirmação antes de abrir chamado são funções testadas; o modelo pede, o sistema decide.
 - **Passo 0 forçado.** O agent registra o que entendeu antes de agir, e é daí que sai o painel "por quê?".
-- **Benchmark antes de escolher modelo.** Rodei 7 modelos no agent de produção e mantive o Gemini pelos motivos descritos acima.
+- **Benchmark antes de escolher modelo.** Rodei 7 modelos no agent de produção. Mantive o Gemini enquanto ele tinha saldo; quando o saldo acabou, troquei pelo vencedor do benchmark depois de confirmá-lo nos evals.
 - **Funcionário simulado.** Criei um usuário artificial para conversar com o agent e achar falhas que os evals de casos fixos não pegavam.
 - **Demo aberta com teto.** Sem cadastro, com limite de mensagens e um espaço isolado por visitante.
 
