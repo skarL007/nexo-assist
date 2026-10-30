@@ -90,3 +90,31 @@ export const diagnosticQueries: RetrievalQuery[] = [
   { query: "o carregador do meu celular pessoal quebrou", expected: null },
   { query: "a luz da sala de reunião não acende", expected: null },
 ];
+
+/**
+ * Pedido × defeito × fora da central: escrito em 30/10/2026, antes de mexer nos artigos ou na busca,
+ * para medir os três erros que os artigos de diagnóstico trouxeram ("como faço para ter um mouse sem
+ * fio" indo para o defeito; "notebook esquentando" e "tela piscando" recebendo artigo de outro sintoma).
+ * Pedido de algo novo vai para "Pedir equipamento"; defeito com artigo vai para ele; sintoma que
+ * nenhum artigo cobre não recebe artigo.
+ */
+export const confusionQueries: RetrievalQuery[] = [
+  { query: "preciso de um segundo monitor para trabalhar", expected: "kb-equipamento" },
+  { query: "quero trocar meu teclado por um ergonômico", expected: "kb-equipamento" },
+  { query: "como peço um headset novo para as reuniões", expected: "kb-equipamento" },
+  { query: "meu mouse está velho, dá para ganhar outro?", expected: "kb-equipamento" },
+  { query: "vou trabalhar de casa e queria um teclado sem fio", expected: "kb-equipamento" },
+  { query: "gostaria de um notebook mais novo", expected: "kb-equipamento" },
+  { query: "o mouse sem fio parou de mexer o cursor", expected: "kb-teclado-mouse" },
+  { query: "as teclas não respondem quando eu digito", expected: "kb-teclado-mouse" },
+  { query: "o headset não pega minha voz no Teams", expected: "kb-audio-reuniao" },
+  { query: "o segundo monitor não mostra nada", expected: "kb-tela-sem-imagem" },
+  { query: "o notebook não liga nem com o carregador", expected: "kb-pc-nao-liga" },
+  { query: "o computador da mesa está sem rede, o cabo azul está ligado", expected: "kb-rede-cabo" },
+  { query: "o ventilador do computador está fazendo muito barulho", expected: null },
+  { query: "a bateria do notebook acaba em uma hora", expected: null },
+  { query: "derrubei café no teclado", expected: null },
+  { query: "a tela do notebook está rachada", expected: null },
+  { query: "o computador está muito lento", expected: null },
+  { query: "o monitor está com uma mancha", expected: null },
+];
