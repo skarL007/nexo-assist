@@ -3,6 +3,8 @@ import { z } from "zod";
 import { CHECK_OPTIONS, checksAsked, MAX_CHECKS } from "@/domain/diagnostics";
 import { turnFrom } from "../turn-context";
 
+const VERDICT_NOTE = { applies: "o avaliador confirmou que se aplica", maybe: "o avaliador disse talvez", none: "o avaliador não achou artigo que se aplique" } as const;
+
 export const searchHelpCenter = createTool({
   id: "searchHelpCenter",
   description:
@@ -14,7 +16,7 @@ export const searchHelpCenter = createTool({
   }),
   execute: async ({ query }, context) => {
     const turn = turnFrom(context);
-    const { matches, mode } = await turn.services.knowledge.search(query);
+    const { matches, mode, verdict } = await turn.services.knowledge.search(query);
 
     // O trace mostra por que cada artigo veio: termos em comum e/ou proximidade de sentido.
     const why = (m: (typeof matches)[number]) =>
@@ -22,14 +24,18 @@ export const searchHelpCenter = createTool({
         .filter(Boolean)
         .join("; ");
     const found = matches.length ? matches.map((m) => `"${m.article.title}" (${why(m)})`).join(" · ") : `Nada encontrado para "${query}"`;
-    turn.recorder.step("buscou na central de ajuda", mode === "hybrid" ? found : `${found} · busca só por palavras (embeddings indisponíveis)`);
+    const notes = [mode === "keyword" ? "busca só por palavras (embeddings indisponíveis)" : null, verdict ? VERDICT_NOTE[verdict] : null].filter(Boolean);
+    turn.recorder.step("buscou na central de ajuda", [found, ...notes].join(" · "));
+    // "Talvez": o artigo vai sem as verificações, para nenhuma ser pedida antes de confirmar que ele se aplica.
+    const maybe = verdict === "maybe";
     return {
       articles: matches.map(({ article }) => ({
         id: article.id,
         title: article.title,
         body: article.body,
-        ...(article.checks?.length ? { checks: article.checks } : {}),
+        ...(article.checks?.length && !maybe ? { checks: article.checks } : {}),
       })),
+      ...(maybe ? { instruction: "Este artigo talvez se aplique: confirme com o funcionário o detalhe que falta antes de usá-lo." } : {}),
     };
   },
 });

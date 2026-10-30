@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Article } from "@/domain/knowledge";
 import { articleText, KnowledgeService } from "./knowledge-service";
-import type { ArticleRepository, Embedder } from "./ports";
+import type { ArticleRepository, Embedder, RelevanceJudge, RelevanceVerdict } from "./ports";
 import { EmbeddingHttpError, ProviderBreaker } from "./provider-breaker";
 
 const vpn: Article = { id: "kb-vpn", title: "VPN com erro 809", body: "Reinstale o cliente de VPN.", tags: ["vpn"] };
@@ -177,5 +177,55 @@ describe("verificações de diagnóstico", () => {
     const service = new KnowledgeService(new FakeArticles([vpn, pc]), []);
     expect(await service.findCheck("energia-cabo")).toEqual({ articleId: "kb-pc", check: pc.checks![0] });
     expect(await service.findCheck("inventada")).toBeNull();
+  });
+});
+
+describe("avaliador de relevância depois da busca", () => {
+  const pc: Article = {
+    id: "kb-pc",
+    title: "Computador não liga",
+    body: "Confira a energia.",
+    tags: ["energia"],
+    checks: [{ id: "energia-cabo", label: "Cabo de energia encaixado", fix: "Encaixe o cabo." }],
+  };
+
+  /** Juiz de brinquedo: devolve o veredito fixo e guarda os candidatos que recebeu. */
+  class FakeJudge implements RelevanceJudge {
+    readonly model = "juiz";
+    seen: string[][] = [];
+    constructor(public verdict: RelevanceVerdict | Error) {}
+    async judge(_query: string, candidates: Article[]) {
+      this.seen.push(candidates.map((c) => c.id));
+      if (this.verdict instanceof Error) throw this.verdict;
+      return this.verdict;
+    }
+  }
+
+  const service = (judge: FakeJudge, breaker = new ProviderBreaker()) =>
+    new KnowledgeService(new FakeArticles([vpn, wifi, pc]), [new FakeEmbedder()], () => {}, breaker, judge);
+
+  it("o juiz recebe os candidatos sem margem e o que aplica volta sozinho, com as verificações", async () => {
+    const judge = new FakeJudge({ applies: "kb-pc", maybe: null });
+    const result = await service(judge).search("o computador não liga");
+    expect(judge.seen[0]).toEqual(expect.arrayContaining(["kb-vpn", "kb-wifi", "kb-pc"]));
+    expect(result).toMatchObject({ verdict: "applies", matches: [{ article: { id: "kb-pc", checks: pc.checks } }] });
+    expect(result.matches).toHaveLength(1);
+  });
+
+  it("talvez volta marcado; nenhum volta vazio; id fora dos candidatos conta como nenhum", async () => {
+    expect(await service(new FakeJudge({ applies: null, maybe: "kb-vpn" })).search("não conecto de casa")).toMatchObject({ verdict: "maybe", matches: [{ article: { id: "kb-vpn" } }] });
+    expect(await service(new FakeJudge({ applies: null, maybe: null })).search("ventilador fazendo barulho")).toMatchObject({ verdict: "none", matches: [] });
+    expect(await service(new FakeJudge({ applies: "kb-inventado", maybe: null })).search("vpn")).toMatchObject({ verdict: "none", matches: [] });
+  });
+
+  it("juiz fora do ar: vale a regra de margem de antes, e o juiz fica de fora pelo disjuntor", async () => {
+    const now = 0;
+    const judge = new FakeJudge(new EmbeddingHttpError(402));
+    const svc = service(judge, new ProviderBreaker(() => now));
+    const first = await svc.search("acesso remoto de casa");
+    expect(first).toMatchObject({ verdict: null, mode: "hybrid" });
+    expect(first.matches[0].article.id).toBe("kb-vpn");
+    await svc.search("acesso remoto de casa");
+    expect(judge.seen).toHaveLength(1);
   });
 });

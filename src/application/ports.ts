@@ -23,6 +23,18 @@ export interface ArticleRepository {
   saveEmbeddings(model: string, items: { articleId: string; vector: number[]; contentHash: string }[]): Promise<void>;
 }
 
+/** Veredito do avaliador: o id do candidato que se aplica, ou do que talvez se aplique (falta um detalhe), ou nenhum. */
+export interface RelevanceVerdict {
+  applies: string | null;
+  maybe: string | null;
+}
+
+/** Decide qual candidato da busca se aplica à mensagem (Corrective RAG). */
+export interface RelevanceJudge {
+  readonly model: string;
+  judge(query: string, candidates: Article[]): Promise<RelevanceVerdict>;
+}
+
 /** Transforma texto em vetores (embeddings). "query" e "document" pedem tarefas diferentes ao modelo. */
 export interface Embedder {
   readonly model: string;

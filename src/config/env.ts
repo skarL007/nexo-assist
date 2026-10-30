@@ -22,6 +22,8 @@ const schema = z.object({
   LLM_FALLBACK_MODEL: z.string().default(DEFAULT_FALLBACK_MODEL),
   /** Embeddings pelo OpenRouter, 1º provedor da busca híbrida (usa a OPENROUTER_API_KEY). "off" desliga. Outro modelo pede nova margem: `npm run eval:busca`. */
   OPENROUTER_EMBEDDING_MODEL: z.string().default("google/gemini-embedding-2"),
+  /** Avaliador de relevância da busca (OpenRouter, usa a OPENROUTER_API_KEY): diz qual candidato se aplica. "off" desliga. */
+  RELEVANCE_JUDGE_MODEL: z.string().default("google/gemini-3.5-flash-lite"),
   /** Modelo de embeddings do Gemini direto, 2º provedor da busca híbrida (usa a mesma chave do Google). */
   EMBEDDING_MODEL: z.string().default("gemini-embedding-2"),
   DATABASE_URL: z.string().default("file:local.db"),

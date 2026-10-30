@@ -16,6 +16,7 @@ import { ProviderBreaker } from "@/application/provider-breaker";
 import { env } from "@/config/env";
 import { GeminiEmbedder } from "./ai/gemini-embedder";
 import { OpenRouterEmbedder } from "./ai/openrouter-embedder";
+import { OpenRouterRelevanceJudge } from "./ai/openrouter-relevance-judge";
 import { db } from "./db/client";
 import { FlakyTicketRepository } from "./legacy-ticket-system";
 import { DrizzleBudgetRepository } from "./repositories/budget-repository";
@@ -37,7 +38,7 @@ export interface ServiceOptions {
   onLegacyRetry?: (attempt: number) => void;
 }
 
-/** Um só por instância, fora do createServices: um provedor sem crédito não é tentado de novo a cada mensagem. */
+/** Um só por instância, fora do createServices: um provedor sem crédito (embeddings ou avaliador) não é tentado de novo a cada mensagem. */
 const embeddingBreaker = new ProviderBreaker();
 
 export function createServices(options: ServiceOptions = {}) {
@@ -59,11 +60,14 @@ export function createServices(options: ServiceOptions = {}) {
   const embedders: Embedder[] = [];
   if (config.OPENROUTER_API_KEY && config.OPENROUTER_EMBEDDING_MODEL !== "off") embedders.push(new OpenRouterEmbedder(config.OPENROUTER_EMBEDDING_MODEL, config.OPENROUTER_API_KEY));
   if (config.GOOGLE_GENERATIVE_AI_API_KEY) embedders.push(new GeminiEmbedder(config.EMBEDDING_MODEL, config.GOOGLE_GENERATIVE_AI_API_KEY));
+  const judge =
+    config.OPENROUTER_API_KEY && config.RELEVANCE_JUDGE_MODEL !== "off" ? new OpenRouterRelevanceJudge(config.RELEVANCE_JUDGE_MODEL, config.OPENROUTER_API_KEY) : null;
   const knowledge = new KnowledgeService(
     articles,
     embedders,
-    (error, model) => console.error(`[embeddings] ${model}:`, error instanceof Error ? error.message : String(error)),
+    (error, model) => console.error(`[busca] ${model}:`, error instanceof Error ? error.message : String(error)),
     embeddingBreaker,
+    judge,
   );
   const suggestionRepository = new DrizzleSuggestionRepository(database, options.demoScope);
   const insights = new InsightsService(new DrizzleInsightsSource(database, options.demoScope), pricePerToken, suggestionRepository);
