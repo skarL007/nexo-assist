@@ -143,3 +143,28 @@ Comparei cinco modelos do OpenRouter, todos com as 63 perguntas dos três conjun
 ### Disjuntor
 
 Um provedor que falha fica de fora por um tempo, na memória da instância: 15 min com 401, 402 ou 403 (sem crédito ou sem permissão) e 1 min com timeout, 429, 5xx ou erro de rede. Sem isso, cada mensagem esperaria uma chamada que vai falhar de novo. Testes em [`application/provider-breaker.test.ts`](../../src/application/provider-breaker.test.ts) e [`application/knowledge-service.test.ts`](../../src/application/knowledge-service.test.ts).
+
+## Avaliador de relevância (30/10/2026)
+
+**Pergunta:** a busca por sentido acha o assunto, mas não sabe se o artigo **se aplica**. Dá para parar de mostrar artigo errado (pedido indo para o artigo de conserto, sintoma não coberto recebendo o artigo de outro sintoma) sem perder os acertos?
+
+**Resposta:** sim, com uma segunda etapa. A híbrida traz até 5 candidatos, sem margem, e um LLM barato (`google/gemini-3.5-flash-lite` pelo OpenRouter) diz qual se aplica, qual talvez se aplique ou nenhum. Nas 81 perguntas: **78 certas, 0 com artigo errado e 3 abstenções**. Antes eram 67 certas, 10 com artigo errado e 4 abstenções. O resultado foi igual em duas rodadas do `eval:busca`.
+
+| Conjunto | Híbrida com margem (antes) | Híbrida + avaliador |
+|---|---|---|
+| Calibração (33) | 85% | 94% |
+| Separado (17) | 100% | 94% |
+| Diagnóstico (13) | 100% | 100% |
+| **Pedido × defeito × fora da central (18, congelado antes da correção)** | **50%** | **100%** |
+| As 50 perguntas antigas | 45/50 | 47/50 (o mesmo de antes dos artigos de diagnóstico) |
+| Total (81) | 67 (10 com artigo errado) | **78 (0 com artigo errado)** |
+
+- **Como medi:** `npm run eval:busca`, que agora roda o avaliador como a produção e separa "artigo errado" de "sem artigo quando havia um". O conjunto `confusionQueries` foi escrito e commitado antes de qualquer correção, e o prompt do avaliador não usa nenhuma pergunta dos conjuntos.
+- **Os três erros que sobram:** "não consigo acessar a rede da empresa de casa", "trabalho em home office e não conecto no sistema interno" e "a VPN não conecta quando estou viajando" ficam sem artigo. O artigo se chama "VPN com erro 809" e vale só para Windows 10; o agent pergunta mais em vez de mandar reinstalar a VPN à toa.
+- **O agent com o avaliador ligado:** `npm run eval` deu 36/36 com o GPT-6 Luna (US$ 0,06), o mesmo resultado de antes do avaliador.
+- **Custo e latência:** cerca de US$ 0,00025 por busca e +1,4 s de mediana (p90 de 1,6 s). No teto da demo (2000 turnos), menos de US$ 0,50 mesmo se todo turno buscar.
+- **Robustez:**
+  - O id precisa estar entre os candidatos.
+  - "Talvez" devolve o artigo sem as verificações e com a instrução de confirmar o detalhe.
+  - Avaliador fora do ar ou sem chave: volta a regra de margem de 0,02, com o mesmo disjuntor dos embeddings.
+- **Alternativas medidas e por que ficaram de fora** (rerankers com limiar, tirar as verificações do embedding, juiz com o catálogo inteiro, outro modelo): ver a [pesquisa](../pesquisa/BUSCA-APLICABILIDADE.md).

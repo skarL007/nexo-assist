@@ -1,8 +1,8 @@
 # Avaliação de 29 e 30/10/2026: antes e depois
 
-**Pergunta:** as mudanças de 29 e 30/10 (verificações de diagnóstico, troca para o GPT-6 Luna, sincronização da central, prévia ao compartilhar e o novo provedor dos embeddings) melhoraram o Nexo Assist? Quanto, a que custo, e o que ficou pior?
+**Pergunta:** as mudanças de 29 e 30/10 (verificações de diagnóstico, troca para o GPT-6 Luna, sincronização da central, prévia ao compartilhar, o novo provedor dos embeddings e o avaliador de relevância) melhoraram o Nexo Assist? Quanto, a que custo, e o que ficou pior?
 
-**Resposta:** melhoraram. O agent resolve um tipo de problema que antes não resolvia (defeito de equipamento com verificações guiadas), acerta todos os cenários de decisão e custa 95% menos por cenário de eval. A busca em produção, que tinha caído para 75% quando os créditos do Google acabaram, volta a 92% pelo OpenRouter, por cerca de US$ 0,012 no teto inteiro da demo. O preço: nas 50 perguntas antigas da busca, o acerto caiu 4 pontos, porque os artigos novos de diagnóstico passaram a atrair perguntas parecidas.
+**Resposta:** melhoraram. O agent resolve um tipo de problema que antes não resolvia (defeito de equipamento com verificações guiadas), acerta todos os cenários de decisão e custa 95% menos por cenário de eval. A busca em produção, que tinha caído para 75% quando os créditos do Google acabaram, volta a 92% pelo OpenRouter, por cerca de US$ 0,012 no teto inteiro da demo. Os artigos de diagnóstico trouxeram um efeito colateral: perguntas parecidas passaram a receber o artigo de conserto (pedido de equipamento, sintoma que nenhum artigo cobre). O avaliador de relevância corrigiu isso: nas 81 perguntas da busca, **78 certas e nenhuma com artigo errado**, contra 10 com artigo errado antes.
 
 "Antes" é o `e805fb0` (29/10, 13h), o último commit antes dessas mudanças. "Depois" é o `main` com as mudanças abaixo.
 
@@ -15,6 +15,8 @@
 | `02d93be` | `syncArticles`: a central é atualizada no deploy sem apagar conversas, chamados nem contadores |
 | `1d0e0c5` | Documentação com os números do Luna |
 | `e8a914c` | Prévia ao compartilhar (Open Graph e cartão do X) e link "Sobre este protótipo" para o estudo de caso |
+| `446b0df` | Conjunto congelado de 18 perguntas (pedido × defeito × fora da central), escrito antes da correção |
+| `12c8170` | Busca em duas etapas: a híbrida traz 5 candidatos e um LLM barato diz qual se aplica, qual talvez ou nenhum ([BUSCA.md](BUSCA.md#avaliador-de-relevância-30102026), [pesquisa](../pesquisa/BUSCA-APLICABILIDADE.md)) |
 | `52a45b0` | Embeddings pelo OpenRouter, com o Gemini direto de reserva e disjuntor por provedor ([BUSCA.md](BUSCA.md#provedor-dos-embeddings-30102026)) |
 
 ## Antes e depois
@@ -23,20 +25,24 @@
 |---|---|---|---|---|
 | Decisões do agent (evals, 1 rodada) | 31/32 = 96,9% (Gemini 3.5 Flash) | 36/36 = 100% (GPT-6 Luna); nos 32 cenários antigos, 32/32 | +3,1 pontos | [README](README.md), rodadas de 29/10 e 30/10 |
 | Custo por cenário de eval | US$ 0,024 (US$ 0,77 por 32) | US$ 0,0011 (US$ 0,04 por 36) | **−95%** | idem |
-| **Busca em produção** (63 perguntas) | 47/63 = 75% (só palavras: Google sem crédito, 402) | **58/63 = 92%** (híbrida pelo OpenRouter) | **+17 pontos** | `npm run eval:busca` |
+| **Busca em produção** (81 perguntas, 4 conjuntos) | 56/81 = 69% (só palavras: Google sem crédito, 402) | **78/81 = 96%** (híbrida pelo OpenRouter + avaliador) | **+27 pontos** | `npm run eval:busca`, duas rodadas iguais |
+| ↳ com artigo errado | 22 de 81 (só palavras) · 10 de 81 (híbrida sem avaliador) | **0 de 81** | −100% | idem |
+| ↳ pedido × defeito × fora da central (18, congelado antes da correção) | 9/18 | **18/18** | +50 pontos | idem |
+| Busca híbrida sem avaliador (63 perguntas antigas) | 47/63 = 75% (só palavras) | 58/63 = 92% | +17 pontos | `npm run eval:busca` |
 | Busca só por palavras, mesmo código de busca (63 perguntas) | 43/63 = 68% (9 artigos) | 47/63 = 75% (14 artigos) | +7 pontos | medição de 30/10, abaixo |
 | ↳ perguntas de defeito de equipamento (13) | 1/13 = 8% | 7/13 = 54% | +46 pontos | idem |
 | ↳ as 50 perguntas antigas | 42/50 = 84% | 40/50 = 80% | −4 pontos | idem |
-| Busca híbrida, as 50 perguntas antigas | 47/50 = 94% | 45/50 = 90% | −4 pontos | [BUSCA.md](BUSCA.md) |
+| Busca, as 50 perguntas antigas | 47/50 = 94% (híbrida, 9 artigos) | 45/50 sem avaliador · **47/50 com avaliador** | recuperado | [BUSCA.md](BUSCA.md) |
 | Busca híbrida, perguntas de equipamento (13) | — (os artigos não existiam) | 13/13 = 100% | novo | idem |
 | Funcionário simulado (pass^1 / pass^3) | 0,93 / 0,80 (Gemini) | não medido com o Luna | ? | [SIMULACAO.md](SIMULACAO.md) |
-| Testes unitários / E2E | 443 / 39 | 466 / 42 | +23 / +3 | `npm test` · `npm run test:e2e` |
+| Testes unitários / E2E | 443 / 39 | 472 / 42 | +29 / +3 | `npm test` · `npm run test:e2e` |
 
 O que não vira porcentagem:
 
 - **Diagnóstico guiado:** antes, "computador não liga" ia direto para um chamado. Agora o agent pede até 3 verificações seguras, uma por vez, com botões, e o que já foi tentado entra no chamado para o analista não perguntar de novo.
 - **Central atualizada sem perder dados:** antes, só o seed levava artigos novos a um banco existente, e o seed apaga as conversas. Agora o deploy da Vercel e a subida do contêiner no Komodo sincronizam os artigos.
 - **Quem recebe o link da demo:** vê a tela do produto na prévia do LinkedIn ou do WhatsApp e chega ao estudo de caso pelo link "Sobre este protótipo".
+- **A busca não mostra artigo que não se aplica:** pedido de equipamento vai para "Pedir equipamento", e sintoma que nenhum artigo cobre (ventilador, café no teclado, tela rachada) fica sem artigo em vez de puxar verificações erradas. Um artigo que "talvez" se aplique vai sem as verificações, e o agent confirma o detalhe antes.
 - **Busca sem um ponto único de falha:** dois provedores do mesmo modelo, um disjuntor que não insiste num provedor sem crédito e as palavras-chave como último recurso.
 
 ## A decisão sobre os embeddings

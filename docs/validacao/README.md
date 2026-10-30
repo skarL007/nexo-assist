@@ -4,7 +4,8 @@ Cada melhoria grande tem uma pergunta, um método que outra pessoa pode repetir,
 
 | O que | Pergunta | Resultado | Como repetir |
 |---|---|---|---|
-| [Antes e depois de 29–30/10](AVALIACAO-2026-10-30.md) | Diagnóstico guiado, GPT-6 Luna e o novo provedor dos embeddings melhoraram o sistema, a que custo? | Busca em produção **75% → 92%**; evals 31/32 → **36/36**; custo por cenário de eval **−95%**; −4 pontos nas 50 perguntas antigas da busca | ver o documento |
+| [Antes e depois de 29–30/10](AVALIACAO-2026-10-30.md) | Diagnóstico guiado, GPT-6 Luna, o novo provedor dos embeddings e o avaliador de relevância melhoraram o sistema, a que custo? | Busca em produção **56/81 → 78/81**, com **0 artigo errado** (eram 10); pedido × defeito × fora da central **9/18 → 18/18**; custo por cenário de eval **−95%** | ver o documento |
+| [Avaliador de relevância](BUSCA.md#avaliador-de-relevância-30102026) | A busca para de mostrar artigo do assunto certo que não se aplica? | 78/81, 0 com artigo errado, em duas rodadas; 18/18 no conjunto congelado antes da correção | `npm run eval:busca` |
 | [Busca na central](BUSCA.md) | A busca híbrida acha mais artigos certos, sem responder com artigo sem relação? | Acerto geral **84% → 94%** em 50 perguntas; no conjunto separado, hit@1 92% → 100%. Com 14 artigos e o mesmo modelo pelo OpenRouter (30/10): **58/63 (92%)**, contra 47/63 (75%) só com palavras; o mais barato dos outros quatro modelos medidos fez 55/63 | `npm run eval:busca` · `evals/retrieval/compare-models.ts` |
 | [Tempo real](TEMPO-REAL.md) | O stream SSE entrega mais rápido que o polling, e o polling ainda segura se o stream cair? | Mediana **263–580 ms** × 1505–1684 ms; p95 < 1 s; o fallback funciona | `npx playwright test e2e/live.spec.ts` |
 | [Red-team](RED-TEAM.md) | O agent resiste a injeção, vazamento, ação sem confirmação e desvio? | 7 ataques × 3 = **21/21**; injeção indireta pela central 3/3; mapeados ao OWASP | `npm run eval -- ataque --repeat=3` |
