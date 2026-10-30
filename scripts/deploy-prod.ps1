@@ -1,5 +1,6 @@
 # Deploy de produção (Windows PowerShell 5.1+), na ordem de docs/DEPLOY.md:
-#   1. migrações no Turso   2. seed (opcional: APAGA as conversas de produção)   3. publica o último commit na Vercel
+#   1. migrações no Turso   2. seed (opcional: APAGA as conversas de produção) ou, sem ele, só os artigos da central
+#   3. publica o último commit na Vercel
 #
 #   powershell -ExecutionPolicy Bypass -File scripts\deploy-prod.ps1           # migra + publica
 #   powershell -ExecutionPolicy Bypass -File scripts\deploy-prod.ps1 -Seed     # migra + seed + publica
@@ -25,7 +26,10 @@ try {
     npx tsx --env-file=.vercel/env.production scripts/seed.ts
     if ($LASTEXITCODE -ne 0) { throw "seed falhou" }
   } else {
-    Write-Host "2/3 Seed pulado (use -Seed para recriar os dados de exemplo)."
+    # Sem seed, só a central de ajuda acompanha a versão: artigos novos e alterados, nada apagado.
+    Write-Host "2/3 Central de ajuda (seed pulado; use -Seed para recriar os dados de exemplo)..."
+    npx tsx --env-file=.vercel/env.production scripts/sync-articles.ts
+    if ($LASTEXITCODE -ne 0) { throw "sincronização dos artigos falhou" }
   }
 } finally {
   Remove-Item Env:AUTH_SECRET -ErrorAction SilentlyContinue

@@ -25,6 +25,8 @@ export type ReasoningEffort = (typeof REASONING_EFFORTS)[number];
 const PRICE_PER_MILLION: Record<string, { input: number; output: number }> = {
   "google/gemini-3.5-flash": { input: 1.5, output: 9 },
   "google/gemini-3.5-flash-lite": { input: 0.3, output: 2.5 },
+  // Preço de tabela do OpenRouter (30/10/2026). Sem o desconto do cache: a estimativa fica acima do pago.
+  "openrouter/openai/gpt-6-luna": { input: 0.1, output: 0.5 },
 };
 
 export function pricePerToken(model: string): { input: number; output: number } | null {

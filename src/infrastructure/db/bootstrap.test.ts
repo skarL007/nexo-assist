@@ -2,11 +2,13 @@
  * Preparo do banco na imagem Docker, contra um SQLite de verdade (em memória):
  * migra sempre, cria os dados de exemplo só no banco vazio e nunca apaga o que já existe.
  */
-import { count } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import { prepareDatabase } from "./bootstrap";
 import { createDatabase, type Database } from "./client";
-import { conversations, employees } from "./schema";
+import { articles, conversations, employees } from "./schema";
+import { syncArticles } from "./seed";
+import { articles as seedArticles } from "./seed-data";
 
 let db: Database;
 
@@ -34,6 +36,30 @@ describe("preparo do banco da imagem Docker", () => {
 
     expect(result).toEqual({ seeded: false });
     expect(await total(conversations)).toBe(before);
+  });
+
+  it("segunda subida: atualiza a central de ajuda (artigos novos e alterados) sem apagar conversas", async () => {
+    await prepareDatabase(db, { migrationsFolder: "drizzle", seedIfEmpty: true });
+    await db.delete(articles).where(eq(articles.id, "kb-pc-nao-liga")); // banco de uma versão sem o artigo
+    await db.update(articles).set({ title: "título antigo", checks: [] }).where(eq(articles.id, "kb-tela-sem-imagem"));
+    const conversationsBefore = await total(conversations);
+
+    await prepareDatabase(db, { migrationsFolder: "drizzle", seedIfEmpty: true });
+
+    const byId = new Map((await db.select().from(articles)).map((a) => [a.id, a]));
+    expect(byId.size).toBe(seedArticles.length);
+    expect(byId.get("kb-pc-nao-liga")?.checks.map((c) => c.id)).toContain("energia-cabo");
+    expect(byId.get("kb-tela-sem-imagem")?.title).toBe("Tela preta ou sem imagem");
+    expect(byId.get("kb-tela-sem-imagem")?.checks.length).toBeGreaterThan(0);
+    expect(await total(conversations)).toBe(conversationsBefore);
+  });
+
+  it("syncArticles mantém artigo que não está no seed (não apaga nada)", async () => {
+    await prepareDatabase(db, { migrationsFolder: "drizzle", seedIfEmpty: true });
+    await db.insert(articles).values({ id: "kb-extra", title: "Extra", body: "Criado depois.", tags: ["extra"] });
+
+    expect(await syncArticles(db)).toBe(seedArticles.length);
+    expect((await db.select().from(articles)).map((a) => a.id)).toContain("kb-extra");
   });
 
   it("com o seed desligado, só migra (as tabelas existem e ficam vazias)", async () => {

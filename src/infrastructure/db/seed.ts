@@ -61,6 +61,19 @@ async function seedConversation(
   );
 }
 
+/**
+ * Atualiza só a central de ajuda: insere os artigos novos do seed e reescreve os existentes.
+ * Não apaga nada (nem artigo fora do seed), então roda em produção a cada deploy sem tocar
+ * em conversas, chamados ou contadores. Os embeddings se recalculam sozinhos pelo hash do texto.
+ */
+export async function syncArticles(db: Database): Promise<number> {
+  for (const article of articles) {
+    const { id, ...fields } = { checks: [], ...article };
+    await db.insert(schema.articles).values({ id, ...fields }).onConflictDoUpdate({ target: schema.articles.id, set: fields });
+  }
+  return articles.length;
+}
+
 /** Recria os dados de exemplo no banco recebido (apaga o que houver antes). */
 export async function seedDemoData(db: Database) {
   // Ordem importa por causa das chaves estrangeiras. Zerar usage_counters reinicia o teto total.

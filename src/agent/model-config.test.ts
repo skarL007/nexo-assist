@@ -47,6 +47,8 @@ describe("mensagem quando falta a chave", () => {
 describe("preço para estimar custo nos indicadores", () => {
   it("Gemini 3.5 Flash: US$ 1,50 e US$ 9,00 por milhão de tokens; modelo sem tabela fica sem estimativa", () => {
     expect(pricePerToken("google/gemini-3.5-flash")).toEqual({ input: 1.5e-6, output: 9e-6 });
+    expect(pricePerToken("openrouter/openai/gpt-6-luna")?.input).toBeCloseTo(0.1e-6);
+    expect(pricePerToken("openrouter/openai/gpt-6-luna")?.output).toBeCloseTo(0.5e-6);
     expect(pricePerToken("openrouter/qualquer/modelo")).toBeNull();
   });
 });
