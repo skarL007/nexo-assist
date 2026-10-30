@@ -387,13 +387,13 @@ No primeiro ciclo, as specs (`docs/specs/`) foram consolidadas a partir do PRD j
 <details>
 <summary>Capítulos e como o vídeo foi feito</summary>
 
-5:28, com música original de fundo e efeitos sonoros, sem narração. As partes do app são gravações reais com o Gemini: trechos longos aparecem acelerados no máximo 2× e sinalizados ("acelerado N×"), e as esperas pelo modelo foram cortadas, com um aviso do tempo real ("aguardando o modelo · N s"). Diagramas e números são animações, e cada número mostra a fonte no repositório. A música é original, gerada por código para este vídeo. Efeitos sonoros: Pixabay (licença de conteúdo do Pixabay).
+5:28, com narração em português (voz sintética do Fish Audio), música original de fundo e efeitos sonoros. As partes do app são gravações reais de 28/10 com o Gemini: trechos longos aparecem acelerados no máximo 2× e sinalizados ("acelerado N×"), e as esperas pelo modelo foram cortadas, com um aviso do tempo real ("aguardando o modelo · N s"). Diagramas e números são animações, atualizadas em 30/10, e cada número mostra a fonte no repositório. A música é original, gerada por código para este vídeo. Efeitos sonoros: Pixabay (licença de conteúdo do Pixabay). O volume de cada recurso foi validado por script: master a -16 LUFS, trilha 17 dB abaixo da voz durante a fala e efeitos pelo menos 6 dB abaixo dela.
 
 - 0:00 Abertura: o problema, a solução e o que há de novo
 - 0:25 1. O funcionário resolve sozinho: central de ajuda, "Isso resolveu?" e o painel "por quê?"
 - 1:01 2. Prazo em risco e incidente em massa
 - 1:53 3. Console do analista: relatório, sugestão de resposta, tempo real (SSE) e indicadores
-- 2:56 4. Busca híbrida na central
+- 2:56 4. Busca com avaliador de relevância: 56 → 78 de 81, sem artigo errado
 - 3:28 5. Qualidade: testes, evals, funcionário simulado (pass^k) e red team
 - 4:10 6. Arquitetura
 - 4:41 7. Entrega: imagem Docker, CircleCI e Komodo (fluxo configurado, em diagrama)
