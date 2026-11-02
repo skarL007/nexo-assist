@@ -55,7 +55,7 @@ with_agent ──handoff──▶ waiting_analyst ──assume──▶ with_ana
 
 ## Sessão
 
-- Uma conversa aberta por funcionário. Ao voltar, ele continua nela (história 6).
+- Uma conversa aberta por funcionário. Ao voltar, ele continua nela (história 6). Quem garante é o banco: índice único parcial `conversations_one_open_idx` (`employee_id` onde `status != 'closed'`, migração 0008, que antes encerra duplicatas antigas e mantém a mais recente). Se dois pedidos simultâneos tentam abrir, o segundo recebe a conversa do primeiro. Aceite: `repositories.test.ts` (20 pedidos simultâneos → uma conversa, o mesmo id para todos). Auditoria de 02/11, P2.
 - Limite: 30 mensagens do funcionário por conversa. "Nova conversa" encerra a atual.
 
 ## Console do analista

@@ -128,8 +128,11 @@ export class ConversationService {
       createdAt: now,
       updatedAt: now,
     };
-    await this.conversations.insert(conversation);
-    return conversation;
+    // Outro pedido simultâneo pode ter aberto a conversa entre a leitura e a gravação: usa a dele.
+    if (await this.conversations.insert(conversation)) return conversation;
+    const open = await this.findOpen(employeeId);
+    if (!open) throw new DomainError("conflict", "Não foi possível abrir a conversa. Tente de novo.");
+    return open;
   }
 
   /** Grava a mudança só se ninguém mexeu na conversa desde que ela foi lida. */

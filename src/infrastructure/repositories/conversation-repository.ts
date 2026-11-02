@@ -66,8 +66,10 @@ export class DrizzleConversationRepository implements ConversationRepository {
     return rows.map(toDomain);
   }
 
-  async insert(conversation: Conversation): Promise<void> {
-    await this.db.insert(conversations).values(toRow(conversation));
+  /** O índice único parcial (uma aberta por funcionário) recusa a segunda; aqui isso vira false. */
+  async insert(conversation: Conversation): Promise<boolean> {
+    const rows = await this.db.insert(conversations).values(toRow(conversation)).onConflictDoNothing().returning({ id: conversations.id });
+    return rows.length > 0;
   }
 
   async update(conversation: Conversation, expectedStatus: Conversation["status"]): Promise<boolean> {

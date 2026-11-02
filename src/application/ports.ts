@@ -70,7 +70,8 @@ export interface ConversationRepository {
   findLatestOpenByEmployee(employeeId: string): Promise<Conversation | null>;
   /** As mais recentes primeiro, até `limit`. */
   listRecent(limit: number): Promise<Conversation[]>;
-  insert(conversation: Conversation): Promise<void>;
+  /** false = o funcionário já tem uma conversa aberta (outro pedido simultâneo abriu antes). */
+  insert(conversation: Conversation): Promise<boolean>;
   /**
    * Grava só se o estado no banco ainda for `expectedStatus` (evita que duas
    * ações ao mesmo tempo se sobrescrevam). Devolve false se outra ação venceu.

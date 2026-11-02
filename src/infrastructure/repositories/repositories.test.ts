@@ -4,11 +4,13 @@
  */
 import { migrate } from "drizzle-orm/libsql/migrator";
 import { beforeEach, describe, expect, it } from "vitest";
-import { makeTicket } from "@/application/test-doubles";
+import { ConversationService } from "@/application/conversation-service";
+import { fixedClock, makeTicket } from "@/application/test-doubles";
 import { createDatabase, type Database } from "../db/client";
 import { conversations, employees, messages, ticketComments } from "../db/schema";
 import { DrizzleBudgetRepository } from "./budget-repository";
 import { DrizzleChangeFeed } from "./change-feed";
+import { DrizzleConversationRepository } from "./conversation-repository";
 import { DrizzleMessageRepository } from "./message-repository";
 import { DrizzleTicketRepository } from "./ticket-repository";
 
@@ -83,6 +85,27 @@ describe("idempotência no sistema de chamados", () => {
     expect(await repo.findByIdempotencyKey("draft:9")).toMatchObject({ code: "INC-1" });
     expect(await repo.findByIdempotencyKey("draft:10")).toBeNull();
     await expect(repo.insert(makeTicket({ code: "INC-2" }), "draft:9")).rejects.toMatchObject({ code: "conflict" });
+  });
+});
+
+describe("uma conversa aberta por funcionário", () => {
+  // Auditoria de 02/11 (P2): getOrStart lê e depois insere; pedidos simultâneos enxergavam o mesmo "nenhuma aberta".
+  it("20 pedidos simultâneos do mesmo funcionário abrem uma conversa só, e todos recebem a mesma", async () => {
+    await db.insert(employees).values({ id: "ana", name: "Ana Souza", email: "ana.souza@nexo.com.br", role: "employee", department: "Financeiro", passwordChangedAt: new Date() });
+    const service = new ConversationService(new DrizzleConversationRepository(db), new DrizzleMessageRepository(db), fixedClock("2026-11-02T13:00:00Z"));
+
+    const results = await Promise.all(Array.from({ length: 20 }, () => service.getOrStart("ana")));
+
+    expect(new Set(results.map((c) => c.id)).size).toBe(1);
+    expect(await db.select().from(conversations)).toHaveLength(1);
+  });
+
+  it("encerrada não conta: a próxima mensagem abre outra", async () => {
+    await db.insert(employees).values({ id: "ana", name: "Ana Souza", email: "ana.souza@nexo.com.br", role: "employee", department: "Financeiro", passwordChangedAt: new Date() });
+    const service = new ConversationService(new DrizzleConversationRepository(db), new DrizzleMessageRepository(db), fixedClock("2026-11-02T13:00:00Z"));
+    const first = await service.getOrStart("ana");
+    await service.closeOpen("ana");
+    expect((await service.getOrStart("ana")).id).not.toBe(first.id);
   });
 });
 

@@ -57,6 +57,13 @@
       "when": 1793636247686,
       "tag": "0007_idempotencia",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1793636412226,
+      "tag": "0008_conversa-aberta-unica",
+      "breakpoints": true
     }
   ]
 }

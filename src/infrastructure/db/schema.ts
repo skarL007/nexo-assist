@@ -2,7 +2,8 @@
  * Tabelas do banco (SQLite/libSQL). Local é um arquivo; no deploy é o Turso.
  * Colunas JSON guardam estruturas que só são lidas inteiras (cards, trace).
  */
-import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
+import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import type { ConversationStatus, HandoffReason } from "@/domain/conversation";
 import type { DiagnosticCheck } from "@/domain/diagnostics";
 import type { EmployeeRole } from "@/domain/employee";
@@ -76,7 +77,12 @@ export const conversations = sqliteTable("conversations", {
   handoffAt: timestamp("handoff_at"),
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),
-}, (t) => [index("conversations_employee_idx").on(t.employeeId, t.status), index("conversations_updated_idx").on(t.updatedAt)]);
+}, (t) => [
+  index("conversations_employee_idx").on(t.employeeId, t.status),
+  index("conversations_updated_idx").on(t.updatedAt),
+  // Uma conversa aberta por funcionário: pedidos simultâneos não abrem duas (o banco decide, não a leitura).
+  uniqueIndex("conversations_one_open_idx").on(t.employeeId).where(sql`status != 'closed'`),
+]);
 
 export const messages = sqliteTable("messages", {
   id: text("id").primaryKey(),

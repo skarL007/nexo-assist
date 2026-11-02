@@ -93,7 +93,10 @@ export class InMemoryConversationRepository implements ConversationRepository {
     return [...this.items.values()].slice(0, limit);
   }
   async insert(conversation: Conversation) {
+    const open = [...this.items.values()].some((c) => c.employeeId === conversation.employeeId && c.status !== "closed");
+    if (open) return false;
     this.items.set(conversation.id, conversation);
+    return true;
   }
   async update(conversation: Conversation, expectedStatus: Conversation["status"]) {
     if (this.items.get(conversation.id)?.status !== expectedStatus) return false;
