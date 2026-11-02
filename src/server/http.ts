@@ -23,6 +23,7 @@ const STATUS_BY_DOMAIN_ERROR: Record<DomainErrorCode, number> = {
   conflict: 409,
   message_limit: 429,
   daily_limit: 429,
+  spend_limit: 429,
   legacy_unavailable: 503,
   agent_unavailable: 503,
 };

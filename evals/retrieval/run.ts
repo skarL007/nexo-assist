@@ -16,7 +16,7 @@ import type { Embedder, RelevanceJudge } from "@/application/ports";
 import { env } from "@/config/env";
 import { hybridSearch } from "@/domain/hybrid-search";
 import { GeminiEmbedder } from "@/infrastructure/ai/gemini-embedder";
-import { OpenRouterEmbedder } from "@/infrastructure/ai/openrouter-embedder";
+import { DEEPINFRA, OpenRouterEmbedder } from "@/infrastructure/ai/openrouter-embedder";
 import { OpenRouterRelevanceJudge } from "@/infrastructure/ai/openrouter-relevance-judge";
 import { articles } from "@/infrastructure/db/seed-data";
 import { scoreRetrieval, type RetrievalScore } from "./metrics";
@@ -33,22 +33,33 @@ function embedderFor(provider: string): Embedder {
     if (!config.OPENROUTER_API_KEY) throw new Error("Defina OPENROUTER_API_KEY no .env para medir pelo OpenRouter.");
     return new OpenRouterEmbedder(config.OPENROUTER_EMBEDDING_MODEL, config.OPENROUTER_API_KEY);
   }
+  if (provider === "deepinfra") {
+    if (!config.DEEPINFRA_API_KEY) throw new Error("Defina DEEPINFRA_API_KEY no .env para medir pela DeepInfra.");
+    return new OpenRouterEmbedder(config.DEEPINFRA_EMBEDDING_MODEL, config.DEEPINFRA_API_KEY, DEEPINFRA);
+  }
   if (provider === "google") {
     if (!config.GOOGLE_GENERATIVE_AI_API_KEY) throw new Error("Defina GOOGLE_GENERATIVE_AI_API_KEY no .env para medir pelo Gemini direto.");
     return new GeminiEmbedder(config.EMBEDDING_MODEL, config.GOOGLE_GENERATIVE_AI_API_KEY);
   }
-  throw new Error(`--provider deve ser openrouter ou google (veio "${provider}").`);
+  throw new Error(`--provider deve ser deepinfra, openrouter ou google (veio "${provider}").`);
 }
 
 async function main() {
-  const provider = process.argv.find((a) => a.startsWith("--provider="))?.split("=")[1] ?? "openrouter";
+  const provider = process.argv.find((a) => a.startsWith("--provider="))?.split("=")[1] ?? (env().DEEPINFRA_API_KEY ? "deepinfra" : "openrouter");
   const embedder = embedderFor(provider);
   const docVectors = await embedder.embed(articles.map(articleText), "document");
   const vectors = new Map(articles.map((a, i) => [a.id, docVectors[i]]));
   const noVectors = new Map<string, number[]>();
   const config = env();
+  const judgeId = config.RELEVANCE_JUDGE_MODEL.replace(/^deepinfra\//, "");
   const judge: RelevanceJudge | null =
-    config.OPENROUTER_API_KEY && config.RELEVANCE_JUDGE_MODEL !== "off" ? new OpenRouterRelevanceJudge(config.RELEVANCE_JUDGE_MODEL, config.OPENROUTER_API_KEY) : null;
+    config.RELEVANCE_JUDGE_MODEL === "off"
+      ? null
+      : config.DEEPINFRA_API_KEY
+        ? new OpenRouterRelevanceJudge(judgeId, config.DEEPINFRA_API_KEY, DEEPINFRA)
+        : config.OPENROUTER_API_KEY
+          ? new OpenRouterRelevanceJudge(judgeId, config.OPENROUTER_API_KEY)
+          : null;
   const totals = { right: 0, wrongArticle: 0, wrongAbstention: 0, n: 0 };
 
   async function evaluate(title: string, queries: RetrievalQuery[], sweep: boolean) {

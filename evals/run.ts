@@ -14,6 +14,8 @@ import { assertModelResponded, retryOnProviderError } from "./provider-errors";
 
 process.env.DATABASE_URL = "file:eval.db";
 process.env.LEGACY_FAILURE_RATE = "0";
+// Gasto acumulado entre execuções e dias fora do banco (que cada eval recria): mesmo teto do .env.
+process.env.SPEND_LEDGER_FILE ??= "evals/.gasto-llm.json";
 
 const PROVIDER_ATTEMPTS = 3;
 

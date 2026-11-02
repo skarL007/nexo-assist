@@ -8,7 +8,7 @@ import type { RelevanceJudge, RelevanceVerdict } from "@/application/ports";
 import { ProviderHttpError } from "@/application/provider-breaker";
 import type { Article } from "@/domain/knowledge";
 
-const API = "https://openrouter.ai/api/v1/chat/completions";
+import { OPENROUTER, type OpenAiCompatible } from "./openrouter-embedder";
 const TIMEOUT_MS = 4000;
 
 const SYSTEM = [
@@ -28,20 +28,21 @@ export class OpenRouterRelevanceJudge implements RelevanceJudge {
   constructor(
     private readonly modelId: string,
     private readonly apiKey: string,
+    private readonly provider: OpenAiCompatible = OPENROUTER,
   ) {
-    this.model = `openrouter/${modelId}`;
+    this.model = `${provider.prefix}/${modelId}`;
   }
 
   async judge(query: string, candidates: Article[]): Promise<RelevanceVerdict> {
     const list = candidates.map((a) => `id: ${a.id}\n${articleText(a)}`).join("\n---\n");
-    const response = await fetch(API, {
+    const response = await fetch(`${this.provider.baseUrl}/chat/completions`, {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${this.apiKey}` },
       signal: AbortSignal.timeout(TIMEOUT_MS),
       body: JSON.stringify({
         model: this.modelId,
         temperature: 0,
-        reasoning: { effort: "minimal" },
+        ...(this.provider === OPENROUTER ? { reasoning: { effort: "minimal" } } : {}),
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: SYSTEM },

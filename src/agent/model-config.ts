@@ -10,6 +10,7 @@
 const API_KEY_BY_PROVIDER = {
   google: "GOOGLE_GENERATIVE_AI_API_KEY",
   openrouter: "OPENROUTER_API_KEY",
+  deepinfra: "DEEPINFRA_API_KEY",
 } as const;
 
 export type ApiKeyVar = (typeof API_KEY_BY_PROVIDER)[keyof typeof API_KEY_BY_PROVIDER];
@@ -27,6 +28,11 @@ const PRICE_PER_MILLION: Record<string, { input: number; output: number }> = {
   "google/gemini-3.5-flash-lite": { input: 0.3, output: 2.5 },
   // Preço de tabela do OpenRouter (30/10/2026). Sem o desconto do cache: a estimativa fica acima do pago.
   "openrouter/openai/gpt-6-luna": { input: 0.1, output: 0.5 },
+  // DeepInfra, preço por token da API pública de modelos (02/11/2026).
+  "deepinfra/deepseek-ai/DeepSeek-V4-Flash": { input: 0.09, output: 0.18 },
+  "deepinfra/Qwen/Qwen3.8-Flash": { input: 0.113, output: 0.382 },
+  "deepinfra/zai-org/GLM-5.3-Flash": { input: 0.15, output: 0.5 },
+  "deepinfra/openai/gpt-oss-120b": { input: 0.037, output: 0.17 },
 };
 
 export function pricePerToken(model: string): { input: number; output: number } | null {

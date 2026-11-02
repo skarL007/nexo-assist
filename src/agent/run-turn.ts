@@ -20,7 +20,7 @@ import { DomainError } from "@/domain/errors";
 import type { ToolCallLog, TurnTrace } from "@/domain/message";
 import { createServices, type Services } from "@/infrastructure/container";
 import { conversationView } from "@/server/views";
-import { missingApiKey, missingKeyMessage, providerOptionsFor } from "./model-config";
+import { missingApiKey, missingKeyMessage, pricePerToken, providerOptionsFor } from "./model-config";
 import { stripMarkdown, stripSystemNotes, toModelMessages } from "./model-history";
 import { fallbackNote, readStepFinish, type StepFinishPayload } from "./model-fallback";
 import { agentModels, nexoAgent } from "./nexo-agent";
@@ -108,6 +108,10 @@ async function* replyWithAgent(turn: TurnContext, abortSignal?: AbortSignal): As
   if (recorder.repeatedUnderstandings) {
     recorder.guardrail(`O modelo registrou o entendimento ${recorder.repeatedUnderstandings + 1} vezes no mesmo passo; só o primeiro valeu.`);
   }
+
+  // Custo do turno no livro-caixa (uso × preço por token do modelo que respondeu).
+  const price = pricePerToken(run.fallbackModel ?? env().LLM_MODEL);
+  if (price && run.usage) await services.spend.record(run.usage.inputTokens * price.input + run.usage.outputTokens * price.output);
 
   const trace: TurnTrace = {
     traceId: randomBytes(16).toString("hex"),
@@ -246,6 +250,8 @@ async function assertWithinPersonalLimits(services: Services, employeeId: string
  * para pedidos simultâneos e conta também o turno que falhar ou for cancelado.
  */
 async function assertWithinBudget(services: Services) {
+  // Teto de gasto em dólares antes do de turnos: recusado aqui, nenhuma vaga de turno é gasta.
+  await services.spend.assertCanSpend();
   await reserveModelTurn(services.budget, { daily: env().DAILY_AGENT_TURN_LIMIT, total: env().TOTAL_AGENT_TURN_LIMIT }, new Date());
 }
 

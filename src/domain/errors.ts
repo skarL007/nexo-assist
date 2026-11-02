@@ -21,5 +21,6 @@ export type DomainErrorCode =
   | "conflict"
   | "message_limit"
   | "daily_limit"
+  | "spend_limit"
   | "legacy_unavailable"
   | "agent_unavailable";

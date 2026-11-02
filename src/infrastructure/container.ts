@@ -15,7 +15,7 @@ import type { Embedder } from "@/application/ports";
 import { ProviderBreaker } from "@/application/provider-breaker";
 import { env } from "@/config/env";
 import { GeminiEmbedder } from "./ai/gemini-embedder";
-import { OpenRouterEmbedder } from "./ai/openrouter-embedder";
+import { DEEPINFRA, OpenRouterEmbedder } from "./ai/openrouter-embedder";
 import { OpenRouterRelevanceJudge } from "./ai/openrouter-relevance-judge";
 import { db } from "./db/client";
 import { FlakyTicketRepository } from "./legacy-ticket-system";
@@ -31,6 +31,8 @@ import { DrizzleMessageRepository } from "./repositories/message-repository";
 import { DrizzleTicketRepository } from "./repositories/ticket-repository";
 import { OtlpTraceExporter, telemetryConfig } from "./telemetry/otlp-exporter";
 import { CompositeTelemetry, processMetrics } from "./telemetry/prometheus";
+import { SpendLedger } from "@/application/spend-ledger";
+import { DrizzleSpendStore, FileSpendStore } from "./repositories/spend-store";
 
 export interface ServiceOptions {
   /** Espaço derivado da identidade autenticada da demonstração. */
@@ -57,12 +59,23 @@ export function createServices(options: ServiceOptions = {}) {
 
   const feedback = new FeedbackService(new DrizzleFeedbackRepository(database), messages, conversationRepository);
   const config = env();
-  // Ordem da busca por sentido: OpenRouter, depois Gemini direto. Sem nenhum, só palavras-chave.
+  // Ordem da busca por sentido: DeepInfra, OpenRouter, depois Gemini direto. Sem nenhum, só palavras-chave.
   const embedders: Embedder[] = [];
+  if (config.DEEPINFRA_API_KEY && config.DEEPINFRA_EMBEDDING_MODEL !== "off") embedders.push(new OpenRouterEmbedder(config.DEEPINFRA_EMBEDDING_MODEL, config.DEEPINFRA_API_KEY, DEEPINFRA));
   if (config.OPENROUTER_API_KEY && config.OPENROUTER_EMBEDDING_MODEL !== "off") embedders.push(new OpenRouterEmbedder(config.OPENROUTER_EMBEDDING_MODEL, config.OPENROUTER_API_KEY));
   if (config.GOOGLE_GENERATIVE_AI_API_KEY) embedders.push(new GeminiEmbedder(config.EMBEDDING_MODEL, config.GOOGLE_GENERATIVE_AI_API_KEY));
+  // RELEVANCE_JUDGE_MODEL com "deepinfra/" vai pela DeepInfra; sem prefixo, pelo OpenRouter (como antes).
+  const judgeOnDeepInfra = config.RELEVANCE_JUDGE_MODEL.startsWith("deepinfra/");
   const judge =
-    config.OPENROUTER_API_KEY && config.RELEVANCE_JUDGE_MODEL !== "off" ? new OpenRouterRelevanceJudge(config.RELEVANCE_JUDGE_MODEL, config.OPENROUTER_API_KEY) : null;
+    config.RELEVANCE_JUDGE_MODEL === "off"
+      ? null
+      : judgeOnDeepInfra
+        ? config.DEEPINFRA_API_KEY
+          ? new OpenRouterRelevanceJudge(config.RELEVANCE_JUDGE_MODEL.slice("deepinfra/".length), config.DEEPINFRA_API_KEY, DEEPINFRA)
+          : null
+        : config.OPENROUTER_API_KEY
+          ? new OpenRouterRelevanceJudge(config.RELEVANCE_JUDGE_MODEL, config.OPENROUTER_API_KEY)
+          : null;
   const knowledge = new KnowledgeService(
     articles,
     embedders,
@@ -75,12 +88,16 @@ export function createServices(options: ServiceOptions = {}) {
   const writer = missingApiKey(config.LLM_MODEL, config) ? null : mastraReplyWriter;
   const replySuggestions = new ReplySuggestionService(conversations, budget, writer, suggestionRepository, config.TOTAL_AGENT_TURN_LIMIT);
 
+  const spend = new SpendLedger(config.SPEND_LEDGER_FILE ? new FileSpendStore(config.SPEND_LEDGER_FILE) : new DrizzleSpendStore(database), {
+    dailyUsd: config.LLM_DAILY_BUDGET_USD,
+    totalUsd: config.LLM_TOTAL_BUDGET_USD,
+  });
   const changes = new DrizzleChangeFeed(database, options.demoScope);
   // Prometheus sempre (memória do processo, lida em /api/metrics); OTLP/Langfuse só configurado.
   const telemetrySettings = telemetryConfig(config);
   const telemetry = new CompositeTelemetry([processMetrics(), ...(telemetrySettings ? [new OtlpTraceExporter(telemetrySettings)] : [])]);
 
-  return { employees, articles, knowledge, messages, budget, tickets, conversations, drafts, feedback, insights, replySuggestions, changes, telemetry };
+  return { employees, articles, knowledge, messages, budget, spend, tickets, conversations, drafts, feedback, insights, replySuggestions, changes, telemetry };
 }
 
 export type Services = ReturnType<typeof createServices>;

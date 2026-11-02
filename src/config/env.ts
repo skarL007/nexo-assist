@@ -14,6 +14,15 @@ const schema = z.object({
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
   /** Chave do OpenRouter: benchmark de modelos e LLM_MODEL="openrouter/<fornecedor>/<modelo>". */
   OPENROUTER_API_KEY: z.string().optional(),
+  /** Chave da DeepInfra (API no formato da OpenAI): LLM_MODEL="deepinfra/<fornecedor>/<modelo>", embeddings e avaliador. */
+  DEEPINFRA_API_KEY: z.string().optional(),
+  /** Embeddings pela DeepInfra, 1º provedor da busca híbrida quando há a chave. "off" desliga. Outro modelo pede nova margem. */
+  DEEPINFRA_EMBEDDING_MODEL: z.string().default("Qwen/Qwen3-Embedding-8B"),
+  /** Teto de gasto com LLM por dia (UTC) e no total, em US$ (livro-caixa em usage_counters ou em SPEND_LEDGER_FILE). */
+  LLM_DAILY_BUDGET_USD: z.coerce.number().positive().optional(),
+  LLM_TOTAL_BUDGET_USD: z.coerce.number().positive().optional(),
+  /** Livro-caixa num arquivo (evals locais, que recriam o banco a cada execução). */
+  SPEND_LEDGER_FILE: z.string().optional(),
   /** Raciocínio pedido aos modelos via OpenRouter ("minimal" = mesmo nível do Gemini direto). */
   OPENROUTER_REASONING_EFFORT: z.enum(REASONING_EFFORTS).default("minimal"),
   /** Formato "provedor/modelo" do roteador de modelos do Mastra. */

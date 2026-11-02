@@ -66,6 +66,8 @@ const usageSchema = z.object({
   prompt_tokens: z.number().default(0),
   completion_tokens: z.number().default(0),
   cost: z.number().default(0),
+  /** A DeepInfra devolve o custo como `estimated_cost`. */
+  estimated_cost: z.number().optional(),
   prompt_tokens_details: z.object({ cached_tokens: z.number().nullish() }).nullish(),
   completion_tokens_details: z.object({ reasoning_tokens: z.number().nullish() }).nullish(),
 });
@@ -162,12 +164,28 @@ export async function cachedChat(body: Record<string, unknown>, salt = ""): Prom
   return result;
 }
 
+const DEEPINFRA_API = "https://api.deepinfra.com/v1/openai";
+
+/**
+ * Modelo "deepinfra/<fornecedor>/<modelo>" vai à DeepInfra (mesmo formato da OpenAI), sem os
+ * campos que só o OpenRouter entende (`reasoning`, `provider`); o resto vai ao OpenRouter.
+ */
+function route(body: Record<string, unknown>): { url: string; key: string; body: Record<string, unknown> } {
+  const model = String(body.model ?? "");
+  if (!model.startsWith("deepinfra/")) return { url: `${API}/chat/completions`, key: apiKey(), body };
+  const key = process.env.DEEPINFRA_API_KEY;
+  if (!key) throw new Error("DEEPINFRA_API_KEY não configurada (veja .env.example).");
+  const rest = Object.fromEntries(Object.entries(body).filter(([field]) => field !== "reasoning" && field !== "provider"));
+  return { url: `${DEEPINFRA_API}/chat/completions`, key, body: { ...rest, model: model.slice("deepinfra/".length) } };
+}
+
 /** Uma chamada de chat sem streaming. Erro HTTP vira `ok: false` com a mensagem, não exceção. */
 export async function chat(body: Record<string, unknown>, timeoutMs = 120_000): Promise<Completion> {
-  const response = await fetch(`${API}/chat/completions`, {
+  const target = route(body);
+  const response = await fetch(target.url, {
     method: "POST",
-    headers: { Authorization: `Bearer ${apiKey()}`, "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    headers: { Authorization: `Bearer ${target.key}`, "Content-Type": "application/json" },
+    body: JSON.stringify(target.body),
     signal: AbortSignal.timeout(timeoutMs),
   });
   const parsed = completionSchema.safeParse(await response.json().catch(() => ({})));
@@ -180,7 +198,7 @@ export async function chat(body: Record<string, unknown>, timeoutMs = 120_000): 
     text: choice?.message.content ?? "",
     toolCalls: choice?.message.tool_calls?.map((call) => call.function.name) ?? [],
     logprobs: choice?.logprobs?.content ?? [],
-    costUsd: data.usage?.cost ?? 0,
+    costUsd: data.usage?.estimated_cost ?? data.usage?.cost ?? 0,
     inputTokens: data.usage?.prompt_tokens ?? 0,
     cachedTokens: data.usage?.prompt_tokens_details?.cached_tokens ?? 0,
     outputTokens: data.usage?.completion_tokens ?? 0,

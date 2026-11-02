@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { EmbeddingHttpError } from "@/application/provider-breaker";
-import { OpenRouterEmbedder } from "./openrouter-embedder";
+import { DEEPINFRA, OpenRouterEmbedder } from "./openrouter-embedder";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -29,5 +29,16 @@ describe("embeddings pelo OpenRouter", () => {
   it("resposta com menos vetores do que textos é erro, não busca pela metade", async () => {
     vi.stubGlobal("fetch", async () => Response.json({ data: [{ index: 0, embedding: [1, 0] }] }));
     await expect(new OpenRouterEmbedder("google/gemini-embedding-2", "k").embed(["vpn", "wifi"])).rejects.toThrow("resposta incompleta");
+  });
+});
+
+describe("embeddings pela DeepInfra (mesmo formato da OpenAI)", () => {
+  it("usa o endereço da DeepInfra e o prefixo deepinfra/ (cache de vetores separado por provedor)", async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json({ data: [{ index: 0, embedding: [1, 0] }] }));
+    vi.stubGlobal("fetch", fetch);
+    const embedder = new OpenRouterEmbedder("Qwen/Qwen3-Embedding-8B", "k", DEEPINFRA);
+    expect(embedder.model).toBe("deepinfra/Qwen/Qwen3-Embedding-8B");
+    await embedder.embed(["vpn"]);
+    expect(fetch.mock.calls[0][0]).toBe("https://api.deepinfra.com/v1/openai/embeddings");
   });
 });

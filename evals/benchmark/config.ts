@@ -112,6 +112,26 @@ export const JUDGES: Judge[] = [
     effort: "none",
     tokens: { input: 3_500, output: 80 },
   },
+  // DeepInfra (02/11): não devolve logprobs (pré-voo), então a nota é a média de 3 amostras, como no
+  // artigo original da G-Eval. Família diferente da do agent, para o juiz não favorecer o próprio estilo.
+  {
+    key: "glm-5.3-flash",
+    model: "deepinfra/zai-org/GLM-5.3-Flash",
+    label: "GLM-5.3 Flash (DeepInfra)",
+    method: "amostragem",
+    samples: 3,
+    effort: "none",
+    tokens: { input: 3_500, output: 250 },
+  },
+  {
+    key: "qwen3.8-flash",
+    model: "deepinfra/Qwen/Qwen3.8-Flash",
+    label: "Qwen3.8 Flash (DeepInfra)",
+    method: "amostragem",
+    samples: 3,
+    effort: "none",
+    tokens: { input: 3_500, output: 250 },
+  },
   // GLM-5.3 não devolve logprobs pelo OpenRouter (testado) e não aceita desligar o raciocínio.
   {
     key: "glm-5.3",

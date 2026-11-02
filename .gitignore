@@ -58,3 +58,4 @@ docs-e2e.db*
 # vínculo local com o projeto da Vercel (CLI)
 .vercel
 otel-local.jsonl
+evals/.gasto-llm.json

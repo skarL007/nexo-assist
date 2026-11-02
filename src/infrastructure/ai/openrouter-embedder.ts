@@ -7,7 +7,14 @@
 import type { Embedder } from "@/application/ports";
 import { EmbeddingHttpError } from "@/application/provider-breaker";
 
-const API = "https://openrouter.ai/api/v1/embeddings";
+/** Provedor de API no formato da OpenAI: o prefixo separa o cache de vetores e o disjuntor de cada um. */
+export interface OpenAiCompatible {
+  prefix: string;
+  baseUrl: string;
+}
+
+export const OPENROUTER: OpenAiCompatible = { prefix: "openrouter", baseUrl: "https://openrouter.ai/api/v1" };
+export const DEEPINFRA: OpenAiCompatible = { prefix: "deepinfra", baseUrl: "https://api.deepinfra.com/v1/openai" };
 /** 768 dimensões, como no Gemini direto. O modelo precisa aceitar `dimensions` (Gemini e text-embedding-3 aceitam). */
 const DIMENSIONS = 768;
 const TIMEOUT_MS = 4000;
@@ -19,13 +26,14 @@ export class OpenRouterEmbedder implements Embedder {
   constructor(
     private readonly modelId: string,
     private readonly apiKey: string,
+    private readonly provider: OpenAiCompatible = OPENROUTER,
   ) {
-    this.model = `openrouter/${modelId}`;
+    this.model = `${provider.prefix}/${modelId}`;
   }
 
   /** O endpoint não tem tipo de tarefa: pergunta e artigo vão do mesmo jeito, como na medição. */
   async embed(texts: string[]): Promise<number[][]> {
-    const response = await fetch(API, {
+    const response = await fetch(`${this.provider.baseUrl}/embeddings`, {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${this.apiKey}` },
       signal: AbortSignal.timeout(TIMEOUT_MS),
