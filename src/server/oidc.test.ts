@@ -52,6 +52,9 @@ describe("id_token", () => {
   it("recusa e-mail não verificado, ausente ou de outro domínio", async () => {
     expect(await reason(verify(await sign({ email: "ana.souza@nexo.com.br", email_verified: false, nonce: "n-1" })))).toBe("email");
     expect(await reason(verify(await sign({ nonce: "n-1" })))).toBe("email");
+    // Auditoria de 02/11: sem a afirmação explícita do provedor, o e-mail não liga a pessoa a um funcionário.
+    expect(await reason(verify(await sign({ email: "ana.souza@nexo.com.br", nonce: "n-1" })))).toBe("email");
+    expect(await reason(verify(await sign({ email: "ana.souza@nexo.com.br", email_verified: "true", nonce: "n-1" })))).toBe("email");
     expect(await reason(verify(await sign({ email: "ana@gmail.com", email_verified: true, nonce: "n-1" })))).toBe("domain");
   });
 });

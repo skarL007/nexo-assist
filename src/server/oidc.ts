@@ -131,7 +131,8 @@ export async function verifyIdToken(
   if (payload.nonce !== input.nonce) throw new SsoError("token", "nonce diferente");
   const email = typeof payload.email === "string" ? payload.email.toLowerCase() : null;
   // Sem e-mail verificado não dá para ligar a pessoa a um funcionário com segurança.
-  if (!email || payload.email_verified === false) throw new SsoError("email", "e-mail ausente ou não verificado");
+  // Ausente não é "verificado": só vale a afirmação explícita do provedor (email_verified === true).
+  if (!email || payload.email_verified !== true) throw new SsoError("email", "e-mail ausente ou não verificado");
   if (input.config.allowedDomain && !email.endsWith(`@${input.config.allowedDomain.toLowerCase()}`)) throw new SsoError("domain", email.split("@")[1]);
   return email;
 }
