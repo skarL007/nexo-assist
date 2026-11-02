@@ -7,10 +7,14 @@ import { DomainError } from "@/domain/errors";
 import type { BudgetRepository } from "./ports";
 
 export async function reserveModelTurn(budget: BudgetRepository, limits: { daily: number; total?: number }, now: Date): Promise<void> {
-  if (!(await budget.reserve(`model_turns:${now.toISOString().slice(0, 10)}`, limits.daily))) {
+  const dayKey = `model_turns:${now.toISOString().slice(0, 10)}`;
+  if (!(await budget.reserve(dayKey, limits.daily))) {
     throw new DomainError("daily_limit", "O Nexo Assist atingiu o limite de uso de hoje. Fale com o service desk pelo ramal 4000.");
   }
   if (limits.total !== undefined && !(await budget.reserve("model_turns", limits.total))) {
+    // Compensação: o turno recusado não chama o modelo, então devolve a vaga do dia. Cada contador
+    // continua atômico; no pior caso, um pedido simultâneo é recusado cedo, nunca passa do teto.
+    await budget.release(dayKey);
     throw new DomainError("daily_limit", "O Nexo Assist atingiu o limite de uso desta demonstração. Fale com o service desk pelo ramal 4000.");
   }
 }

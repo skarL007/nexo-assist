@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { and, eq, gt, sql } from "drizzle-orm";
 import type { BudgetRepository } from "@/application/ports";
 import type { Database } from "../db/client";
 import { usageCounters } from "../db/schema";
@@ -23,5 +23,12 @@ export class DrizzleBudgetRepository implements BudgetRepository {
       })
       .returning({ value: usageCounters.value });
     return rows.length > 0;
+  }
+
+  async release(key: string): Promise<void> {
+    await this.db
+      .update(usageCounters)
+      .set({ value: sql`${usageCounters.value} - 1` })
+      .where(and(eq(usageCounters.key, key), gt(usageCounters.value, 0)));
   }
 }

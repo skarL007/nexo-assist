@@ -178,6 +178,8 @@ export interface SuggestionRepository {
 export interface BudgetRepository {
   /** Soma 1 ao contador se ele estiver abaixo do teto, de forma atômica. false = teto atingido. */
   reserve(key: string, limit: number): Promise<boolean>;
+  /** Devolve uma vaga reservada (turno recusado por outro teto). Nunca deixa o contador negativo. */
+  release(key: string): Promise<void>;
 }
 
 export interface Clock {

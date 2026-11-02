@@ -33,6 +33,16 @@ describe("teto total de respostas do modelo", () => {
     const results = await Promise.all(Array.from({ length: 10 }, () => budget.reserve("model_turns", 3)));
     expect(results.filter(Boolean)).toHaveLength(3);
   });
+
+  it("devolver uma vaga libera a reserva e nunca deixa o contador negativo", async () => {
+    const budget = new DrizzleBudgetRepository(db);
+    await budget.reserve("model_turns:2026-11-02", 1);
+    await budget.release("model_turns:2026-11-02");
+    await budget.release("model_turns:2026-11-02");
+    await budget.release("sem-reserva");
+    expect(await budget.reserve("model_turns:2026-11-02", 1)).toBe(true);
+    expect(await budget.reserve("model_turns:2026-11-02", 1)).toBe(false);
+  });
 });
 
 describe("número do chamado", () => {

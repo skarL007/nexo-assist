@@ -22,6 +22,9 @@ class FakeBudget implements BudgetRepository {
   async reserve() {
     return this.left-- > 0;
   }
+  async release() {
+    this.left++;
+  }
 }
 class FakeSuggestions implements SuggestionRepository {
   events: string[] = [];

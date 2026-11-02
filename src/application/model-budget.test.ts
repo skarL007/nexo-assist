@@ -10,6 +10,10 @@ class MemoryBudget implements BudgetRepository {
     this.counters.set(key, value + 1);
     return true;
   }
+  async release(key: string) {
+    const value = this.counters.get(key) ?? 0;
+    if (value > 0) this.counters.set(key, value - 1);
+  }
 }
 
 const day = new Date("2026-10-29T15:00:00Z");
@@ -38,5 +42,13 @@ describe("reserveModelTurn", () => {
     const budget = new MemoryBudget();
     await reserveModelTurn(budget, { daily: 100, total: 1 }, day);
     await expect(reserveModelTurn(budget, { daily: 100, total: 1 }, day)).rejects.toMatchObject({ code: "daily_limit", message: expect.stringContaining("demonstração") });
+  });
+
+  it("teto total atingido não gasta a vaga do dia (auditoria de 02/11, P2)", async () => {
+    const budget = new MemoryBudget();
+    await reserveModelTurn(budget, { daily: 100, total: 1 }, day);
+    for (let i = 0; i < 3; i++) await reserveModelTurn(budget, { daily: 100, total: 1 }, day).catch(() => undefined);
+    expect(budget.counters.get("model_turns:2026-10-29")).toBe(1);
+    expect(budget.counters.get("model_turns")).toBe(1);
   });
 });
