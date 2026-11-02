@@ -16,6 +16,7 @@ with_agent ──handoff──▶ waiting_analyst ──assume──▶ with_ana
 ## Login
 
 - Entram só as pessoas dos dados de exemplo, com qualquer senha não vazia (Tela 1 do PDF). Não há cadastro.
+- **Esse login é de demonstração, não é autenticação:** a senha não é conferida, então conhecer o e-mail basta. Ele vale sem SSO e **desliga sozinho com SSO configurado**, para não virar uma rota alternativa ao SSO. `DEMO_LOGIN=1` ou `DEMO_LOGIN=0` manda nos dois casos (o E2E liga os dois caminhos para testar ambos). Desligado, `POST /api/auth/login` responde 404 e a tela mostra só o botão do SSO. Aceite: `src/server/auth-mode.test.ts` (sem SSO → ligado; com SSO → desligado; `DEMO_LOGIN` explícito vence; SSO pela metade não conta). Auditoria de 02/11, P0.
 - Os botões de demonstração ("Ana · funcionária", "Rafael · analista") entram com um clique.
 - Senha vazia mostra "Informe uma senha (na demonstração, qualquer uma funciona)". "Esqueci minha senha" explica o mesmo.
 - "Manter conectado neste computador" (Tela 1 do protótipo): marcado, a sessão dura 7 dias; desmarcado, o cookie some quando o navegador fecha (e a sessão vence em 8 horas de qualquer jeito).

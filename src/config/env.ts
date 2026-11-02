@@ -44,7 +44,12 @@ const schema = z.object({
   OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: z.url().optional(),
   OTEL_EXPORTER_OTLP_TRACES_HEADERS: z.string().optional(),
   /** "true" manda também o texto da conversa e os argumentos das tools (dado pessoal: desligado por padrão). */
-  /** SSO opcional (OpenID Connect). Sem as três primeiras, o login fica só com e-mail e senha. */
+  /**
+   * Login de demonstração: só o e-mail de um funcionário do seed, sem conferir senha (regra do desafio).
+   * Sem definir, vale quando não há SSO e desliga com SSO configurado (src/server/auth-mode.ts).
+   */
+  DEMO_LOGIN: z.enum(["0", "1"]).optional(),
+  /** SSO opcional (OpenID Connect). Com as três primeiras, o login de demonstração desliga (salvo DEMO_LOGIN=1). */
   OIDC_ISSUER: z.url().optional(),
   OIDC_CLIENT_ID: z.string().optional(),
   OIDC_CLIENT_SECRET: z.string().optional(),

@@ -1,17 +1,19 @@
 import { redirect } from "next/navigation";
+import { env } from "@/config/env";
 import { Brand } from "@/components/nexo/brand";
 import type { InsightsReport } from "@/domain/insights";
 import { LoginForm } from "@/features/auth/login-form";
 import { createServices } from "@/infrastructure/container";
 import { formatSeconds, percent } from "@/lib/format";
 import { logError } from "@/server/http";
+import { demoLoginEnabled } from "@/server/auth-mode";
 import { currentUser, homeFor } from "@/server/session";
 import { ssoConfig } from "@/server/sso";
 
 const SSO_ERRORS: Record<string, string> = {
   desconhecido: "Seu e-mail não está no service desk. Fale com a TI no ramal 4000.",
   dominio: "Use a sua conta corporativa da Nexo.",
-  falhou: "Não foi possível entrar pelo SSO. Tente de novo ou use e-mail e senha.",
+  falhou: "Não foi possível entrar pelo SSO. Tente de novo ou ligue no ramal 4000.",
 };
 
 export const dynamic = "force-dynamic";
@@ -31,6 +33,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   if (user) redirect(homeFor(user.role));
   const stats = await loginStats();
   const sso = ssoConfig();
+  const demoLogin = demoLoginEnabled(env());
   const ssoError = SSO_ERRORS[(await searchParams).sso ?? ""];
 
   return (
@@ -68,7 +71,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           </div>
           <div className="space-y-2">
             <h2 className="font-serif text-4xl">Entrar</h2>
-            <p className="text-sm text-muted-foreground">Use seu e-mail corporativo e a senha de rede Nexo.</p>
+            <p className="text-sm text-muted-foreground">
+              {demoLogin ? "Use seu e-mail corporativo e a senha de rede Nexo." : `Entre com a sua conta corporativa (${sso?.label ?? "SSO"}).`}
+            </p>
           </div>
           {ssoError && (
             <p role="alert" className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
@@ -80,7 +85,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
               Entrar com {sso.label}
             </a>
           )}
-          <LoginForm />
+          {demoLogin && <LoginForm />}
         </div>
         <footer className="flex justify-between text-xs text-muted-foreground">
           <span>© Nexo · Tecnologia da Informação</span>
