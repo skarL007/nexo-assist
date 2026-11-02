@@ -9,16 +9,19 @@
  * (produção). Para cada conjunto: acerto, artigo errado e abstenção com intervalo de Wilson,
  * Recall@5 da 1ª etapa, MRR e latência. Entre sistemas: McNemar pareado. O avaliador usa LLM,
  * então roda `--runs` vezes: o relatório traz a média, a pior rodada e quantas perguntas mudaram.
- * Grava evals/retrieval/results/<data>.json e docs/validacao/METRICAS-BUSCA.md.
+ * Grava evals/retrieval/results/<data>.json e docs/validacao/METRICAS-BUSCA-OURO.md (gerado; METRICAS-BUSCA.md é escrito à mão).
  * Custo: ~US$ 0,0003 por pergunta por rodada do avaliador (~US$ 0,10 com 3 rodadas).
  */
 import { execSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { articleText, JUDGE_CANDIDATES, MIN_MARGIN } from "@/application/knowledge-service";
 import type { Embedder } from "@/application/ports";
+import { SpendLedger } from "@/application/spend-ledger";
+import { pricePerToken } from "@/agent/model-config";
+import { FileSpendStore } from "@/infrastructure/repositories/spend-store";
 import { env } from "@/config/env";
 import { hybridSearch } from "@/domain/hybrid-search";
-import { OpenRouterEmbedder } from "@/infrastructure/ai/openrouter-embedder";
+import { DEEPINFRA, OpenRouterEmbedder } from "@/infrastructure/ai/openrouter-embedder";
 import { OpenRouterRelevanceJudge } from "@/infrastructure/ai/openrouter-relevance-judge";
 import { articles } from "@/infrastructure/db/seed-data";
 import { GOLD_SETS, GOLD_VERSION, type GoldSet } from "./gold";
@@ -72,10 +75,18 @@ function keywordOnly() {
 async function main() {
   if (process.argv.includes("--so-palavras")) return keywordOnly();
   const config = env();
-  if (!config.OPENROUTER_API_KEY) throw new Error("Defina OPENROUTER_API_KEY no .env.");
+  process.env.SPEND_LEDGER_FILE ??= "evals/.gasto-llm.json";
+  const ledger = new SpendLedger(new FileSpendStore(process.env.SPEND_LEDGER_FILE), { dailyUsd: config.LLM_DAILY_BUDGET_USD, totalUsd: config.LLM_TOTAL_BUDGET_USD });
+  if (!config.DEEPINFRA_API_KEY && !config.OPENROUTER_API_KEY) throw new Error("Defina DEEPINFRA_API_KEY (ou OPENROUTER_API_KEY) no .env.");
   const runs = Number(process.argv.find((a) => a.startsWith("--runs="))?.split("=")[1] ?? 3);
-  const embedder: Embedder = new OpenRouterEmbedder(config.OPENROUTER_EMBEDDING_MODEL, config.OPENROUTER_API_KEY);
-  const judge = new OpenRouterRelevanceJudge(config.RELEVANCE_JUDGE_MODEL, config.OPENROUTER_API_KEY);
+  // DeepInfra quando há a chave (02/11); senão o OpenRouter de antes. O avaliador segue o RELEVANCE_JUDGE_MODEL.
+  const onDeepInfra = !!config.DEEPINFRA_API_KEY;
+  const embedder: Embedder = onDeepInfra
+    ? new OpenRouterEmbedder(config.DEEPINFRA_EMBEDDING_MODEL, config.DEEPINFRA_API_KEY!, DEEPINFRA)
+    : new OpenRouterEmbedder(config.OPENROUTER_EMBEDDING_MODEL, config.OPENROUTER_API_KEY!);
+  const judgeId = config.RELEVANCE_JUDGE_MODEL.replace(/^deepinfra\//, "");
+  const judge = onDeepInfra ? new OpenRouterRelevanceJudge(judgeId, config.DEEPINFRA_API_KEY!, DEEPINFRA) : new OpenRouterRelevanceJudge(judgeId, config.OPENROUTER_API_KEY!);
+  const judgePrice = pricePerToken(judge.model);
 
   for (const set of GOLD_SETS) {
     if (fingerprint(set.queries) !== set.fingerprint) throw new Error(`O conjunto ${set.id} mudou desde o congelamento: não meça com ele.`);
@@ -102,12 +113,24 @@ async function main() {
       ms: embedMs,
     }));
     const judgedRuns: Outcome[][] = [];
+    // Como em produção (KnowledgeService): avaliador fora do ar ou lento demais → resposta da híbrida com margem.
+    let degraded = 0;
     for (let r = 0; r < runs; r++) {
+      await ledger.assertCanSpend();
       const outcomes: Outcome[] = [];
       for (const [i, q] of set.queries.entries()) {
         const s = Date.now();
         const list = candidates[i].map((m) => m.article);
-        const verdict = list.length ? await judge.judge(q.query, list) : { applies: null, maybe: null };
+        let verdict: { applies: string | null; maybe: string | null };
+        try {
+          verdict = list.length ? await judge.judge(q.query, list) : { applies: null, maybe: null };
+        } catch {
+          degraded++;
+          outcomes.push({ ids: hybrid[i].ids, ms: Date.now() - s + embedMs });
+          continue;
+        }
+        // O avaliador não devolve o uso: estimativa de ~4 caracteres por token (prompt de ~600 tokens + candidatos).
+        if (list.length && judgePrice) await ledger.record(((600 + list.reduce((s, a) => s + articleText(a).length, 0) / 4) * judgePrice.input) + 40 * judgePrice.output);
         const id = [verdict.applies, verdict.maybe].find((v) => v && list.some((c) => c.id === v));
         outcomes.push({ ids: id ? [id] : [], ms: Date.now() - s + embedMs });
       }
@@ -160,6 +183,7 @@ async function main() {
       `| **Híbrida + avaliador, pior de ${runs}** | **${ci(worst.right, n)}** | **${ci(worst.wrong, n)}** | ${worst.abstained}/${unanswerable} | ${Math.round(worst.p50)} / ${Math.round(worst.p95)} ms |`,
       "",
       `- Recall@5 da 1ª etapa: ${ci(recallAt5, answerable.length)} · MRR ${mrr.toFixed(2).replace(".", ",")}`,
+      `- Degradação para a híbrida (avaliador com erro ou acima de 4 s): ${degraded}/${n * runs} chamadas`,
       `- Avaliador em ${runs} rodadas: média ${(meanRight).toFixed(1).replace(".", ",")}/${n}; certas em todas: ${allRight}/${n}; perguntas que mudaram de resultado: ${unstable}`,
       `- McNemar, avaliador × híbrida: ${vsHybrid.aOnly} a ${vsHybrid.bOnly}, p = ${vsHybrid.p.toFixed(3).replace(".", ",")} · híbrida × palavras: ${vsKeyword.aOnly} a ${vsKeyword.bOnly}, p = ${vsKeyword.p.toFixed(3).replace(".", ",")}`,
     );
@@ -191,7 +215,7 @@ async function main() {
       systems: {
         palavras: { right: kw.right, wrong: kw.wrong, abstained: kw.abstained },
         hibrida: { right: hy.right, wrong: hy.wrong, abstained: hy.abstained, p50: hy.p50 },
-        avaliador: { runs: judged.map((j) => ({ right: j.right, wrong: j.wrong, abstained: j.abstained, p50: j.p50, p95: j.p95 })), unstable, allRight },
+        avaliador: { runs: judged.map((j) => ({ right: j.right, wrong: j.wrong, abstained: j.abstained, p50: j.p50, p95: j.p95 })), unstable, allRight, degraded },
       },
       mcnemar: { avaliadorXhibrida: vsHybrid, hibridaXpalavras: vsKeyword },
     });
@@ -223,7 +247,7 @@ async function main() {
   ];
   mkdirSync("evals/retrieval/results", { recursive: true });
   writeFileSync(`evals/retrieval/results/${date}.json`, JSON.stringify({ date, sha, gold: GOLD_VERSION, embedder: embedder.model, judge: judge.model, runs, sets: report }, null, 2));
-  writeFileSync("docs/validacao/METRICAS-BUSCA.md", [...header, ...summary, "## Por conjunto", "", ...md].join("\n"));
+  writeFileSync("docs/validacao/METRICAS-BUSCA-OURO.md", [...header, ...summary, "## Por conjunto", "", ...md].join("\n"));
   console.log([...header, ...summary, ...md].join("\n"));
 }
 

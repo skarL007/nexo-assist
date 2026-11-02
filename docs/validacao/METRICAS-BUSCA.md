@@ -12,11 +12,34 @@ Este relatório aplica os critérios da seção 4 de [BASE-DE-CONHECIMENTO.md](.
 | separado | validação | 17 (5) | `0f4e642ab971` | escrito depois da margem; erros vistos |
 | diagnostico | validação | 13 (2) | `0224a332384a` | erros vistos |
 | confusao | validação | 18 (6) | `d188581ce803` | congelado antes do avaliador; erros vistos no desenho dele |
-| **teste-final-v1** | **teste final** | 40 (13), 7 estratos | `0c5c0421c5f8` | escrito em 02/11, antes de qualquer medição; os erros dele não são mostrados nem usados para ajustar nada |
+| teste-final-v1 | validação | 40 (13), 7 estratos | `0c5c0421c5f8` | escrito em 02/11 antes de medir; rebaixado porque quem o escreveu ajustou o léxico depois |
+| **teste-final-v2** | **teste final** | **214 (94)**, 7 estratos | `ebbfc1d3101e` | escrito **às cegas** por um subagente que não leu o código, o léxico nem as outras perguntas; 6 perguntas iguais a outros conjuntos foram removidas antes de congelar |
 
-Os 4 conjuntos antigos deixaram de valer como teste final porque os erros deles foram olhados durante o desenvolvimento. O `teste-final-v1` cobre defeito com artigo, pedido, fora da central, termo exato, coloquial, erro de digitação e mistura com inglês.
+Os 4 conjuntos antigos deixaram de valer como teste final porque os erros deles foram olhados durante o desenvolvimento. O v1 também foi rebaixado: quem o escreveu (eu) depois escreveu o léxico de sinônimos, e uma palavra que eu soubesse estar no v1 poderia vazar para o léxico. O v2 resolve as duas coisas: autor cego e **214 perguntas**, acima das 190 necessárias para provar "artigo errado ≤ 2%" com zero erros.
 
-## Medido hoje: só palavras (determinístico, sem custo)
+## Precisão da busca por palavras (02/11)
+
+A análise dos 25 erros dos conjuntos de calibração e validação (os do teste final não foram olhados) deu quatro causas de princípio, todas corrigidas em [`domain/knowledge.ts`](../../src/domain/knowledge.ts) com testes de artigos de brinquedo, não com as perguntas reais:
+
+| Causa | Exemplo | Regra |
+|---|---|---|
+| Só o objeto bate | "notebook esquentando" → Pedir equipamento | objeto (notebook, monitor, teclado…) sozinho não escolhe artigo; precisa de sintoma, ou de sinal de pedido num artigo de pedido |
+| Defeito × pedido | "o headset não pega minha voz" → Pedir equipamento | relato de defeito não vai para artigo de pedido |
+| Evidência fraca | "levar o cachorro ao escritório" → Cabo ethernet | palavra fraca ("erro") ou uma palavra só no corpo não escolhe; o termo específico vem da tag ou do título |
+| Vocabulário | "iPhone", "multifuncional", "e-mails", "impresora" | léxico curto de TI, uma letra errada em palavra longa, radical comum, tag de várias palavras pela frase inteira |
+
+**No teste cego v2 (214 perguntas, medido uma vez):**
+
+| Busca por palavras | Acerto [IC 95%] | Artigo errado [IC 95%] |
+|---|---|---|
+| Antes (HEAD `8622504`) | 58,9% [52,2–65,3] | 36,0% [29,9–42,6] |
+| **Depois** | **67,8% [61,2–73,7]** | **22,9% [17,8–29,0]** |
+
+McNemar pareado, depois × antes: **28 a 9, p = 0,0026**, uma melhora real. Por estrato (depois × antes): defeito 22 × 17 de 40, fora 25 × 20 de 38, coloquial 19 × 16 de 29, digitação 26 × 23 de 28, inglês 23 × 18 de 30, termo 14 × 14 de 19. **O estrato pedido piorou: 16 × 18 de 30.**
+
+**O limite ficou claro:** na validação, a busca por palavras passa de 90%, mas no teste cego ela fica em 68%. Regras de palavras generalizam mal, e mais regras só aumentariam a distância. Os 95% vêm da busca por sentido com o avaliador (96,3% em 30/10), e a busca por palavras é o piso de quando os provedores caem.
+
+## Primeira medição de 02/11: só palavras, antes das regras de precisão (determinística, sem custo)
 
 É o modo em que a busca cai quando os provedores de embeddings estão fora do ar (`npm run eval:ouro -- --so-palavras`).
 
@@ -61,4 +84,4 @@ npm run eval:ouro -- --so-palavras
 npm run eval:ouro
 ```
 
-O segundo comando precisa de saldo no OpenRouter (~US$ 0,10 com 3 rodadas). Ele grava `evals/retrieval/results/<data>.json` e reescreve este arquivo com as tabelas por conjunto, o McNemar, o Recall@5, a latência e a quebra por estrato do teste final.
+O segundo comando usa a DeepInfra quando há `DEEPINFRA_API_KEY` (avaliador `RELEVANCE_JUDGE_MODEL=deepinfra/deepseek-ai/DeepSeek-V4-Flash`, ~US$ 0,06 por rodada nas 335 perguntas) e respeita o teto de `LLM_DAILY_BUDGET_USD`. Ele grava `evals/retrieval/results/<data>.json` e [METRICAS-BUSCA-OURO.md](METRICAS-BUSCA-OURO.md) com as tabelas por conjunto, o McNemar, o Recall@5, a latência e a quebra por estrato do teste final.
