@@ -9,6 +9,7 @@
 docs
 e2e
 e2e-demo
+e2e-docs
 evals
 test-results
 playwright-report
