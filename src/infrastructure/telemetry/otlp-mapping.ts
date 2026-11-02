@@ -56,7 +56,8 @@ function splitModel(model: string | null): { provider?: string; name?: string } 
 
 export function turnToOtlp(turn: TurnTelemetry, options: { captureContent: boolean; randomHex: (bytes: number) => string }): OtlpPayload {
   const { trace } = turn;
-  const traceId = options.randomHex(16);
+  // O id do turno (o mesmo que o console mostra ao analista); traces antigos sorteiam um.
+  const traceId = trace.traceId ?? options.randomHex(16);
   const rootId = options.randomHex(8);
   const start = turn.startedAt.getTime();
   const end = start + trace.latencyMs;
@@ -93,8 +94,11 @@ export function turnToOtlp(turn: TurnTelemetry, options: { captureContent: boole
   };
 
   // O trace guarda só a duração de cada tool: os spans ficam em sequência a partir do início (aproximado).
+  // A n-ésima busca do turno corresponde à n-ésima chamada de searchHelpCenter.
   let cursor = start;
+  let searchIndex = 0;
   const tools: OtlpSpan[] = trace.toolCalls.map((call) => {
+    const retrieval = call.tool === "searchHelpCenter" ? trace.retrievals?.[searchIndex++] : undefined;
     const span: OtlpSpan = {
       traceId,
       spanId: options.randomHex(8),
@@ -108,6 +112,19 @@ export function turnToOtlp(turn: TurnTelemetry, options: { captureContent: boole
         ...attr("gen_ai.operation.name", "execute_tool"),
         ...attr("gen_ai.tool.name", call.tool),
         ...attr("nexo.timing", "approximate"),
+        ...(retrieval
+          ? [
+              ...attr("nexo.retrieval.mode", retrieval.mode),
+              ...attr("nexo.retrieval.verdict", retrieval.verdict),
+              ...attr("nexo.retrieval.embedding_model", retrieval.embeddingModel),
+              ...attr("nexo.retrieval.judge_model", retrieval.judgeModel),
+              ...attr("nexo.retrieval.candidates", retrieval.candidates.length),
+              ...attr("nexo.retrieval.chosen", retrieval.chosen.join(",") || null),
+              ...attr("nexo.retrieval.top_similarity", retrieval.candidates[0]?.similarity),
+              ...attr("nexo.retrieval.latency_ms", retrieval.latencyMs),
+              ...attr("nexo.retrieval.degraded", retrieval.degraded.join("; ") || null),
+            ]
+          : []),
         ...(content ? [...attr("gen_ai.tool.call.arguments", json(call.input)), ...attr("gen_ai.tool.call.result", json(call.output))] : []),
       ],
     };

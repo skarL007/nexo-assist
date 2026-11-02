@@ -1,0 +1,45 @@
+# Alertas ligados aos critérios de docs/pesquisa/BASE-DE-CONHECIMENTO.md (seção 4).
+groups:
+  - name: nexo-assist
+    rules:
+      - alert: TurnoLentoP95
+        expr: histogram_quantile(0.95, sum by (le) (rate(nexo_agent_turn_duration_seconds_bucket[15m]))) > 20
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "p95 do turno do agent acima de 20 s"
+
+      - alert: TurnosComErro
+        expr: sum(rate(nexo_agent_turns_total{outcome="error"}[15m])) / clamp_min(sum(rate(nexo_agent_turns_total[15m])), 1e-9) > 0.10
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "Mais de 10% dos turnos com passo que falhou"
+
+      - alert: ModeloReservaEmUso
+        expr: sum(rate(nexo_agent_turns_total{outcome="fallback"}[15m])) > 0
+        for: 15m
+        labels: { severity: info }
+        annotations:
+          summary: "O modelo principal está falhando e o reserva responde"
+
+      - alert: BuscaDegradada
+        expr: sum(rate(nexo_retrieval_degraded_total[15m])) / clamp_min(sum(rate(nexo_retrieval_total[15m])), 1e-9) > 0.20
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "Mais de 20% das buscas sem embeddings ou sem avaliador"
+
+      - alert: BuscaP95AcimaDoPortao
+        expr: histogram_quantile(0.95, sum by (le) (rate(nexo_retrieval_duration_seconds_bucket[30m]))) > 2.5
+        for: 15m
+        labels: { severity: warning }
+        annotations:
+          summary: "p95 da busca acima do portão de 2,5 s (critério 4.2)"
+
+      - alert: AppForaDoAr
+        expr: up{job="nexo-assist"} == 0
+        for: 5m
+        labels: { severity: critical }
+        annotations:
+          summary: "O Prometheus não consegue ler /api/metrics"

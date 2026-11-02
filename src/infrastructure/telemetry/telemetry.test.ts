@@ -64,6 +64,49 @@ describe("turno → spans OTLP (convenções GenAI)", () => {
   });
 });
 
+describe("correlação com o console do analista", () => {
+  const withRetrieval: TurnTelemetry = {
+    ...turn,
+    trace: {
+      ...turn.trace,
+      traceId: "0af7651916cd43dd8448eb211c80319c",
+      retrievals: [
+        {
+          query: "vpn caiu",
+          mode: "hybrid",
+          embeddingModel: "google/gemini-embedding-2",
+          judgeModel: "google/gemini-3.5-flash-lite",
+          verdict: "applies",
+          candidates: [{ id: "kb-vpn-809", title: "VPN com erro 809", similarity: 0.71, terms: ["vpn"] }],
+          chosen: ["kb-vpn-809"],
+          latencyMs: 1400,
+          degraded: ["embeddings x pausado pelo disjuntor"],
+        },
+      ],
+    },
+  };
+
+  it("o trace do turno manda no id: o analista copia do console e acha os spans no coletor", () => {
+    const spans = turnToOtlp(withRetrieval, { captureContent: false, randomHex }).resourceSpans[0].scopeSpans[0].spans;
+    expect(new Set(spans.map((s) => s.traceId))).toEqual(new Set(["0af7651916cd43dd8448eb211c80319c"]));
+  });
+
+  it("o span da busca leva o raio-X (modo, veredito, escolhido, degradação), mas não a pergunta sem captura", () => {
+    const [, search] = turnToOtlp(withRetrieval, { captureContent: false, randomHex }).resourceSpans[0].scopeSpans[0].spans;
+    expect(attrs(search)).toMatchObject({
+      "nexo.retrieval.mode": "hybrid",
+      "nexo.retrieval.verdict": "applies",
+      "nexo.retrieval.embedding_model": "google/gemini-embedding-2",
+      "nexo.retrieval.judge_model": "google/gemini-3.5-flash-lite",
+      "nexo.retrieval.candidates": "1",
+      "nexo.retrieval.chosen": "kb-vpn-809",
+      "nexo.retrieval.top_similarity": 0.71,
+      "nexo.retrieval.degraded": "embeddings x pausado pelo disjuntor",
+    });
+    expect(JSON.stringify(search)).not.toContain("vpn caiu");
+  });
+});
+
 describe("configuração da telemetria", () => {
   it("desligada sem nenhuma variável", () => {
     expect(telemetryConfig({})).toBeNull();

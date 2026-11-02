@@ -46,6 +46,47 @@ Saída do coletor local no turno real (Gemini 3.5 Flash, cenário "Consulta sem 
 
 **Com Langfuse de verdade:** basta definir `LANGFUSE_PUBLIC_KEY` e `LANGFUSE_SECRET_KEY` na Vercel. O formato enviado é o mesmo que o teste recebe. O que não testei é a interpretação do lado do Langfuse, como a tela de sessão e o cálculo de custo a partir de `gen_ai.usage.*`.
 
+## Métricas Prometheus e telemetria no console (02/11/2026)
+
+**Uma fonte só:** o trace de cada turno (o que o analista vê em "por quê?") alimenta três destinos ao mesmo tempo, num `CompositeTelemetry` em que um destino que falha não segura os outros:
+
+1. **O console do analista:** id do trace, tempo de cada ferramenta e raio-X da busca (veja a spec 03).
+2. **OpenTelemetry:** o span raiz usa o mesmo `traceId` do console, e o span `execute_tool searchHelpCenter` leva `nexo.retrieval.*` (modo, veredito, modelos, candidatos, escolhido, maior cosseno, latência, degradação). A pergunta só sai com a captura de conteúdo ligada.
+3. **Prometheus:** `GET /api/metrics`, protegido por `METRICS_TOKEN` (Bearer, comparação em tempo constante; sem o token, 404). Fica fora do portão do link de acesso, porque tem autenticação própria.
+
+| Série | Tipo | Rótulos |
+|---|---|---|
+| `nexo_agent_turns_total` | contador | model, intent, outcome (ok, error, fallback) |
+| `nexo_agent_turn_duration_seconds` | histograma | model |
+| `nexo_llm_tokens_total` | contador | model, direction |
+| `nexo_agent_confidence` | histograma | — |
+| `nexo_tool_calls_total` / `nexo_tool_duration_seconds` | contador / histograma | tool |
+| `nexo_guardrails_total` | contador | — |
+| `nexo_retrieval_total` | contador | mode, verdict |
+| `nexo_retrieval_duration_seconds` / `nexo_retrieval_top_similarity` | histogramas | — |
+| `nexo_retrieval_degraded_total` | contador | component (embeddings, avaliador) |
+| `nexo_process_*`, `nexo_nodejs_*` | padrão do prom-client | — |
+
+**Sem dado pessoal e com cardinalidade baixa:** nenhum texto, pessoa, conversa ou artigo vira rótulo. O teste confere que "VPN caiu", o id da pessoa, o da conversa e o do artigo não aparecem no texto das métricas.
+
+**Onde faz sentido:** no container (Komodo), o processo é longo e o Prometheus soma. Na Vercel, cada função tem a sua memória; lá o caminho é o OTLP.
+
+**Stack pronta** em [`observability/`](../../observability/docker-compose.yml): Prometheus v3.5 (coleta a cada 15 s, 30 dias), 6 alertas ligados aos portões da seção 4 (turno p95 > 20 s, mais de 10% de turnos com erro, modelo reserva em uso, mais de 20% de buscas degradadas, busca p95 > 2,5 s, app fora do ar), Grafana 12.1 com o painel "Nexo Assist · agent e busca" (12 painéis) provisionado e Jaeger 2.9 recebendo OTLP na 4318.
+
+### Provas
+
+| O quê | Como | Resultado |
+|---|---|---|
+| Trace vira métricas certas | `prometheus.test.ts` com um turno completo | contadores, histogramas e rótulos conferidos linha a linha |
+| Resultado do turno | mesmo teste | passo que falhou conta `error`; modelo reserva conta `fallback` |
+| Destino que falha | mesmo teste | o coletor fora do ar não impede o Prometheus |
+| Painel e alertas citam séries que existem | mesmo teste lê `alerts.yml` e o JSON do painel | todo `nexo_*` citado existe no registro, com `_bucket`/`_sum` só em histograma |
+| Acesso | `prometheus.test.ts` e `e2e/metrics.spec.ts` no build de produção | sem token ou com outro: 401; com o token: 200, `text/plain`, séries do agent e do processo |
+| Console | `e2e/telemetry.spec.ts` | id, tempos e raio-X visíveis na conversa do Bruno |
+| Mesmo id no coletor | `telemetry.test.ts` | todos os spans usam o `traceId` do turno |
+
+**O que não foi testado aqui:** a stack Docker não subiu nesta máquina, porque o Docker não está instalado. Os YAML foram validados com um parser e os nomes de série pelo teste acima, mas a sintaxe PromQL e o provisionamento do Grafana só se provam ao subir a stack na VPS.
+
 ## SSO com OpenID Connect
 
 **O que faz:** com `OIDC_ISSUER`, `OIDC_CLIENT_ID` e `OIDC_CLIENT_SECRET` definidos, o login ganha "Entrar com {OIDC_LABEL}". O resto continua igual: e-mail e senha seguem funcionando.

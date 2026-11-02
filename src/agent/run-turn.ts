@@ -7,6 +7,7 @@
  *   3. roda o agent com as últimas mensagens; o 1º passo é sempre recordUnderstanding
  *   4. salva a resposta com o trace (decisão, passos, tools, tokens, tempo)
  */
+import { randomBytes } from "node:crypto";
 import { RequestContext } from "@mastra/core/request-context";
 import type { ChatStreamEvent } from "@/contracts/chat";
 import { reserveModelTurn } from "@/application/model-budget";
@@ -109,6 +110,8 @@ async function* replyWithAgent(turn: TurnContext, abortSignal?: AbortSignal): As
   }
 
   const trace: TurnTrace = {
+    traceId: randomBytes(16).toString("hex"),
+    ...(recorder.retrievals.length ? { retrievals: recorder.retrievals } : {}),
     decision: recorder.decision,
     steps: recorder.steps,
     toolCalls: run.toolCalls,

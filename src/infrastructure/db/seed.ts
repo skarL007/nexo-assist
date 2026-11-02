@@ -22,6 +22,22 @@ interface SeedMessage {
 
 /** Turno do agent em que a busca na central não achou nada (vira "Lacunas da central" nos indicadores). */
 const searchMiss = (query: string): TurnTrace => ({
+  retrievals: [
+    {
+      query,
+      mode: "hybrid",
+      embeddingModel: "google/gemini-embedding-2",
+      judgeModel: "google/gemini-3.5-flash-lite",
+      verdict: "none",
+      candidates: [
+        { id: "kb-tela-sem-imagem", title: "Tela preta ou sem imagem", similarity: 0.58, terms: ["sem sinal"] },
+        { id: "kb-pc-nao-liga", title: "Computador não liga", similarity: 0.54, terms: ["não liga"] },
+      ],
+      chosen: [],
+      latencyMs: 1380,
+      degraded: [],
+    },
+  ],
   decision: { intent: "new_ticket", understanding: "Projetor da sala de reunião sem funcionar", confidence: 0.82, reasoning: "" },
   steps: [{ label: "buscou na central de ajuda", detail: `Nada encontrado para "${query}"`, ok: true }],
   toolCalls: [{ tool: "searchHelpCenter", input: { query }, output: { articles: [] }, durationMs: 310 }],
@@ -151,7 +167,51 @@ export async function seedDemoData(db: Database) {
         minutesAgo: 50,
         cards: [{ kind: "handoff", reason: "low_confidence", summary: BRUNO_SUMMARY }],
       },
-      { role: "agent", text: "Vou chamar um analista para te ajudar com isso, ele já recebe o resumo da conversa.", minutesAgo: 50 },
+      {
+        role: "agent",
+        text: "Vou chamar um analista para te ajudar com isso, ele já recebe o resumo da conversa.",
+        minutesAgo: 50,
+        // Turno completo, com a telemetria que o console mostra (id do trace, tempo das tools e raio-X da busca).
+        trace: {
+          traceId: "4bf92f3577b34da6a3ce929d0e0e4736",
+          retrievals: [
+            {
+              query: "instalar plugin de IA no Figma",
+              mode: "hybrid",
+              embeddingModel: "google/gemini-embedding-2",
+              judgeModel: "google/gemini-3.5-flash-lite",
+              verdict: "maybe",
+              candidates: [
+                { id: "kb-software", title: "Instalar ou solicitar software", similarity: 0.66, terms: ["instalar"] },
+                { id: "kb-equipamento", title: "Pedir equipamento", similarity: 0.49, terms: [] },
+                { id: "kb-sap-bloqueio", title: "Senha do SAP bloqueada", similarity: 0.41, terms: ["acesso"] },
+              ],
+              chosen: ["kb-software"],
+              latencyMs: 1460,
+              degraded: [],
+            },
+          ],
+          decision: {
+            intent: "question",
+            understanding: "Bruno quer saber se pode instalar um plugin de IA no Figma com a licença do time",
+            confidence: 0.41,
+            reasoning: "O artigo de software não diz se plugin de IA com acesso aos arquivos precisa de aprovação.",
+          },
+          steps: [
+            { label: "buscou na central de ajuda", detail: '"Instalar ou solicitar software" (termos: instalar; sentido 0,66) · o avaliador disse talvez', ok: true },
+            { label: "transferiu para um analista", detail: "Agent sem segurança para decidir", ok: true },
+          ],
+          toolCalls: [
+            { tool: "recordUnderstanding", input: { intent: "question" }, output: { ok: true }, durationMs: 640 },
+            { tool: "searchHelpCenter", input: { query: "instalar plugin de IA no Figma" }, output: { articles: 1 }, durationMs: 1480 },
+            { tool: "transferToAnalyst", input: { reason: "low_confidence" }, output: { ok: true }, durationMs: 95 },
+          ],
+          guardrails: ["Confiança abaixo de 50% duas vezes: o código transferiu para um analista."],
+          model: "openrouter/openai/gpt-6-luna",
+          usage: { inputTokens: 6120, outputTokens: 210 },
+          latencyMs: 5900,
+        },
+      },
     ],
   );
 

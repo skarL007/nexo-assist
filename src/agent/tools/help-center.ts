@@ -16,7 +16,8 @@ export const searchHelpCenter = createTool({
   }),
   execute: async ({ query }, context) => {
     const turn = turnFrom(context);
-    const { matches, mode, verdict } = await turn.services.knowledge.search(query);
+    const { matches, mode, verdict, trace } = await turn.services.knowledge.search(query);
+    turn.recorder.retrievals.push(trace);
 
     // O trace mostra por que cada artigo veio: termos em comum e/ou proximidade de sentido.
     const why = (m: (typeof matches)[number]) =>

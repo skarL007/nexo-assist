@@ -229,3 +229,54 @@ describe("avaliador de relevância depois da busca", () => {
     expect(judge.seen).toHaveLength(1);
   });
 });
+
+describe("raio-X da busca para o analista (trace)", () => {
+  const judgeOf = (verdict: RelevanceVerdict | Error): RelevanceJudge => ({
+    model: "juiz",
+    judge: async () => {
+      if (verdict instanceof Error) throw verdict;
+      return verdict;
+    },
+  });
+
+  it("híbrida com avaliador: candidatos em ordem com similaridade, veredito, escolhido e modelos", async () => {
+    const service = new KnowledgeService(new FakeArticles([vpn, wifi]), [new FakeEmbedder()], () => {}, new ProviderBreaker(), judgeOf({ applies: "kb-vpn", maybe: null }));
+    const { trace } = await service.search("vpn de casa");
+    expect(trace).toMatchObject({
+      query: "vpn de casa",
+      mode: "hybrid",
+      embeddingModel: "fake",
+      judgeModel: "juiz",
+      verdict: "applies",
+      chosen: ["kb-vpn"],
+      degraded: [],
+    });
+    expect(trace.candidates.map((c) => c.id)).toEqual(["kb-vpn", "kb-wifi"]);
+    expect(trace.candidates[0]).toMatchObject({ title: "VPN com erro 809", terms: ["vpn"] });
+    expect(trace.candidates[0].similarity).toBeCloseTo(1, 5);
+    expect(trace.latencyMs).toBeGreaterThanOrEqual(0);
+  });
+
+  it("toda degradação fica registrada com o motivo: provedor de embeddings e avaliador fora do ar", async () => {
+    const service = new KnowledgeService(
+      new FakeArticles([vpn, wifi]),
+      [new FakeEmbedder("emb-1", new EmbeddingHttpError(402))],
+      () => {},
+      new ProviderBreaker(),
+      judgeOf(new EmbeddingHttpError(503)),
+    );
+    const { trace } = await service.search("vpn 809");
+    expect(trace).toMatchObject({ mode: "keyword", embeddingModel: null, verdict: null, judgeModel: null });
+    expect(trace.degraded).toEqual(["embeddings emb-1 fora do ar (402)", "avaliador juiz fora do ar (503): valeu a regra de margem"]);
+  });
+
+  it("provedor já desligado pelo disjuntor também aparece, para o analista saber por que a busca piorou", async () => {
+    let now = 0;
+    const breaker = new ProviderBreaker(() => now);
+    const service = new KnowledgeService(new FakeArticles([vpn, wifi]), [new FakeEmbedder("emb-1", new EmbeddingHttpError(402))], () => {}, breaker);
+    await service.search("vpn");
+    now += 1000;
+    const { trace } = await service.search("vpn");
+    expect(trace.degraded).toEqual(["embeddings emb-1 pausado pelo disjuntor"]);
+  });
+});

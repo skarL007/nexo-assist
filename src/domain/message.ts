@@ -113,7 +113,32 @@ export interface ToolCallLog {
   durationMs: number;
 }
 
+/**
+ * Raio-X de uma busca na central, para o analista ver por que veio (ou não veio) um artigo:
+ * candidatos em ordem, o que o avaliador decidiu e qualquer degradação (provedor fora do ar).
+ */
+export interface RetrievalTrace {
+  query: string;
+  mode: "hybrid" | "keyword";
+  /** Modelo de embeddings que respondeu; null na busca só por palavras. */
+  embeddingModel: string | null;
+  /** Avaliador de relevância usado; null quando não entrou (sem chave, fora do ar ou sem candidatos). */
+  judgeModel: string | null;
+  verdict: "applies" | "maybe" | "none" | null;
+  /** Até 5 candidatos, na ordem da busca, com o que pesou: sentido (cosseno) e termos em comum. */
+  candidates: { id: string; title: string; similarity: number | null; terms: string[] }[];
+  /** Ids devolvidos ao agent. */
+  chosen: string[];
+  latencyMs: number;
+  /** Motivos de degradação, em português (ex.: "embeddings X fora do ar (402)"). Vazio = busca completa. */
+  degraded: string[];
+}
+
 export interface TurnTrace {
+  /** Id do trace OpenTelemetry deste turno (32 hex): o mesmo do span no coletor. Traces antigos não têm. */
+  traceId?: string;
+  /** Uma entrada por busca na central feita no turno. Traces antigos não têm. */
+  retrievals?: RetrievalTrace[];
   decision: Decision | null;
   steps: TraceStep[];
   toolCalls: ToolCallLog[];

@@ -36,6 +36,7 @@ export default defineConfig({
       PUBLIC_DEMO: "0",
       // Com SSO configurado o login por e-mail desliga; aqui os dois ficam ligados para testar ambos.
       DEMO_LOGIN: "1",
+      METRICS_TOKEN: "e2e-metrics-token-e2e-metrics",
       OIDC_ISSUER: "http://localhost:3200",
       OIDC_CLIENT_ID: "nexo-e2e",
       OIDC_CLIENT_SECRET: "e2e-client-secret",

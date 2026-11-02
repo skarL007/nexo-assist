@@ -7,7 +7,7 @@
  */
 import type { Employee } from "@/domain/employee";
 import { OFFER_ANALYST_OPTION } from "@/domain/frustration";
-import type { Card, Decision, TraceStep } from "@/domain/message";
+import type { Card, Decision, RetrievalTrace, TraceStep } from "@/domain/message";
 import type { Services } from "@/infrastructure/container";
 
 export type RecorderEvent = { type: "step"; step: TraceStep } | { type: "card"; card: Card };
@@ -23,6 +23,8 @@ export class TurnRecorder {
   readonly steps: TraceStep[] = [];
   readonly cards: Card[] = [];
   readonly guardrails: string[] = [];
+  /** Raio-X de cada busca na central do turno (console do analista, spans e métricas). */
+  readonly retrievals: RetrievalTrace[] = [];
   private pending: RecorderEvent[] = [];
 
   /** Registra o entendimento; devolve false (e conta) se o turno já tinha um. Sem await: chamadas paralelas não passam juntas. */

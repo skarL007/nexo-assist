@@ -46,7 +46,7 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Tudo, menos arquivos estáticos e a própria página de acesso restrito.
-  // Ancorado: "/acessoX" ou "/favicon.icoX" continuam passando pela porta.
-  matcher: ["/((?!_next/static/|_next/image|favicon\.ico$|acesso(?:/|$)).*)"],
+  // Tudo, menos arquivos estáticos, a própria página de acesso restrito e /api/metrics (que tem o
+  // próprio Bearer do Prometheus). Ancorado: "/acessoX" ou "/api/metricsX" continuam passando pela porta.
+  matcher: ["/((?!_next/static/|_next/image|favicon\.ico$|acesso(?:/|$)|api/metrics$).*)"],
 };

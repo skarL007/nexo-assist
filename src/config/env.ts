@@ -43,6 +43,8 @@ const schema = z.object({
   /** Qualquer coletor OTLP/HTTP (variáveis padrão do OpenTelemetry). */
   OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: z.url().optional(),
   OTEL_EXPORTER_OTLP_TRACES_HEADERS: z.string().optional(),
+  /** Token do Prometheus para ler /api/metrics (Authorization: Bearer). Sem ele, a rota responde 404. */
+  METRICS_TOKEN: z.string().min(16).optional(),
   /** "true" manda também o texto da conversa e os argumentos das tools (dado pessoal: desligado por padrão). */
   /**
    * Login de demonstração: só o e-mail de um funcionário do seed, sem conferir senha (regra do desafio).

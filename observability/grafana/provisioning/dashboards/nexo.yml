@@ -1,0 +1,7 @@
+apiVersion: 1
+providers:
+  - name: nexo-assist
+    folder: Nexo Assist
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards

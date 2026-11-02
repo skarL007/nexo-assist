@@ -30,6 +30,7 @@ import { DrizzleSuggestionRepository } from "./repositories/suggestion-repositor
 import { DrizzleMessageRepository } from "./repositories/message-repository";
 import { DrizzleTicketRepository } from "./repositories/ticket-repository";
 import { OtlpTraceExporter, telemetryConfig } from "./telemetry/otlp-exporter";
+import { CompositeTelemetry, processMetrics } from "./telemetry/prometheus";
 
 export interface ServiceOptions {
   /** Espaço derivado da identidade autenticada da demonstração. */
@@ -75,8 +76,9 @@ export function createServices(options: ServiceOptions = {}) {
   const replySuggestions = new ReplySuggestionService(conversations, budget, writer, suggestionRepository, config.TOTAL_AGENT_TURN_LIMIT);
 
   const changes = new DrizzleChangeFeed(database, options.demoScope);
+  // Prometheus sempre (memória do processo, lida em /api/metrics); OTLP/Langfuse só configurado.
   const telemetrySettings = telemetryConfig(config);
-  const telemetry = telemetrySettings ? new OtlpTraceExporter(telemetrySettings) : null;
+  const telemetry = new CompositeTelemetry([processMetrics(), ...(telemetrySettings ? [new OtlpTraceExporter(telemetrySettings)] : [])]);
 
   return { employees, articles, knowledge, messages, budget, tickets, conversations, drafts, feedback, insights, replySuggestions, changes, telemetry };
 }

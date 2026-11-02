@@ -1,5 +1,5 @@
-import { Check, ShieldCheck, X } from "lucide-react";
-import { INTENT_LABEL, type TurnTrace } from "@/domain/message";
+import { AlertTriangle, Check, ShieldCheck, X } from "lucide-react";
+import { INTENT_LABEL, type RetrievalTrace, type TurnTrace } from "@/domain/message";
 import { percent } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -76,7 +76,10 @@ export function DecisionDetails({ trace }: { trace: TurnTrace }) {
           </span>
         )}
         <span>Tempo: {(trace.latencyMs / 1000).toFixed(1)}s</span>
+        {trace.fallbackFrom && <span className="text-warning">Reserva: {trace.fallbackFrom} falhou</span>}
       </footer>
+
+      <Telemetry trace={trace} />
 
       {trace.toolCalls.length > 0 && (
         <details className="text-xs">
@@ -96,5 +99,93 @@ function ConfidenceBar({ value }: { value: number }) {
     <span className="h-1.5 w-28 overflow-hidden rounded-full bg-border" aria-hidden>
       <span className={cn("block h-full rounded-full", tone)} style={{ width: percent(value) }} />
     </span>
+  );
+}
+
+const VERDICT_LABEL: Record<NonNullable<RetrievalTrace["verdict"]>, string> = { applies: "se aplica", maybe: "talvez", none: "nenhum se aplica" };
+const decimal = (value: number) => value.toFixed(2).replace(".", ",");
+
+/**
+ * Telemetria do turno: o id para achar os spans no coletor (OpenTelemetry/Langfuse), o tempo de
+ * cada ferramenta e o raio-X de cada busca na central. Traces antigos não têm id nem raio-X.
+ */
+function Telemetry({ trace }: { trace: TurnTrace }) {
+  const slowest = Math.max(1, ...trace.toolCalls.map((c) => c.durationMs));
+  if (!trace.traceId && !trace.toolCalls.length && !trace.retrievals?.length) return null;
+
+  return (
+    <section className="space-y-3" data-testid="turn-telemetry">
+      <h5 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Telemetria</h5>
+      {trace.traceId && (
+        <p className="text-xs text-muted-foreground">
+          Trace <code className="rounded bg-muted px-1 font-mono text-foreground select-all">{trace.traceId}</code>
+        </p>
+      )}
+
+      {trace.toolCalls.length > 0 && (
+        <ol className="space-y-1 text-xs" aria-label="Tempo de cada ferramenta">
+          {trace.toolCalls.map((call, index) => (
+            <li key={index} className="grid grid-cols-[minmax(0,10rem)_1fr_3.5rem] items-center gap-2">
+              <span className="truncate font-mono">{call.tool}</span>
+              <span className="h-1.5 overflow-hidden rounded-full bg-border" aria-hidden>
+                <span className="block h-full rounded-full bg-primary" style={{ width: `${Math.max(2, (call.durationMs / slowest) * 100)}%` }} />
+              </span>
+              <span className="text-right tabular-nums text-muted-foreground">{call.durationMs} ms</span>
+            </li>
+          ))}
+        </ol>
+      )}
+
+      {trace.retrievals?.map((retrieval, index) => <RetrievalDetails key={index} retrieval={retrieval} />)}
+    </section>
+  );
+}
+
+function RetrievalDetails({ retrieval }: { retrieval: RetrievalTrace }) {
+  return (
+    <div className="space-y-2 rounded-lg border bg-card p-3 text-xs" data-testid="retrieval-details">
+      <p>
+        <span className="font-medium">Busca na central</span> <span className="text-muted-foreground">“{retrieval.query}”</span>
+      </p>
+      <p className="flex flex-wrap gap-x-3 gap-y-1 text-muted-foreground">
+        <span>{retrieval.mode === "hybrid" ? `Híbrida · ${retrieval.embeddingModel}` : "Só palavras"}</span>
+        <span>{retrieval.judgeModel ? `Avaliador ${retrieval.judgeModel}: ${retrieval.verdict ? VERDICT_LABEL[retrieval.verdict] : "—"}` : "Sem avaliador (regra de margem)"}</span>
+        <span className="tabular-nums">{retrieval.latencyMs} ms</span>
+      </p>
+      {retrieval.degraded.map((reason) => (
+        <p key={reason} className="flex gap-1.5 text-warning">
+          <AlertTriangle className="mt-px size-3.5 shrink-0" />
+          {reason}
+        </p>
+      ))}
+      {retrieval.candidates.length > 0 ? (
+        <table className="w-full text-left">
+          <thead className="text-muted-foreground">
+            <tr>
+              <th className="py-1 font-normal">Candidato</th>
+              <th className="py-1 text-right font-normal">Sentido</th>
+              <th className="py-1 pl-3 font-normal">Termos</th>
+            </tr>
+          </thead>
+          <tbody>
+            {retrieval.candidates.map((candidate) => {
+              const chosen = retrieval.chosen.includes(candidate.id);
+              return (
+                <tr key={candidate.id} className={cn("border-t", chosen && "font-medium")}>
+                  <td className="py-1">
+                    {chosen && <Check className="mr-1 inline size-3.5 text-success" aria-label="devolvido ao agent" />}
+                    {candidate.title}
+                  </td>
+                  <td className="py-1 text-right tabular-nums">{candidate.similarity === null ? "—" : decimal(candidate.similarity)}</td>
+                  <td className="py-1 pl-3 text-muted-foreground">{candidate.terms.join(", ") || "—"}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      ) : (
+        <p className="text-muted-foreground">Nenhum candidato.</p>
+      )}
+    </div>
   );
 }
