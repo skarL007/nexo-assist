@@ -30,6 +30,10 @@ mensagem → limites → salva → (conversa com analista? para aqui)
 | `offerQuickReplies` | Botões de resposta rápida | — |
 | `transferToAnalyst` | Transfere com motivo e resumo | "transferiu para um analista" |
 
+### Analista que assume durante o turno
+
+O estado da conversa é lido no início do turno, e um analista pode assumir (ou encerrar) enquanto o modelo responde. Antes de gravar a resposta, o turno lê o estado de novo: se a conversa não está mais com o agent, e não foi o próprio turno que transferiu, a resposta é descartada, o rascunho do turno é cancelado e fica no histórico a mensagem de sistema "Resposta do Nexo Assist descartada: um analista assumiu a conversa durante o turno". O evento `done` troca o texto do stream pela conversa gravada. Aceite: `agentReplyStillValid` em `src/domain/conversation.test.ts`. Auditoria de 02/11, P1.
+
 ## Trace (`TurnTrace`)
 
 ```ts

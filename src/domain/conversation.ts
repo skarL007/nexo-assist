@@ -92,3 +92,13 @@ export function nextStatus(current: ConversationStatus, action: ConversationActi
 }
 
 export const agentCanReply = (status: ConversationStatus) => status === "with_agent";
+
+/**
+ * Revalidação no fim do turno: o estado foi lido no início, e um analista pode ter assumido (ou
+ * encerrado) durante a inferência. A resposta só sai se a conversa continua com o agent, ou se
+ * foi o próprio turno que transferiu (aí ela é o aviso "um analista vai continuar").
+ */
+export function agentReplyStillValid(statusNow: ConversationStatus, handedOffThisTurn: boolean): boolean {
+  if (handedOffThisTurn) return statusNow !== "closed";
+  return agentCanReply(statusNow);
+}

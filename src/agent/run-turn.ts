@@ -13,7 +13,7 @@ import { reserveModelTurn } from "@/application/model-budget";
 import { env } from "@/config/env";
 import { isExplicitConfirmation } from "@/domain/confirmation";
 import { demoScopeOf } from "@/domain/demo";
-import { agentCanReply, EMPLOYEE_MESSAGES_PER_DAY, EMPLOYEE_MESSAGES_PER_HOUR } from "@/domain/conversation";
+import { agentCanReply, agentReplyStillValid, EMPLOYEE_MESSAGES_PER_DAY, EMPLOYEE_MESSAGES_PER_HOUR } from "@/domain/conversation";
 import type { Employee } from "@/domain/employee";
 import { DomainError } from "@/domain/errors";
 import type { ToolCallLog, TurnTrace } from "@/domain/message";
@@ -118,6 +118,16 @@ async function* replyWithAgent(turn: TurnContext, abortSignal?: AbortSignal): As
     usage: run.usage,
     latencyMs: Date.now() - startedAt.getTime(),
   };
+
+  // Um analista pode ter assumido durante a inferência: resposta vencida não é publicada, e o
+  // rascunho do turno nunca vira botão de confirmar. O evento "done" troca o texto do stream pela
+  // conversa gravada, então o funcionário não fica com a resposta descartada na tela.
+  const current = await services.conversations.get(conversationId);
+  if (!agentReplyStillValid(current.status, recorder.handedOff)) {
+    await services.drafts.cancelPending(conversationId, startedAt);
+    await services.messages.add({ conversationId, role: "system", text: "Resposta do Nexo Assist descartada: um analista assumiu a conversa durante o turno" });
+    return;
+  }
 
   const reply = await services.messages.add({
     conversationId,
