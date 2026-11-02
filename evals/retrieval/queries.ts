@@ -7,6 +7,8 @@ export interface RetrievalQuery {
   query: string;
   /** Artigo certo, ou null quando nenhum artigo da central responde. */
   expected: string | null;
+  /** Estrato do teste final (critério 4.1 de docs/pesquisa/BASE-DE-CONHECIMENTO.md). */
+  stratum?: "defeito" | "pedido" | "fora" | "termo" | "coloquial" | "digitacao" | "ingles";
 }
 
 export const retrievalQueries: RetrievalQuery[] = [
@@ -117,4 +119,63 @@ export const confusionQueries: RetrievalQuery[] = [
   { query: "a tela do notebook está rachada", expected: null },
   { query: "o computador está muito lento", expected: null },
   { query: "o monitor está com uma mancha", expected: null },
+];
+
+/**
+ * Teste final cego (padrão ouro v1): escrito em 02/11/2026, ANTES de qualquer medição com ele, e
+ * congelado em gold.ts. Ninguém olha os erros deste conjunto para ajustar limiar, prompt ou pesos:
+ * ele só mede, uma vez por versão. Os outros conjuntos tiveram os erros olhados durante o
+ * desenvolvimento e passaram a ser de calibração e validação.
+ *
+ * Estratos: defeito com artigo, pedido, fora da central, termo exato, coloquial, erro de digitação
+ * e mistura com inglês. Em cada estrato há perguntas sem artigo certo.
+ */
+export const finalTestQueries: RetrievalQuery[] = [
+  // defeito com artigo
+  { query: "a VPN fica tentando conectar e dá erro", expected: "kb-vpn-809", stratum: "defeito" },
+  { query: "não aparece nada na tela quando ligo o computador, mas a luz acende", expected: "kb-tela-sem-imagem", stratum: "defeito" },
+  { query: "ninguém me ouve na chamada do Teams", expected: "kb-audio-reuniao", stratum: "defeito" },
+  { query: "a impressão não sai, fica parada como pendente", expected: "kb-impressora", stratum: "defeito" },
+  { query: "apertei o botão de ligar e o PC não dá sinal de vida", expected: "kb-pc-nao-liga", stratum: "defeito" },
+  { query: "o cursor travou e o mouse não mexe mais", expected: "kb-teclado-mouse", stratum: "defeito" },
+  // pedido (não é conserto)
+  { query: "preciso de um monitor maior para planilhas", expected: "kb-equipamento", stratum: "pedido" },
+  { query: "como solicito o Power BI no meu computador", expected: "kb-software", stratum: "pedido" },
+  { query: "quero instalar o Zoom", expected: "kb-software", stratum: "pedido" },
+  { query: "dá para pedir um mouse vertical?", expected: "kb-equipamento", stratum: "pedido" },
+  { query: "quero um crachá novo, perdi o meu", expected: null, stratum: "pedido" },
+  { query: "como peço férias no sistema de RH", expected: null, stratum: "pedido" },
+  // fora da central
+  { query: "o elevador do prédio está parado no térreo", expected: null, stratum: "fora" },
+  { query: "meu holerite veio com desconto errado", expected: null, stratum: "fora" },
+  { query: "o celular da empresa caiu e quebrou a tela", expected: null, stratum: "fora" },
+  { query: "o Excel fecha sozinho quando abro uma planilha grande", expected: null, stratum: "fora" },
+  { query: "recebi um e-mail estranho pedindo minha senha", expected: null, stratum: "fora" },
+  { query: "a webcam mostra a imagem de cabeça para baixo", expected: null, stratum: "fora" },
+  // termo exato
+  { query: "erro 809", expected: "kb-vpn-809", stratum: "termo" },
+  { query: "SAP bloqueado", expected: "kb-sap-bloqueio", stratum: "termo" },
+  { query: "cabo RJ45 solto", expected: "kb-rede-cabo", stratum: "termo" },
+  { query: "monitor sem sinal no HDMI", expected: "kb-tela-sem-imagem", stratum: "termo" },
+  { query: "erro 0x80070005 no Windows Update", expected: null, stratum: "termo" },
+  // coloquial
+  { query: "o note morreu, não liga de jeito nenhum", expected: "kb-pc-nao-liga", stratum: "coloquial" },
+  { query: "a net sem fio do escritório tá caindo toda hora", expected: "kb-wifi", stratum: "coloquial" },
+  { query: "esqueci a senha pra entrar no computador, socorro", expected: "kb-senha-rede", stratum: "coloquial" },
+  { query: "o suporte funciona no feriado?", expected: "kb-horario", stratum: "coloquial" },
+  { query: "o PC tá uma carroça", expected: null, stratum: "coloquial" },
+  // erro de digitação
+  { query: "impresora nao inprime", expected: "kb-impressora", stratum: "digitacao" },
+  { query: "nao consigo conectar na vpm de casa", expected: "kb-vpn-809", stratum: "digitacao" },
+  { query: "senha do sap bloquiada", expected: "kb-sap-bloqueio", stratum: "digitacao" },
+  { query: "o microfone nao funsiona na reuniao", expected: "kb-audio-reuniao", stratum: "digitacao" },
+  { query: "o teclado molhou e parou", expected: null, stratum: "digitacao" },
+  // mistura com inglês
+  { query: "meu e-mail não faz sync no smartphone", expected: "kb-email-celular", stratum: "ingles" },
+  { query: "o laptop não dá boot", expected: "kb-pc-nao-liga", stratum: "ingles" },
+  { query: "no audio na call", expected: "kb-audio-reuniao", stratum: "ingles" },
+  { query: "o wireless não conecta", expected: "kb-wifi", stratum: "ingles" },
+  { query: "preciso de reset da password do Windows", expected: "kb-senha-rede", stratum: "ingles" },
+  { query: "o dashboard do Power BI está sem dados", expected: null, stratum: "ingles" },
+  { query: "a dock station não carrega o notebook", expected: null, stratum: "ingles" },
 ];

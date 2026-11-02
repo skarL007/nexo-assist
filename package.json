@@ -25,7 +25,8 @@
     "eval:sugestao": "tsx --env-file-if-exists=.env evals/suggestion/run.ts",
     "verify": "npm run typecheck && npm run lint && npm test && npm run test:e2e && npm run test:e2e:demo",
     "eval:sim": "tsx --env-file-if-exists=.env evals/sim/run.ts",
-    "otel:local": "tsx scripts/otel-local.ts"
+    "otel:local": "tsx scripts/otel-local.ts",
+    "eval:ouro": "tsx --env-file-if-exists=.env evals/retrieval/gold-run.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",
