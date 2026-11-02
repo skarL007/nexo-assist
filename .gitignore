@@ -53,6 +53,7 @@ next-env.d.ts
 
 # banco do e2e
 e2e.db*
+docs-e2e.db*
 
 # vínculo local com o projeto da Vercel (CLI)
 .vercel

@@ -26,6 +26,7 @@
     "verify": "npm run typecheck && npm run lint && npm test && npm run test:e2e && npm run test:e2e:demo",
     "eval:sim": "tsx --env-file-if-exists=.env evals/sim/run.ts",
     "otel:local": "tsx scripts/otel-local.ts",
+    "docs:capturas": "playwright test -c playwright.docs.config.ts",
     "eval:ouro": "tsx --env-file-if-exists=.env evals/retrieval/gold-run.ts"
   },
   "dependencies": {
