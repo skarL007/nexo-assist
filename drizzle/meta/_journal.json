@@ -50,6 +50,13 @@
       "when": 1793314308585,
       "tag": "0006_article_checks",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1793636247686,
+      "tag": "0007_idempotencia",
+      "breakpoints": true
     }
   ]
 }

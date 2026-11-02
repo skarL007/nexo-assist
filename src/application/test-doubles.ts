@@ -1,4 +1,5 @@
 /** Implementações em memória das portas, usadas só nos testes. */
+import { DomainError } from "@/domain/errors";
 import { currentFrustration } from "@/domain/frustration";
 import type { Conversation } from "@/domain/conversation";
 import type { ChatMessage, DraftStatus, MessageRole } from "@/domain/message";
@@ -17,6 +18,8 @@ import type {
 export class InMemoryTicketRepository implements TicketRepository {
   readonly tickets = new Map<string, Ticket>();
   readonly comments: { ticketCode: string; text: string }[] = [];
+  private readonly keys = new Map<string, string>();
+  private readonly commentKeys = new Set<string>();
   private sequence = 30000;
 
   constructor(initial: Ticket[] = []) {
@@ -35,13 +38,24 @@ export class InMemoryTicketRepository implements TicketRepository {
   async nextCode(type: TicketType) {
     return `${type}-${++this.sequence}`;
   }
-  async insert(ticket: Ticket) {
+  /** Como o banco: código ou chave repetidos dão "conflict" (o UNIQUE). */
+  async insert(ticket: Ticket, idempotencyKey?: string) {
+    if (this.tickets.has(ticket.code) || (idempotencyKey && this.keys.has(idempotencyKey))) {
+      throw new DomainError("conflict", `O código ${ticket.code} acabou de ser usado.`);
+    }
     this.tickets.set(ticket.code, ticket);
+    if (idempotencyKey) this.keys.set(idempotencyKey, ticket.code);
+  }
+  async findByIdempotencyKey(key: string) {
+    const code = this.keys.get(key);
+    return code ? (this.tickets.get(code) ?? null) : null;
   }
   async update(ticket: Ticket) {
     this.tickets.set(ticket.code, ticket);
   }
-  async addComment(ticketCode: string, _author: string, text: string) {
+  async addComment(ticketCode: string, _author: string, text: string, _at?: Date, idempotencyKey?: string) {
+    if (idempotencyKey && this.commentKeys.has(idempotencyKey)) return;
+    if (idempotencyKey) this.commentKeys.add(idempotencyKey);
     this.comments.push({ ticketCode, text });
   }
 }

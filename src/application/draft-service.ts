@@ -205,7 +205,8 @@ export class DraftService {
     try {
       ticket = await this.commit(draft, employeeId);
     } catch (error) {
-      // Nada foi gravado: o rascunho volta a ficar pendente para tentar de novo.
+      // O rascunho volta a ficar pendente para tentar de novo. Se algo chegou a ser gravado, a chave
+      // da operação faz a nova confirmação reaproveitar o que existe em vez de duplicar.
       await this.drafts.setStatus(draft.id, "pending");
       throw error;
     }
@@ -216,13 +217,17 @@ export class DraftService {
     return { conversationId: draft.conversationId, draft: this.snapshot({ ...draft, status: "confirmed" }), ...escalation };
   }
 
-  /** Grava o chamado ou o comentário. Se falhar, nada ficou gravado. */
+  /**
+   * Grava o chamado ou o comentário. A chave é o rascunho: se o banco gravou e a resposta se perdeu,
+   * confirmar de novo devolve o mesmo chamado e não repete o comentário.
+   */
   private async commit(draft: Draft, employeeId: string): Promise<Ticket> {
+    const key = `draft:${draft.id}`;
     if (draft.kind === "update") {
       const fields = draft.fields as TicketUpdateFields;
-      return this.tickets.addComment(employeeId, fields.ticketCode, fields.comment, fields.reopen);
+      return this.tickets.addComment(employeeId, fields.ticketCode, fields.comment, fields.reopen, key);
     }
-    return this.tickets.create(employeeId, draft.fields as NewTicketFields);
+    return this.tickets.create(employeeId, draft.fields as NewTicketFields, key);
   }
 
   /**

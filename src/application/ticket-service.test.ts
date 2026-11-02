@@ -88,6 +88,17 @@ describe("sistema legado instável", () => {
     expect(retries).toEqual([1]);
   });
 
+  it("com a falha depois da escrita, a nova tentativa do comentário não duplica", async () => {
+    // Sorteios: findByCode passa, update passa, addComment grava e falha, a 2ª tentativa passa.
+    const draws = [1, 1, 0, 1];
+    const inner = new InMemoryTicketRepository([makeTicket({ status: "open" })]);
+    const flaky = new FlakyTicketRepository(inner, 0.5, () => draws.shift() ?? 1, true);
+    const service = new TicketService(flaky, { clock, retryDelayMs: 0 });
+
+    await service.addComment("ana", "INC-20311", "Continua lento.", false, "draft:1");
+    expect(inner.comments).toHaveLength(1);
+  });
+
   it("desiste depois de 3 tentativas", async () => {
     const flaky = new FlakyTicketRepository(new InMemoryTicketRepository(), 1);
     const service = new TicketService(flaky, { clock, retryDelayMs: 0 });

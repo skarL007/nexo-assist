@@ -288,6 +288,81 @@ describe("sistema de chamados instável depois de gravar (sem duplicidade)", () 
   });
 });
 
+describe("falha depois de gravar (a resposta do sistema de chamados se perde)", () => {
+  // Auditoria de 02/11 (P1): o banco grava, mas quem chamou recebe erro; a nova tentativa não pode duplicar.
+  const lostResponse = () => new DomainError("legacy_unavailable", "O sistema de chamados está indisponível no momento.");
+
+  /** A operação grava de verdade e só então falha, nas primeiras `times` chamadas. */
+  function writeThenFail<A extends unknown[]>(fn: (...args: A) => Promise<void>, times: number) {
+    let left = times;
+    return async (...args: A) => {
+      await fn(...args);
+      if (left-- > 0) throw lostResponse();
+    };
+  }
+
+  it("comentário: a nova tentativa automática não grava de novo", async () => {
+    const { ticketRepo, drafts, conversation } = await setup();
+    await ticketRepo.insert(makeTicket({ code: "INC-20311", status: "open" }));
+    ticketRepo.addComment = writeThenFail(ticketRepo.addComment.bind(ticketRepo), 1);
+    const draft = await drafts.proposeUpdate(conversation.id, "ana", { ticketCode: "INC-20311", comment: "Continua lento." });
+
+    await drafts.confirm(draft.id, "ana");
+    expect(ticketRepo.comments).toHaveLength(1);
+  });
+
+  it("comentário: esgotadas as tentativas, confirmar de novo não duplica", async () => {
+    const { ticketRepo, drafts, conversation } = await setup();
+    await ticketRepo.insert(makeTicket({ code: "INC-20311", status: "open" }));
+    ticketRepo.addComment = writeThenFail(ticketRepo.addComment.bind(ticketRepo), 3);
+    const draft = await drafts.proposeUpdate(conversation.id, "ana", { ticketCode: "INC-20311", comment: "Continua lento." });
+
+    await expect(drafts.confirm(draft.id, "ana")).rejects.toMatchObject({ code: "legacy_unavailable" });
+    await drafts.confirm(draft.id, "ana");
+    expect(ticketRepo.comments).toHaveLength(1);
+  });
+
+  it("chamado novo: a nova tentativa não abre um segundo chamado com outro número", async () => {
+    const { ticketRepo, drafts, conversation } = await setup();
+    ticketRepo.insert = writeThenFail(ticketRepo.insert.bind(ticketRepo), 1);
+    const draft = await drafts.proposeNewTicket(conversation.id, "ana", fields);
+
+    const { ticket } = await drafts.confirm(draft.id, "ana");
+    expect(ticketRepo.tickets.size).toBe(1);
+    expect(ticketRepo.tickets.has(ticket.code)).toBe(true);
+  });
+
+  it("chamado novo: várias respostas perdidas seguidas ainda dão um chamado só", async () => {
+    // A 2ª gravação esbarra na chave ("conflict") e a nova tentativa acha o chamado pela chave.
+    const { ticketRepo, drafts, conversation } = await setup();
+    ticketRepo.insert = writeThenFail(ticketRepo.insert.bind(ticketRepo), 3);
+    const draft = await drafts.proposeNewTicket(conversation.id, "ana", fields);
+
+    const { ticket } = await drafts.confirm(draft.id, "ana");
+    expect(ticketRepo.tickets.size).toBe(1);
+    expect(ticketRepo.tickets.has(ticket.code)).toBe(true);
+  });
+
+  it("chamado novo: se nem a consulta pela chave responder, confirmar de novo devolve o mesmo chamado", async () => {
+    const { ticketRepo, drafts, conversation } = await setup();
+    ticketRepo.insert = writeThenFail(ticketRepo.insert.bind(ticketRepo), 1);
+    // 1ª consulta responde (nada gravado ainda); as 3 seguintes caem, e o turno desiste.
+    const findByKey = ticketRepo.findByIdempotencyKey.bind(ticketRepo);
+    let calls = 0;
+    ticketRepo.findByIdempotencyKey = async (key) => {
+      calls++;
+      if (calls >= 2 && calls <= 4) throw lostResponse();
+      return findByKey(key);
+    };
+    const draft = await drafts.proposeNewTicket(conversation.id, "ana", fields);
+
+    await expect(drafts.confirm(draft.id, "ana")).rejects.toMatchObject({ code: "legacy_unavailable" });
+    const { ticket } = await drafts.confirm(draft.id, "ana");
+    expect(ticketRepo.tickets.size).toBe(1);
+    expect(ticketRepo.tickets.has(ticket.code)).toBe(true);
+  });
+});
+
 describe("crítico com o banco fora do ar na transferência", () => {
   it("se nem a conversa puder ser lida, avisa que não chamou o analista (não diz que está tudo bem)", async () => {
     const { ticketRepo, messages, drafts, conversations, conversation } = await setup();

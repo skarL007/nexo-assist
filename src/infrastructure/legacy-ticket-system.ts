@@ -1,7 +1,8 @@
 /**
  * Simula o sistema de chamados legado: às vezes fica indisponível por um instante.
- * É um "decorator": embrulha o repositório real e, antes de cada chamada,
- * sorteia se esta vai falhar. A taxa vem de LEGACY_FAILURE_RATE.
+ * É um "decorator": embrulha o repositório real e sorteia se cada chamada vai falhar.
+ * A taxa vem de LEGACY_FAILURE_RATE. Com `afterWrite`, a escrita acontece e só a resposta
+ * falha: é o caso que exige idempotência (tentar de novo não pode duplicar).
  */
 import type { TicketRepository } from "@/application/ports";
 import { DomainError } from "@/domain/errors";
@@ -11,6 +12,7 @@ export class FlakyTicketRepository implements TicketRepository {
     private readonly inner: TicketRepository,
     private readonly failureRate: number,
     private readonly random: () => number = Math.random,
+    private readonly afterWrite = false,
   ) {}
 
   private maybeFail() {
@@ -19,9 +21,21 @@ export class FlakyTicketRepository implements TicketRepository {
     }
   }
 
+  /** Leitura falha antes de executar; escrita, com `afterWrite`, grava e só depois falha. */
+  private async write(fn: () => Promise<void>): Promise<void> {
+    if (!this.afterWrite) this.maybeFail();
+    await fn();
+    if (this.afterWrite) this.maybeFail();
+  }
+
   findByCode: TicketRepository["findByCode"] = async (code) => {
     this.maybeFail();
     return this.inner.findByCode(code);
+  };
+
+  findByIdempotencyKey: TicketRepository["findByIdempotencyKey"] = async (key) => {
+    this.maybeFail();
+    return this.inner.findByIdempotencyKey(key);
   };
 
   listByOwner: TicketRepository["listByOwner"] = async (ownerId) => {
@@ -39,18 +53,9 @@ export class FlakyTicketRepository implements TicketRepository {
     return this.inner.nextCode(type);
   };
 
-  insert: TicketRepository["insert"] = async (ticket) => {
-    this.maybeFail();
-    return this.inner.insert(ticket);
-  };
+  insert: TicketRepository["insert"] = (...args) => this.write(() => this.inner.insert(...args));
 
-  update: TicketRepository["update"] = async (ticket) => {
-    this.maybeFail();
-    return this.inner.update(ticket);
-  };
+  update: TicketRepository["update"] = (...args) => this.write(() => this.inner.update(...args));
 
-  addComment: TicketRepository["addComment"] = async (...args) => {
-    this.maybeFail();
-    return this.inner.addComment(...args);
-  };
+  addComment: TicketRepository["addComment"] = (...args) => this.write(() => this.inner.addComment(...args));
 }

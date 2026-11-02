@@ -47,9 +47,13 @@ export interface TicketRepository {
   /** Abertos de todo mundo criados desde `since` (incidente em massa). */
   listOpenCreatedSince(since: Date): Promise<Ticket[]>;
   nextCode(type: TicketType): Promise<string>;
-  insert(ticket: Ticket): Promise<void>;
+  /** Com `idempotencyKey`, a mesma operação repetida não cria um segundo chamado (dá "conflict"). */
+  insert(ticket: Ticket, idempotencyKey?: string): Promise<void>;
+  /** O chamado que uma operação já criou (ex.: a confirmação do rascunho D-12), se criou. */
+  findByIdempotencyKey(key: string): Promise<Ticket | null>;
   update(ticket: Ticket): Promise<void>;
-  addComment(ticketCode: string, author: string, text: string, at: Date): Promise<void>;
+  /** Com `idempotencyKey`, repetir a operação não grava um segundo comentário. */
+  addComment(ticketCode: string, author: string, text: string, at: Date, idempotencyKey?: string): Promise<void>;
 }
 
 export interface NewMessage {

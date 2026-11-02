@@ -74,16 +74,24 @@ export class TicketService {
     return this.call(() => this.repo.listOpenCreatedSince(new Date(this.clock.now().getTime() - 5 * 86_400_000)));
   }
 
-  async create(employeeId: string, fields: NewTicketFields): Promise<Ticket> {
+  /**
+   * `idempotencyKey` identifica a operação (ex.: "draft:12"). Se o banco gravou e a resposta se
+   * perdeu, a nova tentativa acha o chamado pela chave em vez de abrir outro com o número seguinte.
+   */
+  async create(employeeId: string, fields: NewTicketFields, idempotencyKey?: string): Promise<Ticket> {
     // Dois chamados criados no mesmo instante podem pegar o mesmo número: tenta o próximo.
-    return withRetry(() => this.createOnce(employeeId, fields), {
+    return withRetry(() => this.createOnce(employeeId, fields, idempotencyKey), {
       attempts: 3,
       baseDelayMs: 0,
       shouldRetry: (error) => error instanceof DomainError && error.code === "conflict",
     });
   }
 
-  private async createOnce(employeeId: string, fields: NewTicketFields): Promise<Ticket> {
+  private async createOnce(employeeId: string, fields: NewTicketFields, idempotencyKey?: string): Promise<Ticket> {
+    if (idempotencyKey) {
+      const existing = await this.call(() => this.repo.findByIdempotencyKey(idempotencyKey));
+      if (existing) return existing;
+    }
     const now = this.clock.now();
     const code = await this.call(() => this.repo.nextCode(fields.type));
     const ticket: Ticket = {
@@ -100,11 +108,11 @@ export class TicketService {
       updatedAt: now,
       resolvedAt: null,
     };
-    await this.call(() => this.repo.insert(ticket));
+    await this.call(() => this.repo.insert(ticket, idempotencyKey));
     return ticket;
   }
 
-  async addComment(employeeId: string, code: string, comment: string, reopen: boolean): Promise<Ticket> {
+  async addComment(employeeId: string, code: string, comment: string, reopen: boolean, idempotencyKey?: string): Promise<Ticket> {
     const now = this.clock.now();
     const ticket = await this.getMine(employeeId, code);
 
@@ -119,9 +127,10 @@ export class TicketService {
     }
 
     const updated: Ticket = { ...ticket, status, resolvedAt, updatedAt: now };
-    // Primeiro o chamado, depois o comentário: se o comentário falhar, tentar de novo não duplica nada.
+    // Primeiro o chamado, depois o comentário. A chave impede o comentário em dobro quando o banco
+    // gravou e só a resposta falhou (a nova tentativa repete a mesma operação).
     await this.call(() => this.repo.update(updated));
-    await this.call(() => this.repo.addComment(code, "employee", comment, now));
+    await this.call(() => this.repo.addComment(code, "employee", comment, now, idempotencyKey));
     return updated;
   }
 

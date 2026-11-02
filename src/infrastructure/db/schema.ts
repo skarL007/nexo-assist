@@ -50,6 +50,8 @@ export const tickets = sqliteTable("tickets", {
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),
   resolvedAt: timestamp("resolved_at"),
+  /** Operação que criou o chamado (ex.: "draft:12"): repetir a operação não abre outro. */
+  idempotencyKey: text("idempotency_key").unique(),
 }, (t) => [index("tickets_owner_idx").on(t.ownerId)]);
 
 export const ticketComments = sqliteTable("ticket_comments", {
@@ -58,6 +60,8 @@ export const ticketComments = sqliteTable("ticket_comments", {
   author: text("author").notNull(),
   text: text("text").notNull(),
   createdAt: timestamp("created_at").notNull(),
+  /** Operação que gravou o comentário: a nova tentativa depois de uma resposta perdida não duplica. */
+  idempotencyKey: text("idempotency_key").unique(),
 });
 
 export const conversations = sqliteTable("conversations", {

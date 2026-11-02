@@ -6,7 +6,7 @@ import { migrate } from "drizzle-orm/libsql/migrator";
 import { beforeEach, describe, expect, it } from "vitest";
 import { makeTicket } from "@/application/test-doubles";
 import { createDatabase, type Database } from "../db/client";
-import { conversations, employees, messages } from "../db/schema";
+import { conversations, employees, messages, ticketComments } from "../db/schema";
 import { DrizzleBudgetRepository } from "./budget-repository";
 import { DrizzleChangeFeed } from "./change-feed";
 import { DrizzleMessageRepository } from "./message-repository";
@@ -48,6 +48,31 @@ describe("número do chamado", () => {
     });
     await repo.insert(makeTicket({ code: "INC-1" }));
     await expect(repo.insert(makeTicket({ code: "INC-1" }))).rejects.toMatchObject({ code: "conflict" });
+  });
+});
+
+describe("idempotência no sistema de chamados", () => {
+  const ana = { id: "ana", name: "Ana Souza", email: "ana.souza@nexo.com.br", role: "employee" as const, department: "Financeiro", passwordChangedAt: new Date() };
+
+  it("o mesmo comentário com a mesma chave grava uma vez só; sem chave, grava sempre", async () => {
+    const repo = new DrizzleTicketRepository(db);
+    await db.insert(employees).values(ana);
+    await repo.insert(makeTicket({ code: "INC-1" }));
+    const at = new Date();
+    await repo.addComment("INC-1", "employee", "Continua lento.", at, "draft:7");
+    await repo.addComment("INC-1", "employee", "Continua lento.", at, "draft:7");
+    await repo.addComment("INC-1", "employee", "Sem chave.", at);
+    await repo.addComment("INC-1", "employee", "Sem chave.", at);
+    expect(await db.select().from(ticketComments)).toHaveLength(3);
+  });
+
+  it("acha o chamado pela chave da operação, e a mesma chave não cria outro número", async () => {
+    const repo = new DrizzleTicketRepository(db);
+    await db.insert(employees).values(ana);
+    await repo.insert(makeTicket({ code: "INC-1" }), "draft:9");
+    expect(await repo.findByIdempotencyKey("draft:9")).toMatchObject({ code: "INC-1" });
+    expect(await repo.findByIdempotencyKey("draft:10")).toBeNull();
+    await expect(repo.insert(makeTicket({ code: "INC-2" }), "draft:9")).rejects.toMatchObject({ code: "conflict" });
   });
 });
 
