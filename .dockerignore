@@ -23,6 +23,7 @@ playwright-report
 evals
 e2e
 e2e-demo
+e2e-docs
 docs
 otel-local.jsonl
 
