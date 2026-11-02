@@ -10,7 +10,7 @@ Cada resposta do agent mostra **o que ele entendeu, o que fez e por quê**: pass
 
 **Vídeo (5:28):** [assistir no navegador](https://skarl007.github.io/nexo-assist/#video) · [estudo de caso](https://skarl007.github.io/nexo-assist/)
 
-**Stack:** TypeScript estrito · Next.js 16 (App Router) · Mastra (agent) · GPT-6 Luna via OpenRouter (Gemini 3.5 Flash até 30/10) · Drizzle + libSQL (SQLite local, Turso no deploy) · Redux Toolkit + RTK Query · Zod · shadcn/ui + Tailwind · Vitest · Playwright.
+**Stack:** TypeScript estrito · Next.js 16 (App Router) · Mastra (agent) · DeepSeek-V4-Flash via DeepInfra (GPT-6 Luna de 30/10 a 02/11, Gemini 3.5 Flash antes) · Drizzle + libSQL (SQLite local, Turso no deploy) · Redux Toolkit + RTK Query · Zod · shadcn/ui + Tailwind · Vitest · Playwright.
 
 ![Painel "por quê?" aberto num rascunho de chamado: o que o agent entendeu, a intenção, a confiança, o motivo, as ações com resultado e as regras do sistema que agiram](docs/demo/por-que.jpg)
 
@@ -38,7 +38,7 @@ Cada resposta do agent mostra **o que ele entendeu, o que fez e por quê**: pass
 
 ## Como rodar
 
-Pré-requisitos: Node 22.9+ e uma chave do Gemini ([Google AI Studio](https://aistudio.google.com/apikey)), usada pelo modelo padrão local e pelos embeddings da busca. Para rodar como a produção, defina também `OPENROUTER_API_KEY` e `LLM_MODEL=openrouter/openai/gpt-6-luna`; com a chave do OpenRouter, os embeddings da busca também passam por ele (o mesmo `gemini-embedding-2`), e o Gemini direto vira reserva.
+Pré-requisitos: Node 22.9+ e uma chave do Gemini ([Google AI Studio](https://aistudio.google.com/apikey)), usada pelo modelo padrão local e pelos embeddings da busca. Para rodar como a produção, defina também `DEEPINFRA_API_KEY`, `LLM_MODEL=deepinfra/deepseek-ai/DeepSeek-V4-Flash`, `LLM_FALLBACK_MODEL=off` e `RELEVANCE_JUDGE_MODEL=deepinfra/deepseek-ai/DeepSeek-V4-Flash`; com a chave da DeepInfra, os embeddings da busca vêm dela primeiro (`Qwen/Qwen3-Embedding-8B`). Os tetos de gasto `LLM_DAILY_BUDGET_USD` e `LLM_TOTAL_BUDGET_USD` são opcionais ([.env.example](.env.example)).
 
 ```bash
 npm install
@@ -73,9 +73,9 @@ Outros comandos:
 
 ```bash
 npm run verify                    # tipos + lint + unitários + E2E + E2E da demo — sem LLM
-npm test                          # 472 testes unitários em 68 arquivos — sem LLM
+npm test                          # 538 testes unitários em 74 arquivos — sem LLM
 npx playwright install chromium   # só na primeira vez, antes do E2E
-npm run test:e2e                  # 42 testes E2E contra o build de produção — sem LLM
+npm run test:e2e                  # 45 testes E2E contra o build de produção — sem LLM
 npm run test:e2e:demo             # isolamento entre visitantes na demo pública — sem LLM
 npm run eval                      # 36 cenários de decisão do agent com o modelo real (8 de ataque)
 npm run eval:sim                  # funcionário simulado por um modelo, pass^k (τ-bench)
@@ -120,7 +120,7 @@ flowchart LR
     LEG["FlakyTicketRepository<br/>legado instável simulado"]
   end
 
-  GEM[("LLM: GPT-6 Luna<br/>via OpenRouter")]
+  GEM[("LLM: DeepSeek-V4-Flash<br/>via DeepInfra")]
   DB[("SQLite local<br/>Turso no deploy")]
 
   UI --> PX
@@ -255,14 +255,14 @@ Teste unitário não prova que um LLM decide bem, então a qualidade tem quatro 
 
 | Camada | O que cobre | Comando |
 |---|---|---|
-| **Testes unitários** (Vitest, 472 em 68 arquivos) | verificações de diagnóstico e a sincronização da central sem apagar dados, provedores de embeddings em ordem com disjuntor, avaliador de relevância (aplica, talvez ou nenhum), prazos com fim de semana, matriz de prioridade, pergunta sobre alternativa antes da prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória e só explícita, prazo × necessidade, assunto do chamado, categoria E-mail, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, espaço isolado da demo, modelo reserva, o estimador pass^k e a simulação do roteamento em cascata | `npm test` |
-| **E2E** (Playwright, 42 + 1 da demo) | login (inclusive SSO contra um provedor OIDC falso), link para o estudo de caso e prévia ao compartilhar (Open Graph), permissões, transferência de ponta a ponta, relatório, sugestão de resposta, indicadores, prazos em risco, incidente em massa, frustração, tempo real com latência medida, estados de erro e a página 404, contra o build de produção. A suíte da demo sobe o app com `PUBLIC_DEMO=1` e prova que o visitante B não lê, não assume e não pede sugestão da conversa do visitante A | `npm run test:e2e` · `npm run test:e2e:demo` |
+| **Testes unitários** (Vitest, 538 em 74 arquivos) | verificações de diagnóstico e a sincronização da central sem apagar dados, provedores de embeddings em ordem com disjuntor, avaliador de relevância (aplica, talvez ou nenhum), prazos com fim de semana, matriz de prioridade, pergunta sobre alternativa antes da prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória e só explícita, prazo × necessidade, assunto do chamado, categoria E-mail, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, espaço isolado da demo, modelo reserva, o estimador pass^k e a simulação do roteamento em cascata | `npm test` |
+| **E2E** (Playwright, 45 + 1 da demo) | login (inclusive SSO contra um provedor OIDC falso), link para o estudo de caso e prévia ao compartilhar (Open Graph), permissões, transferência de ponta a ponta, relatório, sugestão de resposta, indicadores, prazos em risco, incidente em massa, frustração, tempo real com latência medida, estados de erro e a página 404, contra o build de produção. A suíte da demo sobe o app com `PUBLIC_DEMO=1` e prova que o visitante B não lê, não assume e não pede sugestão da conversa do visitante A | `npm run test:e2e` · `npm run test:e2e:demo` |
 | **Evals** (36 cenários, modelo real) | intenção, tools esperadas e proibidas, verificações de diagnóstico e o "já tentado" no chamado, transferência (e quando *não* transferir), caso crítico, reabertura, escopo de TI, vazamento de dados, incidente em massa, frustração, os achados do funcionário simulado e 8 ataques mapeados ao OWASP ([red-team](docs/validacao/RED-TEAM.md)) | `npm run eval` |
 | **Funcionário simulado** (pass^k, 10 personas) | um modelo faz o papel do funcionário, com fatos que só conta se perguntarem, e clica em Confirmar, Descartar ou numa resposta rápida; o estado no banco é conferido em k execuções, cada uma a partir do seed ([resultado e falhas](docs/validacao/SIMULACAO.md)) | `npm run eval:sim` |
 
 **Resultados com o modelo real:**
 
-- **Evals:** 36/36 com o GPT-6 Luna em 30/10 (US$ 0,04 a rodada). Na primeira rodada com ele, o cenário da resposta rápida de urgência falhou 3 de 3: o Luna perguntava se a funcionária já tinha olhado o portal de softwares, como o artigo manda, e o rascunho que o cenário precisa não aparecia. O cenário passou a dizer que ela já procurou no portal. Com o Gemini 3.5 Flash, a última rodada completa deu 35/36 em 29/10, antes da tool de verificações.
+- **Evals:** 36/36 com o DeepSeek-V4-Flash em 02/11 (US$ 0,07 a rodada), o modelo de produção desde esse dia. Antes, 36/36 com o GPT-6 Luna em 30/10 (US$ 0,04 a rodada). Na primeira rodada com ele, o cenário da resposta rápida de urgência falhou 3 de 3: o Luna perguntava se a funcionária já tinha olhado o portal de softwares, como o artigo manda, e o rascunho que o cenário precisa não aparecia. O cenário passou a dizer que ela já procurou no portal. Com o Gemini 3.5 Flash, a última rodada completa deu 35/36 em 29/10, antes da tool de verificações.
 - **Verificações de diagnóstico:** a primeira versão pedia ao modelo a lista do que já foi tentado. No eval ele a ignorou 3 vezes em 3, então a lista passou a sair do histórico, em código, e os cenários novos foram para 6/6.
 - **Funcionário simulado (28/10):** pass^1 0,72 → 0,93 → 0,93 e pass^3 0,50 → 0,80 → 0,80 nas três rodadas (a terceira com uma persona repetida depois de corrigida). O `outlook-direto` foi de 2/3 para 3/3.
 - **Outras provas:** busca híbrida 84% → 94% com 9 artigos; com os 5 artigos de diagnóstico (14 no total), 100% no conjunto separado e no de diagnóstico e 85% na calibração; com o avaliador de relevância, 78/81 nos quatro conjuntos, 0 com artigo errado e 18/18 nas perguntas de pedido × defeito × fora da central ([BUSCA](docs/validacao/BUSCA.md)); tempo real ~0,4 s × ~1,6 s ([TEMPO-REAL](docs/validacao/TEMPO-REAL.md)); red-team 21/21; telemetria e SSO ([OBSERVABILIDADE-E-SSO](docs/validacao/OBSERVABILIDADE-E-SSO.md)).
@@ -282,7 +282,9 @@ Localmente, `npm run verify` roda tipos, lint, testes unitários, E2E e E2E da d
 
 ## Escolha do modelo
 
-**Em produção desde 30/10/2026: GPT-6 Luna** (`openrouter/openai/gpt-6-luna`), com o **Gemini 3.5 Flash Lite** pelo mesmo OpenRouter como reserva.
+**Em produção desde 02/11/2026: DeepSeek-V4-Flash** (`deepinfra/deepseek-ai/DeepSeek-V4-Flash`), pela DeepInfra, sem modelo reserva e com teto de gasto por dia e no total. De 30/10 a 02/11 foi o **GPT-6 Luna** pelo OpenRouter.
+
+**Troca de 02/11.** O saldo do OpenRouter acabou e a demo pública ficou sem modelo (o Google já estava sem crédito desde 29/10). Antes de trocar, medi o DeepSeek-V4-Flash na suíte inteira: 36/36 por US$ 0,07. A DeepInfra também serve os embeddings (`Qwen/Qwen3-Embedding-8B`, que separou melhor os artigos que o `gemini-embedding-2`: 0,769 contra 0,604; a margem de 0,02 continua no mesmo platô) e o avaliador de relevância. O `gpt-oss-120b`, mais barato, ficou de fora como avaliador porque passava do limite de 4 s. Junto veio um livro-caixa de gasto em micro-dólares (`LLM_DAILY_BUDGET_USD`, `LLM_TOTAL_BUDGET_USD`): ao bater o teto, o turno é recusado com 429 antes de chamar o modelo.
 
 Comecei no **Gemini 3.5 Flash** (`google/gemini-3.5-flash`): tool calling confiável (inclusive a escolha forçada de tool no primeiro passo, a base da transparência), latência baixa com `thinkingLevel: "minimal"`, cerca de 1 centavo de dólar por resposta e saldo disponível no Google. Em 29/10 os créditos pré-pagos do Google acabaram no meio de um eval (HTTP 402). Como o benchmark já tinha apontado o Luna, a troca foi uma variável: o eval completo com ele deu 36/36, e a demo pública passou a responder com ele.
 
@@ -298,9 +300,9 @@ Comecei no **Gemini 3.5 Flash** (`google/gemini-3.5-flash`): tool calling confi�
 
 O G-Eval usa 7 critérios de 1 a 5 tirados do PRD (qualidade da decisão, regras do service desk, condução da conversa, clareza, transparência do raciocínio, tom e português do Brasil). Ele lê também o registro de entendimento do passo 0, o mesmo do painel "por quê?". A nota vem de um painel de 2 juízes (Kimi K3 e GLM-5.3) de famílias que não concorrem, em avaliação cega e calibrado com 3 conversas escritas à mão. O composto pesa efetividade 40, qualidade 30, latência 15 e custo 15; o Luna fica em 1º em 81% de 10 mil combinações de pesos sorteadas. Os intervalos são largos porque a amostra é pequena: por isso a recomendação é confirmar antes de trocar. O estudo inteiro custou US$ 1,80.
 
-**Modelo reserva.** Quando o principal falha, o passo vai para o reserva (`LLM_FALLBACK_MODEL`, hoje `openrouter/google/gemini-3.5-flash-lite`: outro fornecedor de modelo, mesma chave). Em 28/10/2026, o Gemini Flash passou mais de uma hora devolvendo 503 "alta demanda" nas chamadas com tools. O trace mostra quem respondeu, e os evals contam esses turnos à parte para não confundir a medição.
+**Modelo reserva.** Quando o principal falha, o passo vai para o reserva (`LLM_FALLBACK_MODEL`). Na produção ele está desligado desde 02/11 (`off`): os dois provedores antigos estão sem crédito, e o teto de gasto vale para um provedor só. Em 28/10/2026, o Gemini Flash passou mais de uma hora devolvendo 503 "alta demanda" nas chamadas com tools. O trace mostra quem respondeu, e os evals contam esses turnos à parte para não confundir a medição.
 
-Trocar de modelo é uma variável (`LLM_MODEL`), graças ao roteador do Mastra. Pelo OpenRouter: `LLM_MODEL=openrouter/<fornecedor>/<modelo>` com `OPENROUTER_API_KEY`. Os evals dizem se a troca piorou alguma decisão.
+Trocar de modelo é uma variável (`LLM_MODEL`), graças ao roteador do Mastra. Pela DeepInfra: `LLM_MODEL=deepinfra/<fornecedor>/<modelo>` com `DEEPINFRA_API_KEY`; pelo OpenRouter: `LLM_MODEL=openrouter/<fornecedor>/<modelo>` com `OPENROUTER_API_KEY`. Os evals dizem se a troca piorou alguma decisão.
 
 **Custo sob controle:** histórico de no máximo 20 mensagens (cada uma cortada em 1.500 caracteres), cards resumidos, prioridade, prazo, duplicidade e busca em código (sem gastar token), temperatura 0,2, até 6 passos e 800 tokens de saída por passo.
 
@@ -326,14 +328,14 @@ Desde 29/10/2026 a demo está **aberta ao público** de propósito (`PUBLIC_DEMO
 | Dados pessoais na telemetria e nos indicadores | A telemetria OpenTelemetry/Langfuse é opcional e, por padrão, não leva texto da conversa nem argumentos de tools; o funcionário vira um pseudônimo. As frases de exemplo das lacunas da central mascaram e-mail, CPF, telefone e números. O incidente em massa não revela quem relatou. |
 | Clickjacking e afins | CSP, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, HSTS e sem `X-Powered-By` ([`next.config.ts`](next.config.ts)). |
 
-Houve quatro rodadas de revisão de segurança: antes do deploy, depois do deploy, uma com 42 verificações de fora contra produção e uma com skills de auditoria de terceiros. O detalhe está em [`docs/DEPLOY.md`](docs/DEPLOY.md).
+Houve cinco rodadas de revisão de segurança: antes do deploy, depois do deploy, uma com 42 verificações de fora contra produção, uma com skills de auditoria de terceiros e uma auditoria externa em 02/11, com 6 riscos (login de demonstração ativo junto com o SSO, e-mail não verificado no SSO, resposta gravada depois da transferência, chamado duplicado quando a resposta se perde, vaga do teto diário gasta por turno recusado e conversa aberta duplicada), todos corrigidos com testes ([relatório](docs/validacao/AUDITORIA-2026-11-02.md)). O detalhe está em [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 ---
 
 ## Trade-offs
 
 - **SSE com conferência no servidor, não push de verdade:** a Vercel não tem fila compartilhada entre funções, então o stream confere uma assinatura do banco a cada 1 s. Isso dá menos de 1 s de latência, mas cada aba aberta faz uma consulta leve por segundo. Com muitos analistas, o certo seria Redis pub/sub. O polling continua como plano B.
-- **Busca híbrida com embeddings em cache no banco:** o acerto subiu de 84% para 94% nas 50 perguntas ([medição](docs/validacao/BUSCA.md)). O mesmo modelo vem primeiro pelo OpenRouter e depois pelo Gemini direto, com disjuntor: quando os créditos do Google acabaram, a busca seguiu híbrida (58/63 em vez de 47/63 só com palavras) por cerca de US$ 0,012 no teto da demo. Sem nenhum provedor, ela volta para as palavras-chave. Depois dos artigos de diagnóstico, a busca ganhou uma segunda etapa (padrão Corrective RAG): um modelo barato confere os 5 candidatos e diz qual se aplica, qual talvez ou nenhum. Nas 81 perguntas do `eval:busca`, 78 certas e nenhuma com artigo errado (eram 10), por US$ 0,00025 e +1,4 s por busca ([medição](docs/validacao/BUSCA.md#avaliador-de-relevância-30102026), [pesquisa](docs/pesquisa/BUSCA-APLICABILIDADE.md)).
+- **Busca híbrida com embeddings em cache no banco:** o acerto subiu de 84% para 94% nas 50 perguntas ([medição](docs/validacao/BUSCA.md)). Os provedores vêm em ordem, com disjuntor (desde 02/11, a DeepInfra com o `Qwen3-Embedding-8B`; antes, o mesmo `gemini-embedding-2` pelo OpenRouter e depois pelo Gemini direto): quando os créditos do Google acabaram, a busca seguiu híbrida (58/63 em vez de 47/63 só com palavras) por cerca de US$ 0,012 no teto da demo. Sem nenhum provedor, ela volta para as palavras-chave. Depois dos artigos de diagnóstico, a busca ganhou uma segunda etapa (padrão Corrective RAG): um modelo barato confere os 5 candidatos e diz qual se aplica, qual talvez ou nenhum. Nas 81 perguntas do `eval:busca`, 78 certas e nenhuma com artigo errado (eram 10), por US$ 0,00025 e +1,4 s por busca ([medição](docs/validacao/BUSCA.md#avaliador-de-relevância-30102026), [pesquisa](docs/pesquisa/BUSCA-APLICABILIDADE.md)).
 - **Duplicidade por regra simples** (mesmo tipo, categoria e palavra em comum no título), com a decisão final para o modelo: barato e transparente, mas pode deixar passar um duplicado escrito com outras palavras.
 - **Histórico próprio em vez da memória do Mastra:** o console do analista lê e escreve na mesma conversa, então uma única tabela `messages` é a fonte da verdade.
 - **Stream NDJSON próprio em vez do `useChat`:** o estado do chat fica no Redux Toolkit, e os eventos `step`/`card` mostram as ações em tempo real.
