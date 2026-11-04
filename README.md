@@ -8,7 +8,7 @@ Cada resposta do agent mostra **o que ele entendeu, o que fez e por quê**: pass
 
 **Demo pública:** https://nexo-assist-puce.vercel.app. Na tela de login, entre como **Ana · funcionária** ou **Rafael · analista** (um clique, dados fictícios, qualquer senha). Cada navegador recebe um **espaço próprio**, com uma cópia dos dados de exemplo: o que você fizer não aparece para outro avaliador. Para controlar o custo, a demo aceita até **100 mensagens por dia**, somando todos os visitantes. Depois disso, o chat avisa que o limite de hoje acabou.
 
-**Vídeo (5:28):** [assistir no navegador](https://skarl007.github.io/nexo-assist/#video) · [estudo de caso](https://skarl007.github.io/nexo-assist/)
+**Vídeo (4:33):** [assistir no navegador](https://skarl007.github.io/nexo-assist/#video) · [estudo de caso](https://skarl007.github.io/nexo-assist/)
 
 **Stack:** TypeScript estrito · Next.js 16 (App Router) · Mastra (agent) · DeepSeek-V4-Flash via DeepInfra (GPT-6 Luna de 30/10 a 02/11, Gemini 3.5 Flash antes) · Drizzle + libSQL (SQLite local, Turso no deploy) · Redux Toolkit + RTK Query · Zod · shadcn/ui + Tailwind · Vitest · Playwright.
 
@@ -73,9 +73,9 @@ Outros comandos:
 
 ```bash
 npm run verify                    # tipos + lint + unitários + E2E + E2E da demo — sem LLM
-npm test                          # 538 testes unitários em 74 arquivos — sem LLM
+npm test                          # 563 testes unitários em 77 arquivos — sem LLM
 npx playwright install chromium   # só na primeira vez, antes do E2E
-npm run test:e2e                  # 45 testes E2E contra o build de produção — sem LLM
+npm run test:e2e                  # 48 testes E2E contra o build de produção — sem LLM
 npm run test:e2e:demo             # isolamento entre visitantes na demo pública — sem LLM
 npm run eval                      # 36 cenários de decisão do agent com o modelo real (8 de ataque)
 npm run eval:sim                  # funcionário simulado por um modelo, pass^k (τ-bench)
@@ -241,6 +241,7 @@ A decisão de projeto mais importante foi esta: **o modelo decide o que fazer, e
 | Aviso de prazo em risco (75% do prazo útil), com a conta explicada | [`domain/sla-risk.ts`](src/domain/sla-risk.ts) |
 | Modelo reserva: se o modelo principal falhar (ex.: 503), o passo vai para o reserva (`LLM_FALLBACK_MODEL`), e o trace diz quem respondeu; o custo usa o preço de quem respondeu | [`agent/model-fallback.ts`](src/agent/model-fallback.ts) |
 | Entendimento registrado uma vez por turno: chamadas paralelas repetidas não transferem nem avisam de novo | [`agent/turn-context.ts`](src/agent/turn-context.ts) (`recordDecision`) |
+| Imagem anexada (captura de tela ou foto do equipamento): formato conferido pelos bytes, até 1 MB, 5 por conversa; um modelo de visão barato descreve e o agent recebe só a descrição, como dado não confiável; a imagem só é servida à dona da conversa e aos analistas | [`domain/screenshot.ts`](src/domain/screenshot.ts), [`application/screenshot-service.ts`](src/application/screenshot-service.ts), [spec](docs/specs/02-agent.md#captura-de-tela) |
 | Privacidade: o funcionário vem do cookie assinado, nunca de argumento do modelo; chamado de outra pessoa responde "não encontrado" | [`agent/turn-context.ts`](src/agent/turn-context.ts), `TicketService.getMine` |
 
 O [`step-policy.ts`](src/agent/step-policy.ts) segue o padrão *action-selector* da literatura de defesa contra injeção ([arXiv 2506.08837](https://arxiv.org/abs/2506.08837)): o código decide quais tools existem em cada passo, e o modelo só escolhe entre elas. Um texto malicioso pode mudar o que o modelo *quer* fazer, mas não o que ele *consegue* fazer.
@@ -255,14 +256,15 @@ Teste unitário não prova que um LLM decide bem, então a qualidade tem quatro 
 
 | Camada | O que cobre | Comando |
 |---|---|---|
-| **Testes unitários** (Vitest, 538 em 74 arquivos) | verificações de diagnóstico e a sincronização da central sem apagar dados, provedores de embeddings em ordem com disjuntor, avaliador de relevância (aplica, talvez ou nenhum), prazos com fim de semana, matriz de prioridade, pergunta sobre alternativa antes da prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória e só explícita, prazo × necessidade, assunto do chamado, categoria E-mail, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, espaço isolado da demo, modelo reserva, o estimador pass^k e a simulação do roteamento em cascata | `npm test` |
-| **E2E** (Playwright, 45 + 1 da demo) | login (inclusive SSO contra um provedor OIDC falso), link para o estudo de caso e prévia ao compartilhar (Open Graph), permissões, transferência de ponta a ponta, relatório, sugestão de resposta, indicadores, prazos em risco, incidente em massa, frustração, tempo real com latência medida, estados de erro e a página 404, contra o build de produção. A suíte da demo sobe o app com `PUBLIC_DEMO=1` e prova que o visitante B não lê, não assume e não pede sugestão da conversa do visitante A | `npm run test:e2e` · `npm run test:e2e:demo` |
+| **Testes unitários** (Vitest, 563 em 77 arquivos) | verificações de diagnóstico e a sincronização da central sem apagar dados, provedores de embeddings em ordem com disjuntor, avaliador de relevância (aplica, talvez ou nenhum), prazos com fim de semana, matriz de prioridade, pergunta sobre alternativa antes da prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória e só explícita, prazo × necessidade, assunto do chamado, categoria E-mail, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, espaço isolado da demo, modelo reserva, o estimador pass^k e a simulação do roteamento em cascata | `npm test` |
+| **E2E** (Playwright, 48 + 1 da demo) | login (inclusive SSO contra um provedor OIDC falso), link para o estudo de caso e prévia ao compartilhar (Open Graph), permissões, transferência de ponta a ponta, relatório, sugestão de resposta, indicadores, prazos em risco, incidente em massa, frustração, tempo real com latência medida, estados de erro e a página 404, contra o build de produção. A suíte da demo sobe o app com `PUBLIC_DEMO=1` e prova que o visitante B não lê, não assume e não pede sugestão da conversa do visitante A | `npm run test:e2e` · `npm run test:e2e:demo` |
 | **Evals** (36 cenários, modelo real) | intenção, tools esperadas e proibidas, verificações de diagnóstico e o "já tentado" no chamado, transferência (e quando *não* transferir), caso crítico, reabertura, escopo de TI, vazamento de dados, incidente em massa, frustração, os achados do funcionário simulado e 8 ataques mapeados ao OWASP ([red-team](docs/validacao/RED-TEAM.md)) | `npm run eval` |
 | **Funcionário simulado** (pass^k, 10 personas) | um modelo faz o papel do funcionário, com fatos que só conta se perguntarem, e clica em Confirmar, Descartar ou numa resposta rápida; o estado no banco é conferido em k execuções, cada uma a partir do seed ([resultado e falhas](docs/validacao/SIMULACAO.md)) | `npm run eval:sim` |
 
 **Resultados com o modelo real:**
 
-- **Evals:** 36/36 com o DeepSeek-V4-Flash em 02/11 (US$ 0,07 a rodada), o modelo de produção desde esse dia. Antes, 36/36 com o GPT-6 Luna em 30/10 (US$ 0,04 a rodada). Na primeira rodada com ele, o cenário da resposta rápida de urgência falhou 3 de 3: o Luna perguntava se a funcionária já tinha olhado o portal de softwares, como o artigo manda, e o rascunho que o cenário precisa não aparecia. O cenário passou a dizer que ela já procurou no portal. Com o Gemini 3.5 Flash, a última rodada completa deu 35/36 em 29/10, antes da tool de verificações.
+- **Evals de 03/11:** 35/36 com o DeepSeek-V4-Flash (8/8 ataques, US$ 0,07). No incidente em massa do sistema de ponto, a ferramenta pediu confirmação sobre uma alternativa de trabalho e não entregou o rascunho esperado. [Resultado e limites da rodada](docs/validacao/README.md#revisão-de-3-de-novembro).
+- **Rodadas anteriores:** 36/36 com o DeepSeek-V4-Flash em 02/11 (US$ 0,07 a rodada), o modelo de produção desde esse dia. Antes, 36/36 com o GPT-6 Luna em 30/10 (US$ 0,04 a rodada). Na primeira rodada com ele, o cenário da resposta rápida de urgência falhou 3 de 3: o Luna perguntava se a funcionária já tinha olhado o portal de softwares, como o artigo manda, e o rascunho que o cenário precisa não aparecia. O cenário passou a dizer que ela já procurou no portal. Com o Gemini 3.5 Flash, a última rodada completa deu 35/36 em 29/10, antes da tool de verificações.
 - **Verificações de diagnóstico:** a primeira versão pedia ao modelo a lista do que já foi tentado. No eval ele a ignorou 3 vezes em 3, então a lista passou a sair do histórico, em código, e os cenários novos foram para 6/6.
 - **Funcionário simulado (28/10):** pass^1 0,72 → 0,93 → 0,93 e pass^3 0,50 → 0,80 → 0,80 nas três rodadas (a terceira com uma persona repetida depois de corrigida). O `outlook-direto` foi de 2/3 para 3/3.
 - **Outras provas:** busca híbrida 84% → 94% com 9 artigos; com os 5 artigos de diagnóstico (14 no total), 100% no conjunto separado e no de diagnóstico e 85% na calibração; com o avaliador de relevância, 78/81 nos quatro conjuntos, 0 com artigo errado e 18/18 nas perguntas de pedido × defeito × fora da central ([BUSCA](docs/validacao/BUSCA.md)); tempo real ~0,4 s × ~1,6 s ([TEMPO-REAL](docs/validacao/TEMPO-REAL.md)); red-team 21/21; telemetria e SSO ([OBSERVABILIDADE-E-SSO](docs/validacao/OBSERVABILIDADE-E-SSO.md)).
@@ -382,26 +384,29 @@ No primeiro ciclo, as specs (`docs/specs/`) foram consolidadas a partir do PRD j
 
 ## Vídeo de demonstração
 
-[![Vídeo de demonstração do Nexo Assist (5:28)](docs/demo/poster.png)](https://skarl007.github.io/nexo-assist/#video)
+[![Vídeo de demonstração do Nexo Assist (4:33)](docs/demo/poster.png)](https://skarl007.github.io/nexo-assist/#video)
 
 [Assistir no navegador](https://skarl007.github.io/nexo-assist/#video) (o GitHub não toca o mp4 do repositório na página) · [baixar o mp4](docs/demo/nexo-assist-demo.mp4)
 
 <details>
 <summary>Capítulos e como o vídeo foi feito</summary>
 
-5:28, com narração em português (voz sintética do Fish Audio), música original de fundo e efeitos sonoros. As partes do app são gravações reais de 28/10 com o Gemini: trechos longos aparecem acelerados no máximo 2× e sinalizados ("acelerado N×"), e as esperas pelo modelo foram cortadas, com um aviso do tempo real ("aguardando o modelo · N s"). Diagramas e números são animações, atualizadas em 30/10, e cada número mostra a fonte no repositório. A música é original, gerada por código para este vídeo. Efeitos sonoros: Pixabay (licença de conteúdo do Pixabay). O volume de cada recurso foi validado por script: master a -16 LUFS, trilha 17 dB abaixo da voz durante a fala e efeitos pelo menos 6 dB abaixo dela.
+4:33, em 1920×1080 a 60 fps, com narração em português (voz sintética do Fish Audio), música original de fundo e efeitos sonoros. É um dia de suporte de ponta a ponta, com perguntas escritas do jeito que chegam ao service desk ("meu monitor nao liga, ja liguei e nada"). As partes do app são gravações reais de 02/11 com o DeepSeek-V4-Flash; a foto do monitor é real, enviada pelo autor, sem dados pessoais. Trechos longos aparecem acelerados no máximo 1,25× e sinalizados, e as esperas pelo modelo foram cortadas, com um aviso do tempo real ("aguardando o modelo · N s"). As decisões e os números são animações, e cada número mostra a fonte no repositório. Efeitos sonoros: Pixabay (licença de conteúdo do Pixabay). Master a -16 LUFS, validado por script.
 
-- 0:00 Abertura: o problema, a solução e o que há de novo
-- 0:25 1. O funcionário resolve sozinho: central de ajuda, "Isso resolveu?" e o painel "por quê?"
-- 1:01 2. Prazo em risco e incidente em massa
-- 1:53 3. Console do analista: relatório, sugestão de resposta, tempo real (SSE) e indicadores
-- 2:56 4. Busca com avaliador de relevância: 56 → 78 de 81, sem artigo errado
-- 3:28 5. Qualidade: testes, evals, funcionário simulado (pass^k) e red team
-- 4:10 6. Arquitetura
-- 4:41 7. Entrega: imagem Docker, CircleCI e Komodo (fluxo configurado, em diagrama)
-- 5:16 8. Os números
+- 0:00 Abertura
+- 0:06 Gancho com a foto do monitor apagado
+- 0:25 O problema
+- 0:40 Ela resolve sozinha, com foto e verificações
+- 1:18 Chamado do ponto e incidente em massa
+- 2:04 Console do analista, relatório, foto e tempo real
+- 2:48 Por dentro do turno e indicadores
+- 3:13 Quatro decisões de arquitetura
+- 4:13 Provas
+- 4:25 Encerramento e links
 
-O vídeo mostra os números da tarde de 28/10. Depois dele, o `outlook-direto` e as três falhas da rodada 3 foram corrigidos em código; o CircleCI, o Docker Hub e o Komodo, que no vídeo aparecem como fluxo configurado, passaram a rodar de verdade em 29/10; e entraram a confirmação só com frase explícita, o complemento só no chamado do mesmo assunto e o espaço isolado por visitante na demo. Os números atuais estão neste README e em [SIMULACAO](docs/validacao/SIMULACAO.md).
+Os números exibidos no vídeo vêm das medições de 02/11. Na rodada de 03/11, o agente passou em 35 dos 36 cenários.
+
+Na gravação apareceram três pontos a melhorar, registrados como próximos passos: o botão "Já estava assim" é ambíguo numa verificação de sim ou não; o chamado do ponto levou seis turnos de perguntas; e o resumo da transferência, escrito pelo modelo, incluiu um detalhe que a funcionária não disse.
 
 </details>
 
@@ -412,5 +417,7 @@ O vídeo mostra os números da tarde de 28/10. Depois dele, o `outlook-direto` e
 - [`docs/validacao/`](docs/validacao): provas de eficácia, com método, números e limites (busca, tempo real, red-team, simulação, telemetria e SSO).
 - [`docs/pesquisa/FRONTEIRA.md`](docs/pesquisa/FRONTEIRA.md): o que ServiceNow, Zendesk, Intercom e Atlassian fazem com IA no service desk (2025–2026) e o que virou código aqui.
 - [`docs/benchmark/`](docs/benchmark): benchmark de modelos.
+- [`docs/CUSTOS.md`](docs/CUSTOS.md): quanto custa cada atendimento, o que cada troca de modelo economizou e a comparação com o custo de um chamado atendido por pessoa.
+- [`docs/ESCALA.md`](docs/ESCALA.md): o que aguenta hoje, onde trava primeiro e o que mudar em cada degrau de uso.
 - [`docs/PROCESSO-IA.md`](docs/PROCESSO-IA.md): como IA, MCPs, skills, TDD e SDD foram usados.
 - [`AGENTS.md`](AGENTS.md) e [`.claude/skills/`](.claude/skills): convenções e roteiros para quem for alterar o projeto.

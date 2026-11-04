@@ -1,6 +1,14 @@
 # Provas de eficácia
 
-Cada melhoria grande tem uma pergunta, um método que outra pessoa pode repetir, os números e os limites. Os testes de unidade e E2E rodam sem LLM. O que depende do modelo roda com o Gemini 3.5 Flash de verdade.
+Cada melhoria grande tem uma pergunta, um método que outra pessoa pode repetir, os números e os limites. Os testes de unidade e E2E rodam sem LLM. Os evals usam o modelo identificado em cada rodada.
+
+## Revisão de 3 de novembro
+
+- **Aplicação.** O `npm run verify` passou em uma instalação limpa. Foram 563 testes unitários em 77 arquivos, 48 E2E e um E2E de isolamento entre visitantes. A suíte executou o build de produção e aplicou as migrações em bancos SQLite de teste.
+- **Anexo real.** Na prévia local, uma funcionária enviou a foto do monitor. O agente registrou a leitura da imagem, consultou a central e pediu que ela conferisse o cabo de energia. Nos E2E, a funcionária e o analista autorizado viram a foto, outra funcionária recebeu 404 e um SVG disfarçado de PNG foi recusado.
+- **Modelo real.** O DeepSeek-V4-Flash pela DeepInfra passou em **35/36**, incluindo os **8/8** cenários de ataque. A rodada consumiu 735.119 tokens e custou US$ 0,07. Na falha, a funcionária relatou erro 500 no sistema de ponto e pediu a abertura de um chamado. Os botões sobre alternativa de trabalho já tinham sido oferecidos no turno. A ferramenta devolveu `draftReady: false`, e o rascunho de impacto em equipe esperado pelo teste não apareceu. A rodada de 02/11, usada no vídeo, havia passado em 36/36.
+- **Provedores.** A configuração local com Gemini recebeu HTTP 402 por falta de crédito. Na rodada DeepInfra, houve timeouts dos embeddings e do avaliador de relevância. Os provedores de reserva dos embeddings devolveram HTTP 403 no OpenRouter e 402 no Gemini. A demo pública respondeu à consulta de chamados e à pergunta sobre horário do service desk.
+
 
 | O que | Pergunta | Resultado | Como repetir |
 |---|---|---|---|
