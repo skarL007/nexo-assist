@@ -8,7 +8,7 @@ Cada resposta do agent mostra **o que ele entendeu, o que fez e por quê**: pass
 
 **Demo pública:** https://nexo-assist-puce.vercel.app. Na tela de login, entre como **Ana · funcionária** ou **Rafael · analista** (um clique, dados fictícios, qualquer senha). Cada navegador recebe um **espaço próprio**, com uma cópia dos dados de exemplo: o que você fizer não aparece para outro avaliador. Para controlar o custo, a demo aceita até **100 mensagens por dia**, somando todos os visitantes. Depois disso, o chat avisa que o limite de hoje acabou.
 
-**Vídeo (4:33):** [assistir no navegador](https://skarl007.github.io/nexo-assist/#video) · [estudo de caso](https://skarl007.github.io/nexo-assist/)
+**Vídeo (4:49):** [assistir no navegador](https://skarl007.github.io/nexo-assist/#video) · [estudo de caso](https://skarl007.github.io/nexo-assist/)
 
 **Stack:** TypeScript estrito · Next.js 16 (App Router) · Mastra (agent) · DeepSeek-V4-Flash via DeepInfra (GPT-6 Luna de 30/10 a 02/11, Gemini 3.5 Flash antes) · Drizzle + libSQL (SQLite local, Turso no deploy) · Redux Toolkit + RTK Query · Zod · shadcn/ui + Tailwind · Vitest · Playwright.
 
@@ -384,25 +384,30 @@ No primeiro ciclo, as specs (`docs/specs/`) foram consolidadas a partir do PRD j
 
 ## Vídeo de demonstração
 
-[![Vídeo de demonstração do Nexo Assist (4:33)](docs/demo/poster.png)](https://skarl007.github.io/nexo-assist/#video)
+[![Vídeo de demonstração do Nexo Assist (4:49)](docs/demo/poster.png)](https://skarl007.github.io/nexo-assist/#video)
 
 [Assistir no navegador](https://skarl007.github.io/nexo-assist/#video) (o GitHub não toca o mp4 do repositório na página) · [baixar o mp4](docs/demo/nexo-assist-demo.mp4)
 
 <details>
 <summary>Capítulos e como o vídeo foi feito</summary>
 
-4:33, em 1920×1080 a 60 fps, com narração em português (voz sintética do Fish Audio), música original de fundo e efeitos sonoros. É um dia de suporte de ponta a ponta, com perguntas escritas do jeito que chegam ao service desk ("meu monitor nao liga, ja liguei e nada"). As partes do app são gravações reais de 02/11 com o DeepSeek-V4-Flash; a foto do monitor é real, enviada pelo autor, sem dados pessoais. Trechos longos aparecem acelerados no máximo 1,25× e sinalizados, e as esperas pelo modelo foram cortadas, com um aviso do tempo real ("aguardando o modelo · N s"). As decisões e os números são animações, e cada número mostra a fonte no repositório. Efeitos sonoros: Pixabay (licença de conteúdo do Pixabay). Master a -16 LUFS, validado por script.
+4:49, em 1920×1080 a 60 fps, com narração em português (voz sintética do Fish Audio) e trilha original de piano elétrico, baixo e acordes suaves. A música entra depois de dois segundos de silêncio e baixa durante as falas. A gravação do monitor e do sistema de ponto é de 02/11. O caso físico da impressora foi testado na demo local em 03/11. A cena 3D acompanha a foto, o modelo de visão e o texto recebido pelo agente.
 
 - 0:00 Abertura
-- 0:06 Gancho com a foto do monitor apagado
+- 0:06 Foto do monitor apagado
 - 0:25 O problema
-- 0:40 Ela resolve sozinha, com foto e verificações
-- 1:18 Chamado do ponto e incidente em massa
-- 2:04 Console do analista, relatório, foto e tempo real
-- 2:48 Por dentro do turno e indicadores
-- 3:13 Quatro decisões de arquitetura
-- 4:13 Provas
-- 4:25 Encerramento e links
+- 0:40 Verificações do monitor e cabo HDMI
+- 1:18 Impressora com papel preso
+- 1:34 Chamado do ponto e incidente em massa
+- 2:20 Console do analista, relatório, foto e tempo real
+- 3:04 Por dentro do turno e indicadores
+- 3:29 Quatro decisões de arquitetura
+- 4:29 Provas
+- 4:41 Encerramento e links
+
+**Caso físico da impressora.** Ana anexou uma foto de uma impressora aberta. O Nexo reconheceu o papel amassado, perguntou sobre o painel e sugeriu conferir a energia. A verificação do cabo foi genérica para o atolamento visível. Quando Ana pediu ajuda humana, a conversa passou para `waiting_analyst`. O teste comprova a leitura e a transferência. O reparo ficou em aberto. [Resposta capturada no chat](docs/demo/impressora-atendimento.webp)
+
+A foto redimensionada é *Freeing up a paper jam*, de gratuit / FreeImagesLive. [Fotografia original](https://freeimageslive.co.uk/free_stock_image/printer-problem-jpg) · [licença CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)
 
 Os números exibidos no vídeo vêm das medições de 02/11. Na rodada de 03/11, o agente passou em 35 dos 36 cenários.
 
