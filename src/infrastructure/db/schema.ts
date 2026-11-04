@@ -3,11 +3,12 @@
  * Colunas JSON guardam estruturas que só são lidas inteiras (cards, trace).
  */
 import { sql } from "drizzle-orm";
-import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { blob, index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import type { ConversationStatus, HandoffReason } from "@/domain/conversation";
 import type { DiagnosticCheck } from "@/domain/diagnostics";
 import type { EmployeeRole } from "@/domain/employee";
 import type { SuggestionOutcome } from "@/domain/reply-suggestion";
+import type { ScreenshotInfo } from "@/domain/screenshot";
 import type { Card, DraftKind, DraftStatus, MessageRole, NewTicketFields, TicketUpdateFields, TurnTrace } from "@/domain/message";
 import type { Category, Impact, Priority, TicketStatus, TicketType } from "@/domain/ticket";
 
@@ -92,8 +93,17 @@ export const messages = sqliteTable("messages", {
   text: text("text").notNull(),
   cards: text("cards", { mode: "json" }).$type<Card[]>().notNull(),
   trace: text("trace", { mode: "json" }).$type<TurnTrace>(),
+  /** Captura de tela anexada (tipo e descrição do modelo de visão); a imagem fica em message_screenshots. */
+  screenshot: text("screenshot", { mode: "json" }).$type<ScreenshotInfo>(),
   createdAt: timestamp("created_at").notNull(),
 }, (t) => [index("messages_conversation_idx").on(t.conversationId, t.createdAt), index("messages_role_created_idx").on(t.role, t.createdAt)]);
+
+/** Bytes da captura, à parte para a lista de mensagens não carregar imagens. Servida só a quem vê a conversa. */
+export const messageScreenshots = sqliteTable("message_screenshots", {
+  messageId: text("message_id").primaryKey().references(() => messages.id),
+  mime: text("mime").notNull(),
+  data: blob("data", { mode: "buffer" }).notNull(),
+});
 
 /** "Isso resolveu?": uma avaliação por resposta do agent (avaliar de novo troca). */
 export const messageFeedback = sqliteTable("message_feedback", {

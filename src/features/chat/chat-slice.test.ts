@@ -19,6 +19,28 @@ describe("falha ao enviar não apaga o que o funcionário escreveu", () => {
   });
 });
 
+describe("envio com imagem anexada", () => {
+  const image = { mime: "image/jpeg", data: "AAAA", previewUrl: "blob:monitor" };
+  const withImage = chatReducer(undefined, sendMessage.pending("req", { text: "o monitor não liga", image }));
+
+  it("mostra o texto e a miniatura antes de o servidor confirmar", () => {
+    expect(withImage.optimisticText).toBe("o monitor não liga");
+    expect(withImage.optimisticImage).toBe("blob:monitor");
+  });
+
+  it("só a imagem: o texto otimista é o mesmo que o servidor grava", () => {
+    const state = chatReducer(undefined, sendMessage.pending("req", { text: "", image }));
+    expect(state.optimisticText).toBe("Enviei uma imagem.");
+  });
+
+  it("falha devolve o texto e a imagem ao campo", () => {
+    const state = chatReducer(withImage, sendMessage.rejected(new Error("A imagem passou de 1 MB."), "req", { text: "o monitor não liga", image }));
+    expect(state.unsentText).toBe("o monitor não liga");
+    expect(state.unsentImage).toEqual(image);
+    expect(state.optimisticImage).toBeNull();
+  });
+});
+
 describe('"Isso resolveu?"', () => {
   const loaded = chatReducer(undefined, {
     type: "chat/load/fulfilled",

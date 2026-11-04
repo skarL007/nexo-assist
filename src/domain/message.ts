@@ -7,6 +7,7 @@
  */
 import type { Frustration } from "./frustration";
 import type { HandoffReason } from "./conversation";
+import type { ScreenshotInfo } from "./screenshot";
 import type { Urgency } from "./priority";
 import type { Category, Impact, Priority, TicketStatus, TicketType } from "./ticket";
 
@@ -159,5 +160,7 @@ export interface ChatMessage {
   text: string;
   cards: Card[];
   trace: TurnTrace | null;
+  /** Captura de tela anexada (mensagens do funcionário). Mensagens antigas não têm. */
+  screenshot?: ScreenshotInfo | null;
   createdAt: string;
 }

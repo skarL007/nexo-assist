@@ -55,9 +55,19 @@ export type ChatStreamEvent =
   | { type: "done"; conversation: ConversationView }
   | { type: "error"; message: string };
 
-export const sendMessageSchema = z.object({
-  text: z.string().trim().min(1, "Escreva uma mensagem").max(2000),
+/** Imagem anexada (captura de tela ou foto), em base64. Formato e tamanho reais são conferidos no domínio. */
+export const imageAttachmentSchema = z.strictObject({
+  mime: z.string().max(40),
+  // 1 MB decodificado ≈ 1,34 milhão de caracteres em base64.
+  data: z.string().max(1_400_000, "A imagem passou de 1 MB.").regex(/^[A-Za-z0-9+/]+={0,2}$/, "Imagem inválida."),
 });
+
+export const sendMessageSchema = z
+  .object({
+    text: z.string().trim().max(2000).default(""),
+    image: imageAttachmentSchema.optional(),
+  })
+  .refine((body) => body.text.length > 0 || body.image, { message: "Escreva uma mensagem" });
 
 const newTicketEditSchema = z
   .object({

@@ -17,6 +17,7 @@ import { demoScopeOf } from "@/domain/demo";
 import { agentCanReply, agentReplyStillValid, EMPLOYEE_MESSAGES_PER_DAY, EMPLOYEE_MESSAGES_PER_HOUR } from "@/domain/conversation";
 import type { Employee } from "@/domain/employee";
 import { DomainError } from "@/domain/errors";
+import { IMAGE_ONLY_TEXT } from "@/domain/screenshot";
 import type { ToolCallLog, TurnTrace } from "@/domain/message";
 import { createServices, type Services } from "@/infrastructure/container";
 import { conversationView } from "@/server/views";
@@ -36,7 +37,12 @@ const MAX_OUTPUT_TOKENS = 800;
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
 
-export async function* runAgentTurn(employee: Employee, text: string, abortSignal?: AbortSignal): AsyncGenerator<ChatStreamEvent> {
+export async function* runAgentTurn(
+  employee: Employee,
+  text: string,
+  abortSignal?: AbortSignal,
+  image?: { mime: string; bytes: Uint8Array },
+): AsyncGenerator<ChatStreamEvent> {
   const startedAt = new Date();
   const recorder = new TurnRecorder();
   const services = createServices({
@@ -55,7 +61,15 @@ export async function* runAgentTurn(employee: Employee, text: string, abortSigna
     throw new DomainError("agent_unavailable", missingKeyMessage(missingKey, production));
   }
 
-  const employeeMessage = await services.messages.add({ conversationId: conversation.id, role: "employee", text });
+  // Imagem conferida antes de gravar (formato pelos bytes, tamanho, 5 por conversa): recusada, nada fica salvo.
+  const imageMime = image ? await services.screenshots.accept(conversation.id, image) : null;
+  const employeeMessage = await services.messages.add({
+    conversationId: conversation.id,
+    role: "employee",
+    text: text || IMAGE_ONLY_TEXT,
+    screenshot: imageMime ? { mime: imageMime, status: "pending", description: null } : null,
+  });
+  if (image && imageMime) await services.screenshots.save(employeeMessage.id, imageMime, image.bytes);
   await assertWithinPersonalLimits(services, employee.id, conversation.id, { saved: true });
   yield { type: "employee_message", message: employeeMessage };
 
@@ -67,6 +81,16 @@ export async function* runAgentTurn(employee: Employee, text: string, abortSigna
 
   // Tetos globais conferidos DEPOIS de gravar e ANTES do modelo: pedidos simultâneos enxergam uns aos outros.
   await assertWithinBudget(services);
+
+  // A imagem é lida só agora: com um analista atendendo, ele a vê e o modelo de visão não é chamado.
+  if (image && imageMime) {
+    const read = await services.screenshots.read(employeeMessage.id, imageMime, image.bytes);
+    const where = [read.model, `${read.latencyMs} ms`].filter(Boolean).join(" · ");
+    if (read.status === "read") recorder.step("Leu a imagem anexada", `${read.description}
+(${where})`);
+    else recorder.step("Não consegui ler a imagem anexada", `${read.error ?? "falha na leitura"} (${where})`, false);
+    yield* recorder.drain();
+  }
 
   try {
     yield* replyWithAgent({ employee, employeeText: text, conversationId: conversation.id, startedAt, services, recorder }, abortSignal);

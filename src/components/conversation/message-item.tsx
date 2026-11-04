@@ -32,10 +32,12 @@ export function MessageItem({ message, viewer, actions, draftStatuses, feedback 
     case "employee":
       return viewer === "employee" ? (
         <Bubble side="right" className="bg-navy text-navy-foreground" time={time}>
+          <AttachedImage message={message} viewer={viewer} />
           {message.text}
         </Bubble>
       ) : (
         <Bubble side="left" className="border bg-surface" time={time}>
+          <AttachedImage message={message} viewer={viewer} />
           {message.text}
         </Bubble>
       );
@@ -119,6 +121,31 @@ export function AgentReply({
         <MessageCards cards={cards} actions={actions} draftStatuses={draftStatuses} />
       </div>
       {feedback && !working && <ReplyFeedback {...feedback} />}
+    </div>
+  );
+}
+
+/**
+ * Imagem anexada pelo funcionário, servida pela rota que confere quem pode ver.
+ * O analista vê também a leitura automática, que foi o que o agent recebeu no lugar da imagem.
+ */
+function AttachedImage({ message, viewer }: { message: ChatMessage; viewer: Viewer }) {
+  if (!message.screenshot) return null;
+  const src = `/api/chat/screenshots/${encodeURIComponent(message.id)}`;
+  return (
+    <div className="mb-2 space-y-1.5">
+      <a href={src} target="_blank" rel="noreferrer" title="Abrir a imagem em tamanho real">
+        {/* eslint-disable-next-line @next/next/no-img-element -- imagem privada, servida com sessão */}
+        <img src={src} alt="Imagem anexada pelo funcionário" className="max-h-48 rounded-lg" loading="lazy" />
+      </a>
+      {viewer === "analyst" && message.screenshot.status === "read" && message.screenshot.description && (
+        <p className="max-w-md rounded-md bg-muted px-2 py-1.5 text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">Leitura automática:</span> {message.screenshot.description}
+        </p>
+      )}
+      {viewer === "analyst" && message.screenshot.status === "failed" && (
+        <p className="text-xs text-muted-foreground">Leitura automática falhou: o agent pediu o erro por texto.</p>
+      )}
     </div>
   );
 }

@@ -1,8 +1,9 @@
 import type { FrustrationSignal } from "@/domain/frustration";
 import { randomUUID } from "node:crypto";
-import { and, asc, count, desc, eq, gte, inArray, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, isNotNull, sql } from "drizzle-orm";
 import type { MessageRepository, NewMessage } from "@/application/ports";
 import type { ChatMessage, MessageRole } from "@/domain/message";
+import type { ScreenshotInfo } from "@/domain/screenshot";
 import type { Database } from "../db/client";
 import { conversations, messages } from "../db/schema";
 
@@ -26,6 +27,7 @@ export class DrizzleMessageRepository implements MessageRepository {
       text: message.text,
       cards: message.cards ?? [],
       trace: message.trace ?? null,
+      screenshot: message.screenshot ?? null,
       createdAt: new Date(),
     };
     await this.db.insert(messages).values(row);
@@ -35,6 +37,18 @@ export class DrizzleMessageRepository implements MessageRepository {
   async findById(id: string): Promise<ChatMessage | null> {
     const row = await this.db.query.messages.findFirst({ where: eq(messages.id, id) });
     return row ? toDomain(row) : null;
+  }
+
+  async countScreenshots(conversationId: string): Promise<number> {
+    const [row] = await this.db
+      .select({ n: count() })
+      .from(messages)
+      .where(and(eq(messages.conversationId, conversationId), isNotNull(messages.screenshot)));
+    return row?.n ?? 0;
+  }
+
+  async updateScreenshot(messageId: string, screenshot: ScreenshotInfo): Promise<void> {
+    await this.db.update(messages).set({ screenshot }).where(eq(messages.id, messageId));
   }
 
   async listByConversation(conversationId: string): Promise<ChatMessage[]> {
@@ -76,7 +90,7 @@ export class DrizzleMessageRepository implements MessageRepository {
       })
       .from(messages)
       .where(inArray(sql`rowid`, lastRowIds));
-    return new Map(rows.map((row) => [row.conversationId, toDomain({ ...row, trace: null })]));
+    return new Map(rows.map((row) => [row.conversationId, toDomain({ ...row, trace: null, screenshot: null })]));
   }
 
   async lastFrustrations(conversationIds: string[]): Promise<Map<string, FrustrationSignal>> {

@@ -19,6 +19,7 @@ export async function cleanupDemoWorkspaces(database:Database,now=new Date()) {
     await tx.delete(schema.replySuggestions).where(inArray(schema.replySuggestions.conversationId,convs));
     await tx.delete(schema.messageFeedback).where(inArray(schema.messageFeedback.employeeId,people));
     await tx.delete(schema.drafts).where(inArray(schema.drafts.employeeId,people));
+    await tx.delete(schema.messageScreenshots).where(inArray(schema.messageScreenshots.messageId,tx.select({id:schema.messages.id}).from(schema.messages).where(inArray(schema.messages.conversationId,convs))));
     await tx.delete(schema.messages).where(inArray(schema.messages.conversationId,convs));
     await tx.delete(schema.conversations).where(inArray(schema.conversations.employeeId,people));
     await tx.delete(schema.ticketComments).where(inArray(schema.ticketComments.ticketCode,tickets));

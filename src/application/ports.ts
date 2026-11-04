@@ -7,6 +7,7 @@ import type { Conversation } from "@/domain/conversation";
 import type { Employee } from "@/domain/employee";
 import type { SuggestionOutcome } from "@/domain/reply-suggestion";
 import type { Article } from "@/domain/knowledge";
+import type { ScreenshotInfo, ScreenshotMime } from "@/domain/screenshot";
 import type { Card, ChatMessage, DraftKind, DraftStatus, MessageRole, NewTicketFields, TicketUpdateFields, TurnTrace } from "@/domain/message";
 import type { Priority, Ticket, TicketStatus, TicketType } from "@/domain/ticket";
 
@@ -33,6 +34,18 @@ export interface RelevanceVerdict {
 export interface RelevanceJudge {
   readonly model: string;
   judge(query: string, candidates: Article[]): Promise<RelevanceVerdict>;
+}
+
+/** Descreve uma captura de tela (modelo de visão). O custo vem medido: o livro-caixa registra. */
+export interface ImageDescriber {
+  readonly model: string;
+  describe(mime: ScreenshotMime, bytes: Uint8Array): Promise<{ text: string; costUsd: number }>;
+}
+
+/** Bytes das capturas, à parte das mensagens. */
+export interface ScreenshotStore {
+  put(messageId: string, mime: ScreenshotMime, bytes: Uint8Array): Promise<void>;
+  get(messageId: string): Promise<{ mime: ScreenshotMime; bytes: Uint8Array } | null>;
 }
 
 /** Transforma texto em vetores (embeddings). "query" e "document" pedem tarefas diferentes ao modelo. */
@@ -63,6 +76,7 @@ export interface NewMessage {
   text: string;
   cards?: Card[];
   trace?: TurnTrace | null;
+  screenshot?: ScreenshotInfo | null;
 }
 
 export interface ConversationRepository {
@@ -89,6 +103,9 @@ export interface MessageRepository {
   /** Frustração do último entendimento do agent em cada conversa (fila do console). */
   lastFrustrations(conversationIds: string[]): Promise<Map<string, FrustrationSignal>>;
   countByRole(conversationId: string, role: MessageRole): Promise<number>;
+  /** Mensagens com captura nesta conversa (limite por conversa). */
+  countScreenshots(conversationId: string): Promise<number>;
+  updateScreenshot(messageId: string, screenshot: ScreenshotInfo): Promise<void>;
   /** Mensagens do funcionário em todas as conversas dele desde `since` (limite por pessoa). */
   countByEmployeeSince(employeeId: string, since: Date): Promise<number>;
 }

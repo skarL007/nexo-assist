@@ -32,6 +32,9 @@ import { DrizzleTicketRepository } from "./repositories/ticket-repository";
 import { OtlpTraceExporter, telemetryConfig } from "./telemetry/otlp-exporter";
 import { CompositeTelemetry, processMetrics } from "./telemetry/prometheus";
 import { SpendLedger } from "@/application/spend-ledger";
+import { ScreenshotService } from "@/application/screenshot-service";
+import { VisionDescriber } from "./ai/vision-describer";
+import { DrizzleScreenshotStore } from "./repositories/screenshot-store";
 import { DrizzleSpendStore, FileSpendStore } from "./repositories/spend-store";
 
 export interface ServiceOptions {
@@ -92,12 +95,16 @@ export function createServices(options: ServiceOptions = {}) {
     dailyUsd: config.LLM_DAILY_BUDGET_USD,
     totalUsd: config.LLM_TOTAL_BUDGET_USD,
   });
+  // Leitura de imagens: só pela DeepInfra por enquanto (o único modelo de visão medido).
+  const visionOnDeepInfra = config.VISION_MODEL.startsWith("deepinfra/") && config.DEEPINFRA_API_KEY;
+  const describer = visionOnDeepInfra ? new VisionDescriber(config.VISION_MODEL.slice("deepinfra/".length), config.DEEPINFRA_API_KEY!, DEEPINFRA) : null;
+  const screenshots = new ScreenshotService(messages, conversations, new DrizzleScreenshotStore(database), describer, spend);
   const changes = new DrizzleChangeFeed(database, options.demoScope);
   // Prometheus sempre (memória do processo, lida em /api/metrics); OTLP/Langfuse só configurado.
   const telemetrySettings = telemetryConfig(config);
   const telemetry = new CompositeTelemetry([processMetrics(), ...(telemetrySettings ? [new OtlpTraceExporter(telemetrySettings)] : [])]);
 
-  return { employees, articles, knowledge, messages, budget, spend, tickets, conversations, drafts, feedback, insights, replySuggestions, changes, telemetry };
+  return { employees, articles, knowledge, messages, budget, spend, tickets, conversations, drafts, feedback, insights, replySuggestions, screenshots, changes, telemetry };
 }
 
 export type Services = ReturnType<typeof createServices>;

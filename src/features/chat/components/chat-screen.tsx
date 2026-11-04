@@ -20,6 +20,7 @@ import {
   sendMessage,
   startNewConversation,
   unsentRestored,
+  type PendingImage,
 } from "../chat-slice";
 import { Composer, type ComposerHandle } from "./composer";
 import { SlaBanner } from "./sla-banner";
@@ -29,7 +30,7 @@ const POLL_MS = 4000;
 
 export function ChatScreen({ firstName }: { firstName: string }) {
   const dispatch = useAppDispatch();
-  const { conversation, live, optimisticText, sending, error, unsentText } = useAppSelector((state) => state.chat);
+  const { conversation, live, optimisticText, optimisticImage, sending, error, unsentText, unsentImage } = useAppSelector((state) => state.chat);
   const composer = useRef<ComposerHandle>(null);
   const bottom = useRef<HTMLDivElement>(null);
 
@@ -37,14 +38,15 @@ export function ChatScreen({ firstName }: { firstName: string }) {
     void dispatch(loadConversation());
   }, [dispatch]);
 
-  // Enquanto um analista cuida da conversa, as respostas dele chegam pelo stream (tempo real);
-  // se o stream cair, por polling.
+  // Com uma conversa aberta, o stream fica ligado: um analista que assume (ou responde) aparece na hora,
+  // mesmo quando a conversa estava com o agent. Se o stream cair, polling só enquanto um analista atende.
   const paused = conversation !== null && conversation.status !== "with_agent";
+  const watching = conversation?.id != null;
   const refresh = useCallback(async () => {
     const fresh = await apiFetch<ConversationView>("/api/chat").catch(() => null);
     if (fresh) dispatch(conversationRefreshed(fresh));
   }, [dispatch]);
-  const streaming = useLiveUpdates("/api/chat/stream", () => void refresh(), paused) === "live";
+  const streaming = useLiveUpdates("/api/chat/stream", () => void refresh(), watching) === "live";
   useEffect(() => {
     if (!paused || streaming) return;
     const timer = setInterval(() => void refresh(), POLL_MS);
@@ -54,16 +56,19 @@ export function ChatScreen({ firstName }: { firstName: string }) {
   // Envio que falhou antes de gravar: o texto volta para o campo, pronto para tentar de novo.
   useEffect(() => {
     if (unsentText === null) return;
-    composer.current?.prefill(unsentText);
+    composer.current?.prefill(unsentText, unsentImage);
     dispatch(unsentRestored());
-  }, [unsentText, dispatch]);
+  }, [unsentText, unsentImage, dispatch]);
 
   const messageCount = conversation?.messages.length ?? 0;
   useEffect(() => {
     bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messageCount, live?.text, live?.steps.length, live?.cards.length, optimisticText, error]);
 
-  const send = useCallback((text: string) => void dispatch(sendMessage(text)), [dispatch]);
+  const send = useCallback(
+    (text: string, image?: PendingImage) => void dispatch(sendMessage(image ? { text, image } : text)),
+    [dispatch],
+  );
   const shortcutDraftId = useMemo(() => latestPendingDraftId(conversation), [conversation]);
 
   const actions: CardActions = useMemo(
@@ -143,6 +148,10 @@ export function ChatScreen({ firstName }: { firstName: string }) {
 
           {optimisticText && (
             <div className="ml-auto max-w-[75%] rounded-2xl rounded-tr-sm bg-navy px-4 py-2.5 text-sm text-navy-foreground opacity-70">
+              {optimisticImage && (
+                // eslint-disable-next-line @next/next/no-img-element -- prévia local (blob:)
+                <img src={optimisticImage} alt="Imagem anexada" className="mb-2 max-h-48 rounded-lg" />
+              )}
               {optimisticText}
             </div>
           )}

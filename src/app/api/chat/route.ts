@@ -20,7 +20,8 @@ export const GET = handle(async () => {
 
 export const POST = handle(async (request: Request) => {
   const employee = await requireUser("employee");
-  const { text } = await parseBody(request, sendMessageSchema);
+  const { text, image } = await parseBody(request, sendMessageSchema);
+  const attachment = image ? { mime: image.mime, bytes: new Uint8Array(Buffer.from(image.data, "base64")) } : undefined;
   const encoder = new TextEncoder();
 
   const body = new ReadableStream<Uint8Array>({
@@ -28,7 +29,7 @@ export const POST = handle(async (request: Request) => {
       const send = (event: ChatStreamEvent) => controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
       try {
         // Se o funcionário fechar a aba, o sinal cancela a chamada ao modelo (não gasta à toa).
-        for await (const event of runAgentTurn(employee, text, request.signal)) send(event);
+        for await (const event of runAgentTurn(employee, text, request.signal, attachment)) send(event);
       } catch (error) {
         if (!(error instanceof DomainError)) logError(error);
         send({

@@ -93,7 +93,7 @@ export async function syncArticles(db: Database): Promise<number> {
 /** Recria os dados de exemplo no banco recebido (apaga o que houver antes). */
 export async function seedDemoData(db: Database) {
   // Ordem importa por causa das chaves estrangeiras. Zerar usage_counters reinicia o teto total.
-  for (const table of [schema.replySuggestions, schema.articleEmbeddings, schema.messageFeedback, schema.usageCounters, schema.drafts, schema.messages, schema.conversations, schema.ticketComments, schema.tickets, schema.articles, schema.employees]) {
+  for (const table of [schema.replySuggestions, schema.articleEmbeddings, schema.messageFeedback, schema.usageCounters, schema.drafts, schema.messageScreenshots, schema.messages, schema.conversations, schema.ticketComments, schema.tickets, schema.articles, schema.employees]) {
     await db.delete(table);
   }
 

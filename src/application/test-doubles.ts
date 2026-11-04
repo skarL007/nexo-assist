@@ -3,6 +3,7 @@ import { DomainError } from "@/domain/errors";
 import { currentFrustration } from "@/domain/frustration";
 import type { Conversation } from "@/domain/conversation";
 import type { ChatMessage, DraftStatus, MessageRole } from "@/domain/message";
+import type { ScreenshotInfo } from "@/domain/screenshot";
 import type { Ticket, TicketType } from "@/domain/ticket";
 import type {
   Clock,
@@ -116,6 +117,7 @@ export class InMemoryMessageRepository implements MessageRepository {
       text: message.text,
       cards: message.cards ?? [],
       trace: message.trace ?? null,
+      screenshot: message.screenshot ?? null,
       createdAt: new Date().toISOString(),
     };
     this.items.push(saved);
@@ -123,6 +125,13 @@ export class InMemoryMessageRepository implements MessageRepository {
   }
   async findById(id: string) {
     return this.items.find((m) => m.id === id) ?? null;
+  }
+  async countScreenshots(conversationId: string) {
+    return this.items.filter((m) => m.conversationId === conversationId && m.screenshot).length;
+  }
+  async updateScreenshot(messageId: string, screenshot: ScreenshotInfo) {
+    const message = this.items.find((m) => m.id === messageId);
+    if (message) message.screenshot = screenshot;
   }
   async listByConversation(conversationId: string) {
     return this.items.filter((m) => m.conversationId === conversationId);

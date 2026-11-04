@@ -18,6 +18,8 @@ const schema = z.object({
   DEEPINFRA_API_KEY: z.string().optional(),
   /** Embeddings pela DeepInfra, 1º provedor da busca híbrida quando há a chave. "off" desliga. Outro modelo pede nova margem. */
   DEEPINFRA_EMBEDDING_MODEL: z.string().default("Qwen/Qwen3-Embedding-8B"),
+  /** Leitura de imagens anexadas (captura de tela ou foto), "deepinfra/<fornecedor>/<modelo>". "off" desliga. */
+  VISION_MODEL: z.string().default("deepinfra/mistralai/Mistral-Small-3.1-24B-Instruct-2503"),
   /** Teto de gasto com LLM por dia (UTC) e no total, em US$ (livro-caixa em usage_counters ou em SPEND_LEDGER_FILE). */
   LLM_DAILY_BUDGET_USD: z.coerce.number().positive().optional(),
   LLM_TOTAL_BUDGET_USD: z.coerce.number().positive().optional(),
