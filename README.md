@@ -391,7 +391,7 @@ No primeiro ciclo, as specs (`docs/specs/`) foram consolidadas a partir do PRD j
 <details>
 <summary>Capítulos e como o vídeo foi feito</summary>
 
-4:49, em 1920×1080 a 60 fps, com narração em português (voz sintética do Fish Audio) e trilha original de piano elétrico, baixo e acordes suaves. A música entra depois de dois segundos de silêncio e baixa durante as falas. A gravação do monitor e do sistema de ponto é de 02/11. O caso físico da impressora foi testado na demo local em 03/11. A cena 3D acompanha a foto, o modelo de visão e o texto recebido pelo agente.
+4:49, em 1920×1080 a 60 fps, com narração em português (voz Max do Fish Audio) e trilha original de piano elétrico, baixo e acordes suaves. A música entra depois de dois segundos de silêncio e baixa durante as falas. A gravação do monitor e do sistema de ponto é de 02/11. O caso físico da impressora foi testado na demo local em 03/11. A cena 3D acompanha a foto, o modelo de visão e o texto recebido pelo agente.
 
 - 0:00 Abertura
 - 0:06 Foto do monitor apagado
