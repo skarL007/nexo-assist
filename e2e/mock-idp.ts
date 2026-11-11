@@ -1,5 +1,5 @@
 /**
- * Provedor OpenID Connect falso, só para o E2E do SSO (porta 3200).
+ * Provedor OpenID Connect falso, só para o E2E do SSO (porta 3210; outra com E2E_IDP_PORT).
  * Faz o mínimo de um provedor de verdade: descoberta, tela de login, código de
  * uso único preso ao redirect, PKCE S256 conferido, segredo do cliente conferido,
  * id_token RS256 com nonce e JWKS. Se o app errar em algum passo, o fluxo quebra.
@@ -8,7 +8,8 @@ import { createHash, randomBytes } from "node:crypto";
 import { createServer } from "node:http";
 import { exportJWK, generateKeyPair, SignJWT } from "jose";
 
-const PORT = 3200;
+// 3200 é a porta padrão do Grafana Tempo; quem roda a pilha de observabilidade na máquina já a ocupa.
+const PORT = Number(process.env.E2E_IDP_PORT ?? 3210);
 const ISSUER = `http://localhost:${PORT}`;
 const CLIENT_ID = "nexo-e2e";
 const CLIENT_SECRET = "e2e-client-secret";
