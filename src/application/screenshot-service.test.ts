@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { Employee } from "@/domain/employee";
-import type { ScreenshotMime } from "@/domain/screenshot";
+import { SCREENSHOTS_PER_EMPLOYEE_PER_DAY, type ScreenshotMime } from "@/domain/screenshot";
 import { ConversationService } from "./conversation-service";
-import type { ImageDescriber, ScreenshotStore } from "./ports";
+import type { BudgetRepository, ImageDescriber, ScreenshotStore } from "./ports";
 import { ScreenshotService } from "./screenshot-service";
 import { SpendLedger, type SpendStore } from "./spend-ledger";
 import { fixedClock, InMemoryConversationRepository, InMemoryMessageRepository } from "./test-doubles";
@@ -40,21 +40,36 @@ class MemoryScreenshots implements ScreenshotStore {
   }
 }
 
-function setup(describer: ImageDescriber | null) {
+class MemoryBudget implements BudgetRepository {
+  counters = new Map<string, number>();
+  async reserve(key: string, limit: number) {
+    const value = this.counters.get(key) ?? 0;
+    if (value >= limit) return false;
+    this.counters.set(key, value + 1);
+    return true;
+  }
+  async release(key: string) {
+    const value = this.counters.get(key) ?? 0;
+    if (value > 0) this.counters.set(key, value - 1);
+  }
+}
+
+function setup(describer: ImageDescriber | null, dailyTotal = 100) {
   const messages = new InMemoryMessageRepository();
   const conversations = new ConversationService(new InMemoryConversationRepository(), messages, fixedClock("2026-11-02T13:00:00Z"));
   const spendStore = new MemorySpend();
   const spend = new SpendLedger(spendStore, { dailyUsd: 0.07 }, fixedClock("2026-11-02T13:00:00Z"));
   const store = new MemoryScreenshots();
-  const service = new ScreenshotService(messages, conversations, store, describer, spend);
-  return { messages, conversations, spendStore, store, service };
+  const budget = new MemoryBudget();
+  const service = new ScreenshotService(messages, conversations, store, describer, spend, budget, { dailyTotal }, fixedClock("2026-11-02T13:00:00Z"));
+  return { messages, conversations, spendStore, store, budget, service };
 }
 
 const reads = (text: string, costUsd = 0.0001): ImageDescriber => ({ model: "deepinfra/visao", describe: async () => ({ text, costUsd }) });
 
 async function sentWithImage(ctx: ReturnType<typeof setup>) {
   const { id } = await ctx.conversations.getOrStart("carla");
-  const mime = await ctx.service.accept(id, { mime: "image/png", bytes: png });
+  const mime = await ctx.service.accept(id, "carla", { mime: "image/png", bytes: png });
   const message = await ctx.messages.add({ conversationId: id, role: "employee", text: "o monitor não liga", screenshot: { mime, status: "pending", description: null } });
   await ctx.service.save(message.id, mime, png);
   return message;
@@ -76,15 +91,26 @@ describe("ScreenshotService: leitura da imagem pelo modelo de visão", () => {
     expect(ctx.spendStore.values.get("usd_micros")).toBe(100);
   });
 
-  it("falha do modelo não derruba o turno: status failed, sem descrição e sem custo", async () => {
-    const ctx = setup({ model: "deepinfra/visao", describe: async () => Promise.reject(new Error("503")) });
+  it("falha do modelo não derruba o turno: status failed, sem descrição, e o erro do provedor não vai para a conversa", async () => {
+    const ctx = setup({ model: "deepinfra/visao", describe: async () => Promise.reject(new Error("503 upstream https://api.interna/v1 token=abc")) });
     const message = await sentWithImage(ctx);
 
     const result = await ctx.service.read(message.id, "image/png", png);
 
     expect(result).toMatchObject({ status: "failed", description: null });
     expect(ctx.messages.items.find((m) => m.id === message.id)?.screenshot?.status).toBe("failed");
-    expect(ctx.spendStore.values.size).toBe(0);
+    // O texto do provedor fica só no registro do servidor (cause); o passo do agent mostra um motivo fixo.
+    expect(result.error).not.toContain("api.interna");
+    expect(result.cause).toContain("503");
+  });
+
+  it("falha do modelo entra no livro-caixa por estimativa: a chamada pode ter sido cobrada", async () => {
+    const ctx = setup({ model: "deepinfra/visao", describe: async () => Promise.reject(new Error("timeout")) });
+    const message = await sentWithImage(ctx);
+
+    await ctx.service.read(message.id, "image/png", png);
+
+    expect(ctx.spendStore.values.get("usd_micros")).toBeGreaterThan(0);
   });
 
   it("sem modelo de visão configurado (off), a leitura falha com o motivo", async () => {
@@ -113,7 +139,32 @@ describe("ScreenshotService: aceitar e servir a imagem", () => {
     for (let i = 0; i < 5; i++) {
       await ctx.messages.add({ conversationId: id, role: "employee", text: "foto", screenshot: { mime: "image/png", status: "read", description: "ok" } });
     }
-    await expect(ctx.service.accept(id, { mime: "image/png", bytes: png })).rejects.toMatchObject({ code: "message_limit" });
+    await expect(ctx.service.accept(id, "carla", { mime: "image/png", bytes: png })).rejects.toMatchObject({ code: "message_limit" });
+  });
+
+  it("a mesma pessoa não passa do teto de imagens do dia abrindo conversas novas", async () => {
+    const ctx = setup(reads("ok"));
+    for (let i = 0; i < SCREENSHOTS_PER_EMPLOYEE_PER_DAY; i++) {
+      await ctx.service.accept(`conversa-${i}`, "carla", { mime: "image/png", bytes: png });
+    }
+    await expect(ctx.service.accept("conversa-nova", "carla", { mime: "image/png", bytes: png })).rejects.toMatchObject({ code: "message_limit" });
+    // Outra pessoa continua podendo anexar.
+    await expect(ctx.service.accept("conversa-do-bruno", "bruno", { mime: "image/png", bytes: png })).resolves.toBe("image/png");
+  });
+
+  it("o teto global de imagens do dia recusa a seguinte, de qualquer pessoa, e devolve a vaga pessoal", async () => {
+    const ctx = setup(reads("ok"), 2);
+    await ctx.service.accept("c1", "carla", { mime: "image/png", bytes: png });
+    await ctx.service.accept("c2", "bruno", { mime: "image/png", bytes: png });
+
+    await expect(ctx.service.accept("c3", "ana", { mime: "image/png", bytes: png })).rejects.toMatchObject({ code: "daily_limit" });
+    expect(ctx.budget.counters.get("screenshots:ana:2026-11-02")).toBe(0);
+  });
+
+  it("imagem recusada pelo formato não gasta vaga de nenhum teto", async () => {
+    const ctx = setup(reads("ok"));
+    await expect(ctx.service.accept("c1", "carla", { mime: "image/png", bytes: Uint8Array.from([1, 2, 3]) })).rejects.toMatchObject({ code: "invalid_input" });
+    expect(ctx.budget.counters.size).toBe(0);
   });
 
   it("a dona da conversa e o analista veem a imagem; outro funcionário recebe not_found", async () => {

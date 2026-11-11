@@ -5,13 +5,15 @@
  */
 import type { Employee } from "@/domain/employee";
 import { DomainError } from "@/domain/errors";
-import { assertScreenshotQuota, checkScreenshot, type ScreenshotMime } from "@/domain/screenshot";
+import { assertScreenshotQuota, checkScreenshot, SCREENSHOTS_PER_EMPLOYEE_PER_DAY, type ScreenshotMime } from "@/domain/screenshot";
 import type { ConversationService } from "./conversation-service";
-import type { ImageDescriber, MessageRepository, ScreenshotStore } from "./ports";
+import type { BudgetRepository, Clock, ImageDescriber, MessageRepository, ScreenshotStore } from "./ports";
 import type { SpendLedger } from "./spend-ledger";
 
 /** Corte da descrição: o modelo foi pedido para 5 linhas; isto protege o histórico e o custo. */
 const DESCRIPTION_MAX_CHARS = 800;
+/** Leitura que falhou (timeout, erro do provedor) pode ter sido cobrada: entra no livro-caixa pelo dobro do custo típico. */
+const FAILED_READ_ESTIMATE_USD = 0.0002;
 
 export interface ScreenshotRead {
   status: "read" | "failed";
@@ -19,7 +21,10 @@ export interface ScreenshotRead {
   /** Modelo de visão usado; null quando a leitura está desligada. */
   model: string | null;
   latencyMs: number;
+  /** Motivo em texto fixo: vai para o passo do agent, que o funcionário e o analista leem. */
   error?: string;
+  /** Mensagem crua do provedor, só para o registro do servidor. Nunca vai para a conversa. */
+  cause?: string;
 }
 
 export class ScreenshotService {
@@ -29,12 +34,29 @@ export class ScreenshotService {
     private readonly store: ScreenshotStore,
     private readonly describer: ImageDescriber | null,
     private readonly spend: SpendLedger,
+    private readonly budget: BudgetRepository,
+    private readonly limits: { dailyTotal: number },
+    private readonly clock: Clock,
   ) {}
 
-  /** Confere formato, tamanho e o limite da conversa antes de gravar qualquer coisa. */
-  async accept(conversationId: string, image: { mime: string; bytes: Uint8Array }): Promise<ScreenshotMime> {
+  /**
+   * Confere formato, tamanho e os três limites antes de gravar qualquer coisa: por conversa,
+   * por pessoa no dia e o total do dia. Os dois últimos são contadores atômicos: sem eles,
+   * abrir conversas novas na demo pública encheria o banco de imagens.
+   */
+  async accept(conversationId: string, employeeId: string, image: { mime: string; bytes: Uint8Array }): Promise<ScreenshotMime> {
     const mime = checkScreenshot(image.bytes, image.mime);
     assertScreenshotQuota(await this.messages.countScreenshots(conversationId));
+
+    const day = this.clock.now().toISOString().slice(0, 10);
+    const personKey = `screenshots:${employeeId}:${day}`;
+    if (!(await this.budget.reserve(personKey, SCREENSHOTS_PER_EMPLOYEE_PER_DAY))) {
+      throw new DomainError("message_limit", `Você já enviou ${SCREENSHOTS_PER_EMPLOYEE_PER_DAY} imagens hoje. Descreva o erro por texto.`);
+    }
+    if (!(await this.budget.reserve(`screenshots:${day}`, this.limits.dailyTotal))) {
+      await this.budget.release(personKey); // a imagem não foi aceita: a vaga da pessoa volta
+      throw new DomainError("daily_limit", "O limite de imagens de hoje foi atingido. Descreva o erro por texto.");
+    }
     return mime;
   }
 
@@ -59,7 +81,14 @@ export class ScreenshotService {
       if (!description) return finish({ status: "failed", description: null, model, error: "o modelo devolveu descrição vazia" });
       return finish({ status: "read", description, model });
     } catch (error) {
-      return finish({ status: "failed", description: null, model, error: error instanceof Error ? error.message : String(error) });
+      await this.spend.record(FAILED_READ_ESTIMATE_USD);
+      return finish({
+        status: "failed",
+        description: null,
+        model,
+        error: "o modelo de visão não respondeu",
+        cause: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 

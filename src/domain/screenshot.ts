@@ -10,6 +10,8 @@ export type ScreenshotMime = (typeof SCREENSHOT_MIMES)[number];
 /** Depois de decodificado (o navegador já reduz para 1600 px antes de enviar). */
 export const SCREENSHOT_MAX_BYTES = 1_000_000;
 export const SCREENSHOTS_PER_CONVERSATION = 5;
+/** Somando todas as conversas: "comece uma nova conversa" não zera esta conta. */
+export const SCREENSHOTS_PER_EMPLOYEE_PER_DAY = 10;
 /** Mensagem só com imagem: o histórico mostra este texto ao lado da miniatura. */
 export const IMAGE_ONLY_TEXT = "Enviei uma imagem.";
 

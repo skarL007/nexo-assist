@@ -28,13 +28,50 @@ const STATUS_BY_DOMAIN_ERROR: Record<DomainErrorCode, number> = {
   agent_unavailable: 503,
 };
 
+/** Teto do corpo para as rotas comuns (texto curto). A do chat passa o seu, por causa da imagem. */
+export const DEFAULT_BODY_MAX_BYTES = 100_000;
+
+/**
+ * Lê o corpo contando os bytes: passou do teto, para de ler e responde 413. O Content-Length
+ * adianta a recusa, mas não é a garantia (pode faltar ou mentir). Sem isso, o servidor leria
+ * o corpo inteiro antes de o schema reclamar do tamanho.
+ */
+async function readJsonLimited(request: Request, maxBytes: number): Promise<unknown> {
+  const tooLarge = new HttpError(413, "O pedido é grande demais.");
+  if (Number(request.headers.get("content-length") ?? 0) > maxBytes) throw tooLarge;
+  if (!request.body) return null;
+
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    received += value.byteLength;
+    if (received > maxBytes) {
+      await reader.cancel();
+      throw tooLarge;
+    }
+    chunks.push(value);
+  }
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  } catch {
+    return null; // JSON quebrado: o schema responde 400
+  }
+}
+
 /** Só aceita JSON de verdade: um formulário de outro site não consegue montar este pedido. */
-export async function parseBody<T extends z.ZodType>(request: Request, schema: T): Promise<z.infer<T>> {
+export async function parseBody<T extends z.ZodType>(
+  request: Request,
+  schema: T,
+  { maxBytes = DEFAULT_BODY_MAX_BYTES }: { maxBytes?: number } = {},
+): Promise<z.infer<T>> {
   const mime = request.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase();
   if (mime !== "application/json") {
     throw new HttpError(415, "Envie os dados em JSON.");
   }
-  const result = schema.safeParse(await request.json().catch(() => null));
+  const result = schema.safeParse(await readJsonLimited(request, maxBytes));
   if (!result.success) throw new HttpError(400, result.error.issues[0]?.message ?? "Dados inválidos.");
   return result.data;
 }

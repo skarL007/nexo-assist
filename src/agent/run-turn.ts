@@ -61,8 +61,9 @@ export async function* runAgentTurn(
     throw new DomainError("agent_unavailable", missingKeyMessage(missingKey, production));
   }
 
-  // Imagem conferida antes de gravar (formato pelos bytes, tamanho, 5 por conversa): recusada, nada fica salvo.
-  const imageMime = image ? await services.screenshots.accept(conversation.id, image) : null;
+  // Imagem conferida antes de gravar (formato pelos bytes, tamanho, 5 por conversa, 10 por pessoa no dia
+  // e o teto do dia): recusada, nada fica salvo.
+  const imageMime = image ? await services.screenshots.accept(conversation.id, employee.id, image) : null;
   const employeeMessage = await services.messages.add({
     conversationId: conversation.id,
     role: "employee",
@@ -88,7 +89,11 @@ export async function* runAgentTurn(
     const where = [read.model, `${read.latencyMs} ms`].filter(Boolean).join(" · ");
     if (read.status === "read") recorder.step("Leu a imagem anexada", `${read.description}
 (${where})`);
-    else recorder.step("Não consegui ler a imagem anexada", `${read.error ?? "falha na leitura"} (${where})`, false);
+    else {
+      // O detalhe do provedor fica no registro do servidor; a conversa mostra só o motivo fixo.
+      if (read.cause) console.error(`[visão] leitura falhou: ${read.cause}`);
+      recorder.step("Não consegui ler a imagem anexada", `${read.error ?? "falha na leitura"} (${where})`, false);
+    }
     yield* recorder.drain();
   }
 

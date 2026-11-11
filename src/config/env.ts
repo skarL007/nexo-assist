@@ -45,6 +45,8 @@ const schema = z.object({
   LEGACY_FAILURE_RATE: z.coerce.number().min(0).max(1).default(0.15),
   /** Teto global de respostas do agent por dia — protege o custo no deploy. */
   DAILY_AGENT_TURN_LIMIT: z.coerce.number().int().positive().default(500),
+  /** Teto global de imagens aceitas por dia (cada uma tem até 1 MB): protege o armazenamento na demo pública. */
+  DAILY_SCREENSHOT_LIMIT: z.coerce.number().int().positive().default(100),
   /** Teto total de respostas do modelo (gasto fixo da demonstração). Vazio = sem teto. */
   TOTAL_AGENT_TURN_LIMIT: z.coerce.number().int().positive().optional(),
   /** Telemetria opcional (OpenTelemetry GenAI). Langfuse: as duas chaves bastam. */

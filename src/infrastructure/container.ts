@@ -3,6 +3,7 @@
  * As rotas e o agent pedem `createServices()` e recebem tudo pronto.
  */
 import { ConversationService } from "@/application/conversation-service";
+import { systemClock } from "@/application/ports";
 import { DraftService } from "@/application/draft-service";
 import { FeedbackService } from "@/application/feedback-service";
 import { InsightsService } from "@/application/insights-service";
@@ -89,16 +90,27 @@ export function createServices(options: ServiceOptions = {}) {
   const suggestionRepository = new DrizzleSuggestionRepository(database, options.demoScope);
   const insights = new InsightsService(new DrizzleInsightsSource(database, options.demoScope), pricePerToken, suggestionRepository);
   const writer = missingApiKey(config.LLM_MODEL, config) ? null : mastraReplyWriter;
-  const replySuggestions = new ReplySuggestionService(conversations, budget, writer, suggestionRepository, config.TOTAL_AGENT_TURN_LIMIT);
-
   const spend = new SpendLedger(config.SPEND_LEDGER_FILE ? new FileSpendStore(config.SPEND_LEDGER_FILE) : new DrizzleSpendStore(database), {
     dailyUsd: config.LLM_DAILY_BUDGET_USD,
     totalUsd: config.LLM_TOTAL_BUDGET_USD,
   });
+  const replySuggestions = new ReplySuggestionService(conversations, budget, writer, suggestionRepository, config.TOTAL_AGENT_TURN_LIMIT, {
+    ledger: spend,
+    price: pricePerToken(config.LLM_MODEL),
+  });
   // Leitura de imagens: só pela DeepInfra por enquanto (o único modelo de visão medido).
   const visionOnDeepInfra = config.VISION_MODEL.startsWith("deepinfra/") && config.DEEPINFRA_API_KEY;
   const describer = visionOnDeepInfra ? new VisionDescriber(config.VISION_MODEL.slice("deepinfra/".length), config.DEEPINFRA_API_KEY!, DEEPINFRA) : null;
-  const screenshots = new ScreenshotService(messages, conversations, new DrizzleScreenshotStore(database), describer, spend);
+  const screenshots = new ScreenshotService(
+    messages,
+    conversations,
+    new DrizzleScreenshotStore(database),
+    describer,
+    spend,
+    budget,
+    { dailyTotal: config.DAILY_SCREENSHOT_LIMIT },
+    systemClock,
+  );
   const changes = new DrizzleChangeFeed(database, options.demoScope);
   // Prometheus sempre (memória do processo, lida em /api/metrics); OTLP/Langfuse só configurado.
   const telemetrySettings = telemetryConfig(config);

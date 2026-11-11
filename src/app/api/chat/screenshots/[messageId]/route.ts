@@ -14,8 +14,11 @@ export const GET = handle(async (_request: Request, { params }: { params: Promis
   return new Response(Buffer.from(image.bytes), {
     headers: {
       "Content-Type": image.mime,
-      // Dado do funcionário: nada de cache compartilhado; o tipo vem dos bytes conferidos, sem adivinhação do navegador.
-      "Cache-Control": "private, max-age=3600",
+      // Dado do funcionário: o navegador pode guardar, mas confere a sessão a cada uso (no mesmo computador,
+      // depois de sair ou trocar de usuário, a imagem não sai do cache). O tipo vem dos bytes conferidos.
+      "Cache-Control": "private, no-cache",
+      // Aberta direto na aba, a resposta não executa nem carrega nada.
+      "Content-Security-Policy": "default-src 'none'; sandbox",
       "X-Content-Type-Options": "nosniff",
       "Content-Disposition": "inline",
     },

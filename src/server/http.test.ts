@@ -43,6 +43,33 @@ describe("parseBody", () => {
   });
 });
 
+describe("parseBody: tamanho do corpo", () => {
+  const json = (body: string, headers: Record<string, string> = {}) =>
+    new Request("http://x/api", { method: "POST", headers: { "content-type": "application/json", ...headers }, body });
+
+  it("recusa com 413 pelo Content-Length, sem ler o corpo", async () => {
+    const request = json('{"text":"oi"}', { "content-length": "5000000" });
+    await expect(parseBody(request, z.object({ text: z.string() }), { maxBytes: 1000 })).rejects.toMatchObject({ status: 413 });
+  });
+
+  it("recusa com 413 quando o corpo passa do teto mesmo sem Content-Length honesto", async () => {
+    const big = JSON.stringify({ text: "x".repeat(5000) });
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode(big));
+        controller.close();
+      },
+    });
+    const request = new Request("http://x/api", { method: "POST", headers: { "content-type": "application/json" }, body: stream, duplex: "half" } as RequestInit);
+    await expect(parseBody(request, z.object({ text: z.string() }), { maxBytes: 1000 })).rejects.toMatchObject({ status: 413 });
+  });
+
+  it("corpo dentro do teto passa; JSON quebrado continua sendo 400", async () => {
+    await expect(parseBody(json('{"text":"oi"}'), z.object({ text: z.string() }), { maxBytes: 1000 })).resolves.toEqual({ text: "oi" });
+    await expect(parseBody(json("{quebrado"), z.object({ text: z.string() }), { maxBytes: 1000 })).rejects.toMatchObject({ status: 400 });
+  });
+});
+
 describe("logError", () => {
   it("não grava os parâmetros da consulta (texto do chat, e-mail) quando o banco falha", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});

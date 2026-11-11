@@ -20,7 +20,8 @@ export const GET = handle(async () => {
 
 export const POST = handle(async (request: Request) => {
   const employee = await requireUser("employee");
-  const { text, image } = await parseBody(request, sendMessageSchema);
+  // A imagem vai em base64 (até 1,4 MB de texto); o resto do corpo é a mensagem, de até 2000 caracteres.
+  const { text, image } = await parseBody(request, sendMessageSchema, { maxBytes: 1_450_000 });
   const attachment = image ? { mime: image.mime, bytes: new Uint8Array(Buffer.from(image.data, "base64")) } : undefined;
   const encoder = new TextEncoder();
 
