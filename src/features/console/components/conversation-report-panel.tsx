@@ -26,15 +26,16 @@ export function ConversationReportPanel({ conversation, onClose }: { conversatio
 
   return (
     <section ref={panel} aria-label="Relatório da conversa" className="reveal scroll-mt-6 rounded-2xl border bg-surface p-4 text-sm shadow-xs sm:scroll-mt-8 sm:p-5">
-      <header className="mb-4 flex flex-wrap items-start gap-2">
-        <div className="min-w-48 flex-1">
+      <header className="mb-4 flex items-start gap-2">
+        <div className="min-w-0 flex-1">
           <h2 className="font-serif text-xl leading-tight font-semibold tracking-tight">Relatório da conversa</h2>
           <p className="mt-1 text-xs leading-relaxed text-pretty text-muted-foreground">{countsLine(report)}</p>
         </div>
-        <Button size="sm" variant="outline" onClick={() => void copy()}>
-          {copied ? <Check /> : <Copy />} {copied ? "Copiado" : "Copiar"}
+        {/* No celular o botão fica só com o ícone, para o título e o fechar caberem na mesma linha. */}
+        <Button size="sm" variant="outline" className="shrink-0 max-sm:w-8 max-sm:px-0" onClick={() => void copy()}>
+          {copied ? <Check /> : <Copy />} <span className="max-sm:sr-only">{copied ? "Copiado" : "Copiar"}</span>
         </Button>
-        <Button size="icon-sm" variant="ghost" aria-label="Fechar relatório" onClick={onClose}>
+        <Button size="icon-sm" variant="ghost" className="shrink-0" aria-label="Fechar relatório" onClick={onClose}>
           <X />
         </Button>
       </header>
