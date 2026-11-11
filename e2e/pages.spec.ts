@@ -7,5 +7,7 @@ test("endereço que não existe mostra a página 404 em português, no visual do
   await expect(page.getByRole("heading", { name: "Página não encontrada" })).toBeVisible();
   await expect(page.getByText("could not be found")).toHaveCount(0);
   await page.getByRole("link", { name: "Voltar ao início" }).click();
-  await expect(page).toHaveURL(/\/login/);
+  // Sem sessão, o início é a landing do produto (antes redirecionava para o login).
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Farol Desk" })).toBeVisible();
 });
