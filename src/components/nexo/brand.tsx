@@ -25,7 +25,7 @@ export function BrandMark({ className }: { className?: string }) {
 
 export function Brand({ inverted = false }: { inverted?: boolean }) {
   return (
-    <span className={cn("flex items-center gap-2.5 font-serif text-[17px] leading-none font-semibold tracking-tight", inverted && "text-ink-foreground")}>
+    <span className={cn("flex shrink-0 items-center gap-2.5 font-serif text-[17px] leading-none font-semibold tracking-tight whitespace-nowrap", inverted && "text-ink-foreground")}>
       <BrandMark />
       {PRODUCT_NAME}
     </span>

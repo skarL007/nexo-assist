@@ -8,7 +8,11 @@ describe("formatação dos indicadores", () => {
   });
 
   it("custo: centavos com 2 algarismos significativos; acima de 1 dólar, 2 casas", () => {
-    expect(formatUsd(0.015_63)).toBe("US$ 0,016");
-    expect(formatUsd(10.6)).toBe("US$ 10,60");
+    expect(formatUsd(0.015_63)).toBe("US$ 0,016");
+    expect(formatUsd(10.6)).toBe("US$ 10,60");
+  });
+
+  it("custo: o símbolo e o valor não se separam na quebra de linha", () => {
+    expect(formatUsd(0.013)).toBe("US$ 0,013");
   });
 });

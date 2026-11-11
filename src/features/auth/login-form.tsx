@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff, Loader2, Mail } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Loader2, Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AboutPrototypeLink } from "@/components/nexo/about-prototype-link";
@@ -55,13 +55,14 @@ export function LoginForm() {
       <div className="space-y-2">
         <Label htmlFor="email">E-mail corporativo</Label>
         <div className="relative">
-          <Mail className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Mail className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             id="email"
             type="email"
             autoComplete="username"
             placeholder="nome.sobrenome@nexo.com.br"
-            className="h-11 pl-9"
+            className="h-11 pl-10"
+            aria-invalid={error ? true : undefined}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -73,7 +74,7 @@ export function LoginForm() {
           <Label htmlFor="password">Senha</Label>
           <button
             type="button"
-            className="text-xs text-primary hover:underline"
+            className="tap-target rounded text-[13px] font-medium text-primary underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/70 focus-visible:ring-offset-2"
             onClick={() => {
               setError(null);
               setNotice("Na demonstração, qualquer senha funciona. Na Nexo, este link abriria a troca da senha de rede.");
@@ -87,14 +88,14 @@ export function LoginForm() {
             id="password"
             type={showPassword ? "text" : "password"}
             autoComplete="current-password"
-            className="h-11 pr-10"
+            className="h-11 pr-11"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground"
+            className="tap-target absolute top-1/2 right-1 grid size-9 -translate-y-1/2 place-items-center rounded-full text-muted-foreground transition-colors duration-150 outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/70"
             aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
           >
             {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -102,31 +103,45 @@ export function LoginForm() {
         </div>
       </div>
 
-      <label className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Checkbox checked={remember} onCheckedChange={(value) => setRemember(value === true)} />
+      <label className="flex w-fit cursor-pointer items-center gap-2.5 text-sm text-muted-foreground select-none">
+        <Checkbox className="after:-inset-4" checked={remember} onCheckedChange={(value) => setRemember(value === true)} />
         Manter conectado neste computador
       </label>
 
-      {notice && !error && <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">{notice}</p>}
+      {notice && !error && (
+        <p role="status" className="reveal rounded-xl bg-muted px-3.5 py-2.5 text-sm leading-relaxed text-muted-foreground">
+          {notice}
+        </p>
+      )}
 
       {error && (
-        <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger-foreground">
+        <p role="alert" className="reveal rounded-xl bg-danger-soft px-3.5 py-2.5 text-sm leading-relaxed text-danger-foreground">
           {error}
         </p>
       )}
 
-      <Button type="submit" className="h-11 w-full" disabled={loading}>
-        {loading ? <Loader2 className="size-4 animate-spin" /> : "Entrar →"}
+      <Button type="submit" size="lg" className="w-full" disabled={loading} aria-busy={loading}>
+        {loading ? (
+          <>
+            <Loader2 className="animate-spin" /> <span className="sr-only">Entrando…</span>
+          </>
+        ) : (
+          <>
+            Entrar <ArrowRight aria-hidden="true" />
+          </>
+        )}
       </Button>
 
-      <div className="space-y-2.5 rounded-xl border border-beam/50 bg-beam-soft/50 p-3.5 text-xs text-muted-foreground">
-        <p>Ambiente de demonstração: qualquer senha funciona. Entre direto como:</p>
+      <div className="space-y-3 rounded-2xl bg-background p-4 text-[13px] leading-relaxed text-muted-foreground">
+        <p>
+          <span className="font-medium text-foreground">Ambiente de demonstração.</span> Qualquer senha funciona. Entre direto como:
+        </p>
         <div className="flex flex-wrap gap-2">
           {DEMO_ACCOUNTS.map((account) => (
             <button
               key={account.email}
               type="button"
-              className="rounded-full border bg-surface px-3 py-1.5 text-sm font-medium text-foreground shadow-xs transition-colors hover:border-primary hover:text-primary disabled:opacity-60"
+              className="tap-target h-9 rounded-full border bg-surface px-3.5 text-sm font-medium whitespace-nowrap text-foreground shadow-xs transition-[color,border-color,scale] duration-150 outline-none hover:border-primary/50 hover:text-primary focus-visible:ring-2 focus-visible:ring-ring/70 focus-visible:ring-offset-1 focus-visible:ring-offset-background active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50"
               disabled={loading}
               onClick={() => {
                 setEmail(account.email);

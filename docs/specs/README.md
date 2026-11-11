@@ -16,3 +16,4 @@ Fluxo para qualquer mudança:
 | [03-conversa-e-console](03-conversa-e-console.md) | Estados da conversa, transferência, console do analista, API |
 | [04-arquitetura](04-arquitetura.md) | Camadas, dependências e onde cada coisa mora |
 | [05-demo-publica](05-demo-publica.md) | Isolamento de visitantes, exemplos fictícios, expiração e limites globais |
+| [06-layout-responsivo](06-layout-responsivo.md) | Do celular ao desktop: o que cada largura mostra, sem rolagem horizontal |

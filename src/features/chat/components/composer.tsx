@@ -61,7 +61,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
   return (
     <div className="space-y-2">
       {image && (
-        <div className="flex w-fit items-center gap-3 rounded-2xl bg-surface p-1.5 pr-2 text-xs text-muted-foreground shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_4px_14px_-6px_rgba(0,0,0,0.12)]">
+        <div className="reveal flex w-fit items-center gap-3 rounded-2xl bg-surface p-1.5 pr-2 text-xs text-muted-foreground shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_4px_14px_-6px_rgba(0,0,0,0.12)]">
           {/* eslint-disable-next-line @next/next/no-img-element -- prévia local (blob:), fora do otimizador */}
           <img src={image.previewUrl} alt="Imagem anexada" className="size-12 rounded-lg border border-black/5 object-cover" />
           <span className="font-medium text-foreground">Imagem anexada</span>
@@ -71,12 +71,12 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
         </div>
       )}
       {imageError && (
-        <p role="alert" className="text-xs text-destructive">
+        <p role="alert" className="reveal px-4 text-xs text-danger-foreground">
           {imageError}
         </p>
       )}
       <form
-        className="flex items-end gap-1 rounded-[26px] bg-surface/90 p-1.5 shadow-[0_0_0_1px_rgba(0,0,0,0.07),0_8px_28px_-10px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-shadow duration-150 focus-within:shadow-[0_0_0_1px_var(--ring),0_0_0_4px_oklch(0.6_0.1_214/0.14),0_8px_28px_-10px_rgba(0,0,0,0.16)] has-[textarea:disabled]:bg-muted/70 has-[textarea:disabled]:shadow-[0_0_0_1px_rgba(0,0,0,0.05)]"
+        className="flex items-end gap-1 rounded-[26px] bg-surface/90 p-1.5 max-md:rounded-[28px] max-md:p-1 shadow-[0_0_0_1px_rgba(0,0,0,0.07),0_8px_28px_-10px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-shadow duration-150 focus-within:shadow-[0_0_0_1px_var(--ring),0_0_0_4px_oklch(0.6_0.1_214/0.14),0_8px_28px_-10px_rgba(0,0,0,0.16)] has-[textarea:disabled]:bg-muted/70 has-[textarea:disabled]:shadow-[0_0_0_1px_rgba(0,0,0,0.05)]"
         onSubmit={(e) => {
           e.preventDefault();
           submit();
@@ -97,7 +97,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
           type="button"
           size="icon"
           variant="ghost"
-          className="text-muted-foreground"
+          className="text-muted-foreground max-md:size-11"
           disabled={disabled}
           aria-label="Anexar imagem"
           title="Anexar captura de tela ou foto"
@@ -126,19 +126,19 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
               submit();
             }
           }}
-          className="max-h-32 min-h-9 flex-1 resize-none bg-transparent px-1.5 py-2 text-[15px] leading-normal outline-none placeholder:text-muted-foreground/80 disabled:cursor-not-allowed"
+          className="scrollbar-quiet field-sizing-content max-h-36 min-h-9 flex-1 resize-none bg-transparent px-1.5 py-[7px] text-[15px] leading-[22px] outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed max-md:min-h-11 max-md:py-[11px] max-md:text-base"
         />
         {/* Envio em círculo, como no iMessage: desligado fica cinza (não um petróleo desbotado). */}
         <Button
           type="submit"
           size="icon"
-          className="disabled:bg-black/[0.08] disabled:text-muted-foreground disabled:opacity-100 disabled:shadow-none"
+          className="disabled:bg-black/[0.08] disabled:text-muted-foreground disabled:opacity-100 disabled:shadow-none max-md:size-11"
           disabled={!canSend}
         >
           <ArrowUp className="size-[18px]" strokeWidth={2.5} /> <span className="sr-only">Enviar</span>
         </Button>
       </form>
-      <p className="flex flex-col gap-0.5 px-4 text-[11px] leading-relaxed text-muted-foreground sm:flex-row sm:justify-between sm:gap-4">
+      <p className="flex flex-col gap-0.5 px-4 text-[11px] leading-relaxed text-pretty text-muted-foreground sm:flex-row sm:justify-between sm:gap-4">
         {/* As mensagens vão para um modelo de IA externo: nada de senha ou dado pessoal real. */}
         <span>
           Protótipo com dados fictícios · não envie senhas nem dados pessoais. <AboutPrototypeLink />

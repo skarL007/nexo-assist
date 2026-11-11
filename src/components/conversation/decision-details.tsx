@@ -1,6 +1,6 @@
 import { AlertTriangle, Check, ChevronRight, ShieldCheck, X } from "lucide-react";
 import { INTENT_LABEL, type RetrievalTrace, type ToolCallLog, type TurnTrace } from "@/domain/message";
-import { percent } from "@/lib/format";
+import { formatSeconds, percent } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /**
@@ -13,7 +13,7 @@ export function DecisionDetails({ trace }: { trace: TurnTrace }) {
 
   return (
     <div
-      className="overflow-hidden rounded-xl border border-beam/40 border-t-[3px] border-t-beam bg-surface text-sm shadow-[0_10px_30px_-14px_oklch(0.83_0.145_82/0.55)]"
+      className="overflow-hidden rounded-2xl border border-beam/40 border-t-[3px] border-t-beam bg-surface text-sm shadow-[0_10px_30px_-14px_oklch(0.83_0.145_82/0.55)]"
       data-testid="decision-details"
     >
       {decision ? (
@@ -31,7 +31,7 @@ export function DecisionDetails({ trace }: { trace: TurnTrace }) {
           <Row label="Segurança">
             <dd className="flex items-center gap-3">
               <ConfidenceBar value={decision.confidence} />
-              <span className="font-mono text-sm font-medium tabular-nums">{percent(decision.confidence)}</span>
+              <span className="text-sm font-semibold tabular-nums">{percent(decision.confidence)}</span>
             </dd>
           </Row>
           <Row label="Por quê">
@@ -84,8 +84,8 @@ export function DecisionDetails({ trace }: { trace: TurnTrace }) {
         {trace.toolCalls.length > 0 && (
           <div className="px-5 py-4">
             <details className="group text-xs">
-              <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded text-muted-foreground transition-colors duration-150 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
-                <ChevronRight className="size-3.5 transition-transform group-open:rotate-90" />
+              <summary className="tap-target flex w-fit cursor-pointer list-none items-center gap-1.5 rounded text-muted-foreground transition-colors duration-150 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
+                <ChevronRight className="size-3.5 transition-transform duration-150 group-open:rotate-90" />
                 Log técnico ({trace.toolCalls.length} chamadas de ferramenta)
               </summary>
               <div className="mt-3 space-y-3">
@@ -106,12 +106,12 @@ export function DecisionDetails({ trace }: { trace: TurnTrace }) {
         )}
         {trace.usage && (
           <span>
-            Tokens: <span className="font-mono text-foreground/80">{trace.usage.inputTokens}</span> entrada ·{" "}
-            <span className="font-mono text-foreground/80">{trace.usage.outputTokens}</span> saída
+            Tokens: <span className="text-foreground/80 tabular-nums">{trace.usage.inputTokens.toLocaleString("pt-BR")}</span> entrada ·{" "}
+            <span className="text-foreground/80 tabular-nums">{trace.usage.outputTokens.toLocaleString("pt-BR")}</span> saída
           </span>
         )}
         <span>
-          Tempo: <span className="font-mono text-foreground/80">{(trace.latencyMs / 1000).toFixed(1)}s</span>
+          Tempo: <span className="text-foreground/80 tabular-nums">{formatSeconds(trace.latencyMs)}</span>
         </span>
         {trace.fallbackFrom && <span className="text-warning-foreground">Reserva: {trace.fallbackFrom} falhou</span>}
       </footer>
@@ -139,13 +139,13 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 const asJson = (value: unknown) => JSON.stringify(value, null, 2) ?? "—";
 
-/** Entrada e saída de uma ferramenta, em bloco mono sobre o azul-noite. */
+/** Entrada e saída de uma ferramenta, em bloco mono sobre o cinza das barras laterais. */
 function ToolCallBlock({ call }: { call: ToolCallLog }) {
   return (
-    <div className="overflow-hidden rounded-lg bg-ink text-ink-foreground">
-      <div className="flex items-center justify-between gap-3 border-b border-white/10 px-3 py-2 font-mono text-[11px]">
-        <span className="font-medium text-beam">{call.tool}</span>
-        <span className="text-ink-foreground/55 tabular-nums">{call.durationMs} ms</span>
+    <div className="overflow-hidden rounded-lg border bg-background text-foreground">
+      <div className="flex items-center justify-between gap-3 border-b px-3 py-2 text-[11px]">
+        <span className="font-mono font-semibold">{call.tool}</span>
+        <span className="text-muted-foreground tabular-nums">{call.durationMs} ms</span>
       </div>
       {(
         [
@@ -153,9 +153,9 @@ function ToolCallBlock({ call }: { call: ToolCallLog }) {
           ["saída", call.output],
         ] as const
       ).map(([label, value]) => (
-        <div key={label} className="border-b border-white/5 px-3 py-2 last:border-b-0">
-          <p className="mb-1 font-mono text-[10px] tracking-[0.14em] text-ink-foreground/45 uppercase">{label}</p>
-          <pre className="scrollbar-quiet max-h-48 overflow-auto font-mono text-[11px] leading-relaxed whitespace-pre-wrap text-ink-foreground/90">{asJson(value)}</pre>
+        <div key={label} className="border-b px-3 py-2 last:border-b-0">
+          <p className="eyebrow mb-1 text-[11px]">{label}</p>
+          <pre className="scrollbar-quiet max-h-48 overflow-auto font-mono text-[11px] leading-relaxed break-words whitespace-pre-wrap text-foreground/90">{asJson(value)}</pre>
         </div>
       ))}
     </div>
@@ -188,22 +188,24 @@ function Telemetry({ trace }: { trace: TurnTrace }) {
       <div className="min-w-0 space-y-4">
         {trace.traceId && (
           <p className="text-xs text-muted-foreground">
-            Trace <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground select-all">{trace.traceId}</code>
+            Trace <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] break-all text-foreground select-all">{trace.traceId}</code>
           </p>
         )}
 
         {trace.toolCalls.length > 0 && (
           <ol className="space-y-1.5 text-xs" aria-label="Tempo de cada ferramenta">
             {trace.toolCalls.map((call, index) => (
-              <li key={index} className="grid grid-cols-[minmax(0,9rem)_1fr_4rem] items-center gap-3">
-                <span className="truncate font-mono">{call.tool}</span>
+              <li key={index} className="grid grid-cols-[minmax(0,10.5rem)_1fr_3.75rem] items-center gap-3 max-sm:grid-cols-[minmax(0,1fr)_3.5rem_3.75rem]">
+                <span className="truncate font-mono" title={call.tool}>
+                  {call.tool}
+                </span>
                 <span className="h-1.5 overflow-hidden rounded-full bg-border" aria-hidden>
                   <span
                     className={cn("block h-full rounded-full", call.durationMs === slowest && trace.toolCalls.length > 1 ? "bg-beam" : "bg-primary")}
                     style={{ width: `${Math.max(2, (call.durationMs / slowest) * 100)}%` }}
                   />
                 </span>
-                <span className="text-right font-mono tabular-nums text-muted-foreground">{call.durationMs} ms</span>
+                <span className="text-right whitespace-nowrap text-muted-foreground tabular-nums">{call.durationMs} ms</span>
               </li>
             ))}
           </ol>
@@ -224,7 +226,7 @@ function RetrievalDetails({ retrieval }: { retrieval: RetrievalTrace }) {
       <p className="flex flex-wrap gap-x-3 gap-y-1 text-muted-foreground">
         <span>{retrieval.mode === "hybrid" ? `Híbrida · ${retrieval.embeddingModel}` : "Só palavras"}</span>
         <span>{retrieval.judgeModel ? `Avaliador ${retrieval.judgeModel}: ${retrieval.verdict ? VERDICT_LABEL[retrieval.verdict] : "—"}` : "Sem avaliador (regra de margem)"}</span>
-        <span className="font-mono tabular-nums">{retrieval.latencyMs} ms</span>
+        <span className="whitespace-nowrap tabular-nums">{retrieval.latencyMs} ms</span>
       </p>
       {retrieval.degraded.map((reason) => (
         <p key={reason} className="flex gap-1.5 text-warning-foreground">
@@ -235,10 +237,10 @@ function RetrievalDetails({ retrieval }: { retrieval: RetrievalTrace }) {
       {retrieval.candidates.length > 0 ? (
         <table className="w-full text-left">
           <thead>
-            <tr className="eyebrow text-[10px]">
-              <th className="py-1.5 font-semibold">Candidato</th>
-              <th className="py-1.5 text-right font-semibold">Sentido</th>
-              <th className="py-1.5 pl-3 font-semibold">Termos</th>
+            <tr className="eyebrow text-[11px]">
+              <th className="py-1.5 font-medium">Candidato</th>
+              <th className="py-1.5 text-right font-medium">Sentido</th>
+              <th className="py-1.5 pl-3 font-medium">Termos</th>
             </tr>
           </thead>
           <tbody>
@@ -250,7 +252,7 @@ function RetrievalDetails({ retrieval }: { retrieval: RetrievalTrace }) {
                     {chosen && <Check className="mr-1 inline size-3.5 text-success-foreground" aria-label="devolvido ao agent" />}
                     {candidate.title}
                   </td>
-                  <td className="py-1.5 text-right font-mono tabular-nums">{candidate.similarity === null ? "—" : decimal(candidate.similarity)}</td>
+                  <td className="py-1.5 text-right tabular-nums">{candidate.similarity === null ? "—" : decimal(candidate.similarity)}</td>
                   <td className="py-1.5 pl-3 font-normal text-muted-foreground">{candidate.terms.join(", ") || "—"}</td>
                 </tr>
               );
