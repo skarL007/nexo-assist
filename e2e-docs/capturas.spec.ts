@@ -69,10 +69,15 @@ test("03 · console do analista com a fila", async ({ page }) => {
   await login(page, RAFAEL);
   await page.waitForURL("**/console");
   await expect(page.getByRole("button", { name: /Bruno Tavares/ })).toBeVisible();
+  // Espera a primeira conversa da fila abrir: sem isso a captura às vezes saía com "Carregando conversa…".
+  await expect(page.getByRole("button", { name: "Assumir atendimento" })).toBeVisible();
   await shot(page, "03-console-fila");
 });
 
 test("04 · decisão do agent com a telemetria do turno", async ({ page }) => {
+  // Janela alta: o painel inteiro cabe na área da conversa. Na altura normal a captura do elemento
+  // saía cortada, com o rodapé da conversa por cima e um vazio embaixo.
+  await page.setViewportSize({ width: 1440, height: 1600 });
   await login(page, RAFAEL);
   await page.getByRole("button", { name: /Bruno Tavares/ }).click();
   await page.getByRole("button", { name: "por quê?" }).click();
