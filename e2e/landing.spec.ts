@@ -58,6 +58,55 @@ test("com movimento reduzido fica só o quadro parado: o vídeo nem é baixado",
   await context.close();
 });
 
+test("a imersão por rolagem desenha o primeiro quadro e avança com o scroll", async ({ page }) => {
+  await page.goto("/");
+  const section = page.locator("#imersao");
+  await expect(section).toHaveCount(1);
+  await expect(section.getByText("Toda pergunta de TI vira uma conversa.")).toBeAttached();
+  await expect(section.getByText("O agent entende, consulta e decide.")).toBeAttached();
+
+  const canvas = section.locator("canvas");
+  await page.evaluate(() => window.scrollTo(0, (document.getElementById("imersao") as HTMLElement).offsetTop));
+  await expect.poll(() => canvas.getAttribute("data-frame")).toBe("0");
+
+  // No meio da seção, a tomada já está bem adiante (a lanterna).
+  await page.evaluate(() => {
+    const s = document.getElementById("imersao") as HTMLElement;
+    window.scrollTo(0, s.offsetTop + (s.offsetHeight - window.innerHeight) * 0.55);
+  });
+  await expect.poll(async () => Number(await canvas.getAttribute("data-frame")), { timeout: 15_000 }).toBeGreaterThan(50);
+  await expect(section.getByText("O agent entende, consulta e decide.")).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBe(0);
+
+  const first = await page.request.get("/landing/imersao/d/000.webp");
+  expect(first.status()).toBe(200);
+  expect(first.headers()["content-type"]).toBe("image/webp");
+});
+
+test("com movimento reduzido, a imersão é um quadro parado com as três frases", async ({ browser }) => {
+  const context = await browser.newContext({ reducedMotion: "reduce" });
+  const page = await context.newPage();
+  const frames: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().includes("/landing/imersao/")) frames.push(new URL(request.url()).pathname);
+  });
+  await page.goto("/", { waitUntil: "networkidle" });
+  const section = page.locator("#imersao");
+  await section.scrollIntoViewIfNeeded();
+  const poster = section.locator("img");
+  await expect.poll(() => poster.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
+  expect(await poster.evaluate((img: HTMLImageElement) => img.currentSrc)).toMatch(/\/landing\/imersao\/d\/\d{3}\.webp$/);
+  await expect(section.locator("canvas")).toBeHidden();
+  for (const text of ["Toda pergunta de TI vira uma conversa.", "O agent entende, consulta e decide.", "E mostra o porquê."]) {
+    await expect(section.getByText(text)).toBeVisible();
+  }
+  // Sem rolagem presa: a seção tem a altura de uma tela, e só a imagem parada é baixada.
+  const height = await section.evaluate((el) => el.getBoundingClientRect().height / window.innerHeight);
+  expect(height).toBeLessThan(1.2);
+  expect(new Set(frames).size).toBe(1);
+  await context.close();
+});
+
 test("as âncoras da barra levam às seções e a barra fica clara depois do topo", async ({ page }) => {
   await page.goto("/");
   const header = page.getByRole("banner");

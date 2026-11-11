@@ -17,6 +17,7 @@ import { HeroScene } from "./hero-scene";
 import { LandingNav } from "./landing-nav";
 import { ProductShot } from "./product-shot";
 import { Reveal } from "./reveal";
+import { ScrollImmersion } from "./scroll-immersion";
 import { SHOTS } from "./shots";
 import { StepsNav } from "./steps-nav";
 import { ShotPair } from "./window-frame";
@@ -45,6 +46,8 @@ export function LandingPage() {
         <Product />
         <Statement />
         <HowItWorks />
+        {/* A tomada do farol por rolagem desemboca no painel "por quê?": "E mostra o porquê." vira a próxima seção. */}
+        <ScrollImmersion />
         <Why />
         <Analyst />
         <Numbers />
