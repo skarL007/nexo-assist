@@ -100,7 +100,7 @@ function ChatPreview() {
   return (
     <div className="space-y-2 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm">
       <p className="ml-auto w-fit rounded-xl rounded-tr-sm bg-white px-3 py-2 text-navy">Meu notebook não conecta na VPN. Erro 809.</p>
-      <p className="text-xs text-navy-foreground/60">Nexo Assist · consultou a central · montou o chamado</p>
+      <p className="text-xs text-navy-foreground/60">Farol Desk · consultou a central · montou o chamado</p>
       <p className="w-fit rounded-xl rounded-tl-sm bg-white/10 px-3 py-2">Prioridade alta. Um analista responde até as 13h.</p>
     </div>
   );

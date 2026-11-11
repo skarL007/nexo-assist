@@ -32,7 +32,7 @@ mensagem → limites → salva → (conversa com analista? para aqui)
 
 ### Analista que assume durante o turno
 
-O estado da conversa é lido no início do turno, e um analista pode assumir (ou encerrar) enquanto o modelo responde. Antes de gravar a resposta, o turno lê o estado de novo: se a conversa não está mais com o agent, e não foi o próprio turno que transferiu, a resposta é descartada, o rascunho do turno é cancelado e fica no histórico a mensagem de sistema "Resposta do Nexo Assist descartada: um analista assumiu a conversa durante o turno". O evento `done` troca o texto do stream pela conversa gravada. Aceite: `agentReplyStillValid` em `src/domain/conversation.test.ts`. Auditoria de 02/11, P1.
+O estado da conversa é lido no início do turno, e um analista pode assumir (ou encerrar) enquanto o modelo responde. Antes de gravar a resposta, o turno lê o estado de novo: se a conversa não está mais com o agent, e não foi o próprio turno que transferiu, a resposta é descartada, o rascunho do turno é cancelado e fica no histórico a mensagem de sistema "Resposta do Farol Desk descartada: um analista assumiu a conversa durante o turno". O evento `done` troca o texto do stream pela conversa gravada. Aceite: `agentReplyStillValid` em `src/domain/conversation.test.ts`. Auditoria de 02/11, P1.
 
 ## Trace (`TurnTrace`)
 
@@ -87,7 +87,7 @@ Continuam valendo as outras ofertas: chamado vencido, frustração e pedido expl
 
 ## Sem chave do modelo
 
-Se a chave do provedor do `LLM_MODEL` não estiver configurada, o chat avisa **antes** de gravar a mensagem (não gasta a cota da sessão). Rodando local, o aviso diz o que fazer: "defina <VARIÁVEL> no .env e reinicie o servidor". No deploy (`NODE_ENV=production`), o funcionário vê só "O Nexo Assist está indisponível no momento", e o nome da variável vai para o log do servidor. Com um analista na conversa, a mensagem segue para ele normalmente.
+Se a chave do provedor do `LLM_MODEL` não estiver configurada, o chat avisa **antes** de gravar a mensagem (não gasta a cota da sessão). Rodando local, o aviso diz o que fazer: "defina <VARIÁVEL> no .env e reinicie o servidor". No deploy (`NODE_ENV=production`), o funcionário vê só "O Farol Desk está indisponível no momento", e o nome da variável vai para o log do servidor. Com um analista na conversa, a mensagem segue para ele normalmente.
 
 ## Turno de esclarecimento
 

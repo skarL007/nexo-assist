@@ -30,7 +30,7 @@ test("analista pede uma sugestão, revisa o aviso, edita e envia", async ({ page
   const field = page.getByLabel("Resposta do analista");
   await expect(field).toHaveValue(/Oi, Elisa! Vou olhar o Wi-Fi da sala 3/);
   await expect(page.getByRole("alert").filter({ hasText: "REQ-99999" })).toBeVisible();
-  await expect(page.getByText("Sugestão do Nexo: revise antes de enviar.")).toBeVisible();
+  await expect(page.getByText("Sugestão do Farol: revise antes de enviar.")).toBeVisible();
 
   // O analista corrige o número inventado antes de enviar.
   await field.fill("Oi, Elisa! Vou olhar o Wi-Fi da sala 3 (INC-20319). Volto em instantes.");
@@ -41,7 +41,7 @@ test("analista pede uma sugestão, revisa o aviso, edita e envia", async ({ page
   expect(sentBody.text).not.toContain("REQ-99999");
 
   await page.getByRole("button", { name: "Devolver ao agent" }).click();
-  await expect(page.getByText(/devolveu a conversa ao Nexo Assist/).first()).toBeVisible();
+  await expect(page.getByText(/devolveu a conversa ao Farol Desk/).first()).toBeVisible();
 
   // O uso da sugestão aparece nos indicadores (enviada editada).
   await page.goto("/console/indicadores");

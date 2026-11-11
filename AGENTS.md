@@ -8,7 +8,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-# Nexo Assist — convenções do projeto
+# Farol Desk — convenções do projeto
 
 - **Leia antes de mudar:** `docs/specs/` (o que o sistema faz) e `docs/specs/04-arquitetura.md` (onde cada coisa mora).
 - **Toda mudança segue a skill `mudanca-sdd-tdd`:** spec → teste que falha → código → `npm run typecheck && npm run lint && npm test`.

@@ -7,7 +7,7 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 const serif = Source_Serif_4({ variable: "--font-serif-display", subsets: ["latin"] });
 
-const title = "Nexo Assist";
+const title = "Farol Desk";
 const description = "Service desk de TI da Nexo, numa conversa.";
 
 /** A imagem da prévia vem de opengraph-image.png e twitter-image.png (convenção de arquivos do App Router). */

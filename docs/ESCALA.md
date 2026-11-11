@@ -1,6 +1,6 @@
-# Como o Nexo Assist escala
+# Como o Farol Desk escala
 
-Este documento descreve o que o Nexo Assist aguenta hoje, onde ele trava primeiro quando o uso cresce e o que mudar em cada degrau. Os números de carga por turno vêm das gravações de 02/11/2026 (`deepinfra/deepseek-ai/DeepSeek-V4-Flash`); as estimativas de volume são hipóteses marcadas como tal.
+Este documento descreve o que o Farol Desk aguenta hoje, onde ele trava primeiro quando o uso cresce e o que mudar em cada degrau. Os números de carga por turno vêm das gravações de 02/11/2026 (`deepinfra/deepseek-ai/DeepSeek-V4-Flash`); as estimativas de volume são hipóteses marcadas como tal.
 
 ## O que existe hoje
 

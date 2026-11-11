@@ -86,7 +86,7 @@ export class ConversationService {
   }
 
   async release(conversationId: string, analyst: Employee): Promise<Conversation> {
-    return this.analystAction(conversationId, analyst, "release", `${firstName(analyst.name)} devolveu a conversa ao Nexo Assist`);
+    return this.analystAction(conversationId, analyst, "release", `${firstName(analyst.name)} devolveu a conversa ao Farol Desk`);
   }
 
   async close(conversationId: string, analyst: Employee): Promise<Conversation> {

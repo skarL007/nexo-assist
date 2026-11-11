@@ -1,5 +1,5 @@
 /**
- * Benchmark de modelos do Nexo Assist via OpenRouter.
+ * Benchmark de modelos do Farol Desk via OpenRouter.
  *
  *   npm run benchmark                         → pré-voo, candidatos, juízes e relatório
  *   npm run benchmark -- --dry-run            → plano e estimativa de custo, sem gastar

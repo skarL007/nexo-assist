@@ -156,7 +156,7 @@ async function* replyWithAgent(turn: TurnContext, abortSignal?: AbortSignal): As
   const current = await services.conversations.get(conversationId);
   if (!agentReplyStillValid(current.status, recorder.handedOff)) {
     await services.drafts.cancelPending(conversationId, startedAt);
-    await services.messages.add({ conversationId, role: "system", text: "Resposta do Nexo Assist descartada: um analista assumiu a conversa durante o turno" });
+    await services.messages.add({ conversationId, role: "system", text: "Resposta do Farol Desk descartada: um analista assumiu a conversa durante o turno" });
     return;
   }
 

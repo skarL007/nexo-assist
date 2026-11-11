@@ -1,4 +1,4 @@
-# Nexo Assist
+# Farol Desk
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/skarL007/nexo-assist/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/skarL007/nexo-assist/tree/main) [![Docker Hub](https://img.shields.io/badge/docker%20hub-skarl007%2Fnexo--assist-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/skarl007/nexo-assist)
 
@@ -384,7 +384,7 @@ No primeiro ciclo, as specs (`docs/specs/`) foram consolidadas a partir do PRD j
 
 ## Vídeo de demonstração
 
-[![Vídeo de demonstração do Nexo Assist (4:49)](docs/demo/poster.png)](https://skarl007.github.io/nexo-assist/#video)
+[![Vídeo de demonstração do Farol Desk (4:49)](docs/demo/poster.png)](https://skarl007.github.io/nexo-assist/#video)
 
 [Assistir no navegador](https://skarl007.github.io/nexo-assist/#video) (o GitHub não toca o mp4 do repositório na página) · [baixar o mp4](docs/demo/nexo-assist-demo.mp4)
 

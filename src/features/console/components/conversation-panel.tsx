@@ -114,7 +114,7 @@ function FooterNotice({ conversation }: { conversation: ConsoleConversationDetai
   const first = firstName(conversation.employee.name);
   const text = {
     waiting_analyst: `${first} espera um atendente · agent pausado${conversation.handoffAt ? ` desde ${formatClock(conversation.handoffAt)}` : ""}`,
-    with_agent: "O Nexo Assist está atendendo esta conversa.",
+    with_agent: "O Farol Desk está atendendo esta conversa.",
     with_analyst: `Em atendimento por ${conversation.analyst?.name ?? "outro analista"}.`,
     closed: "Conversa encerrada.",
   }[conversation.status];
@@ -168,7 +168,7 @@ function AnalystComposer({ conversationId, employeeFirstName }: { conversationId
           {suggestion.isLoading ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
           {suggestion.isLoading ? "Escrevendo sugestão…" : "Sugerir resposta"}
         </Button>
-        {suggested !== null && <span className="text-xs text-muted-foreground">Sugestão do Nexo: revise antes de enviar.</span>}
+        {suggested !== null && <span className="text-xs text-muted-foreground">Sugestão do Farol: revise antes de enviar.</span>}
       </div>
       {warnings.map((warning) => (
         <p key={warning} role="alert" className="text-xs text-amber-800">

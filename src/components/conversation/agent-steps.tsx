@@ -5,7 +5,7 @@ import type { TraceStep } from "@/domain/message";
 import { cn } from "@/lib/utils";
 
 /**
- * Linha acima da resposta: "Nexo Assist ✓ consultou seus chamados ✓ buscou na central".
+ * Linha acima da resposta: "Farol Desk ✓ consultou seus chamados ✓ buscou na central".
  * O botão "por quê?" abre o detalhe da decisão.
  */
 export function AgentSteps({
@@ -21,7 +21,7 @@ export function AgentSteps({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-      <span className="font-semibold text-foreground">Nexo Assist</span>
+      <span className="font-semibold text-foreground">Farol Desk</span>
       {steps.map((step, index) => (
         <span key={index} className="inline-flex items-center gap-1">
           {step.ok ? <Check className="size-3.5 text-success" /> : <X className="size-3.5 text-danger" />}

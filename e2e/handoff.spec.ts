@@ -31,5 +31,5 @@ test("analista assume, responde e devolve a conversa ao agent", async ({ page })
   await page.getByRole("tab", { name: /Minhas/ }).click();
   await page.getByRole("button", { name: /Carla Mendes/ }).click();
   await page.getByRole("button", { name: "Devolver ao agent" }).click();
-  await expect(page.getByText(/devolveu a conversa ao Nexo Assist/)).toBeVisible();
+  await expect(page.getByText(/devolveu a conversa ao Farol Desk/)).toBeVisible();
 });

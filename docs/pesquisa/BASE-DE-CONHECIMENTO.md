@@ -2,7 +2,7 @@
 
 Pesquisa feita em 02/11/2026, com as URLs acessadas nessa data. Ela responde a duas perguntas:
 
-1. Já existe uma base aberta de artigos e chamados de TI que o Nexo Assist possa usar no lugar dos 14 artigos e 8 chamados escritos à mão?
+1. Já existe uma base aberta de artigos e chamados de TI que o Farol Desk possa usar no lugar dos 14 artigos e 8 chamados escritos à mão?
 2. Com uma base maior, GraphRAG passa a valer a pena?
 
 O plano no fim também inclui a auditoria externa recebida em 02/11, porque ela muda a ordem do trabalho: os riscos de autenticação e concorrência vêm antes de aumentar a base.

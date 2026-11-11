@@ -1,4 +1,4 @@
-# Observabilidade do Nexo Assist: Prometheus (métricas), Grafana (painel) e Jaeger (traces OTLP).
+# Observabilidade do Farol Desk: Prometheus (métricas), Grafana (painel) e Jaeger (traces OTLP).
 # Sobe ao lado da stack do app no Komodo. Antes: crie o arquivo prometheus/metrics-token com o
 # mesmo valor do METRICS_TOKEN do app (sem quebra de linha) e defina GRAFANA_ADMIN_PASSWORD.
 #

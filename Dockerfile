@@ -1,4 +1,4 @@
-# Imagem do Nexo Assist para rodar fora da Vercel (ex.: Komodo local, ver docs/DEPLOY.md).
+# Imagem do Farol Desk para rodar fora da Vercel (ex.: Komodo local, ver docs/DEPLOY.md).
 # Servidor enxuto do Next (output "standalone"), banco libSQL num volume em /data,
 # migrações a cada start e dados de exemplo só no primeiro (banco vazio).
 

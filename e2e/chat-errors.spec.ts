@@ -5,7 +5,7 @@ import { ANA, expect, login, RAFAEL } from "./helpers";
 test("sem chave do modelo: aviso claro e o texto volta para o campo", async ({ page }) => {
   await page.route("**/api/chat", async (route) => {
     if (route.request().method() !== "POST") return route.fallback();
-    const line = { type: "error", message: "O Nexo Assist não está configurado neste ambiente: defina GOOGLE_GENERATIVE_AI_API_KEY no .env e reinicie o servidor." };
+    const line = { type: "error", message: "O Farol Desk não está configurado neste ambiente: defina GOOGLE_GENERATIVE_AI_API_KEY no .env e reinicie o servidor." };
     await route.fulfill({ contentType: "application/x-ndjson", body: JSON.stringify(line) + "\n" });
   });
   await login(page, ANA);

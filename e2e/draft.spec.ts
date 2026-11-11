@@ -4,7 +4,7 @@ import { ANA, expect, login } from "./helpers";
 
 /**
  * Sem LLM: a resposta do servidor ganha um rascunho pendente, e o envio da
- * mensagem fica segurado para simular o Nexo respondendo. Confirmar no meio
+ * mensagem fica segurado para simular o Farol respondendo. Confirmar no meio
  * da resposta deixava a resposta desatualizada ("o rascunho ainda está pronto").
  */
 async function withPendingDraft(page: Page) {
@@ -46,7 +46,7 @@ async function withPendingDraft(page: Page) {
   });
 }
 
-test("rascunho fica travado enquanto o Nexo responde", async ({ page }) => {
+test("rascunho fica travado enquanto o Farol responde", async ({ page }) => {
   await withPendingDraft(page);
   await login(page, ANA);
   const confirm = page.getByRole("button", { name: /^Confirmar/ });
@@ -56,7 +56,7 @@ test("rascunho fica travado enquanto o Nexo responde", async ({ page }) => {
   await page.keyboard.press("Enter");
 
   await expect(confirm).toBeDisabled();
-  await expect(page.getByText("Aguarde o Nexo responder para confirmar.")).toBeVisible();
+  await expect(page.getByText("Aguarde o Farol responder para confirmar.")).toBeVisible();
 });
 
 test("erro ao confirmar aparece no próprio card (não escondido no fim da página)", async ({ page }) => {

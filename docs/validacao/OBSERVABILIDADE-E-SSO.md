@@ -71,7 +71,7 @@ Saída do coletor local no turno real (Gemini 3.5 Flash, cenário "Consulta sem 
 
 **Onde faz sentido:** no container (Komodo), o processo é longo e o Prometheus soma. Na Vercel, cada função tem a sua memória; lá o caminho é o OTLP.
 
-**Stack pronta** em [`observability/`](../../observability/docker-compose.yml): Prometheus v3.5 (coleta a cada 15 s, 30 dias), 6 alertas ligados aos portões da seção 4 (turno p95 > 20 s, mais de 10% de turnos com erro, modelo reserva em uso, mais de 20% de buscas degradadas, busca p95 > 2,5 s, app fora do ar), Grafana 12.1 com o painel "Nexo Assist · agent e busca" (12 painéis) provisionado e Jaeger 2.9 recebendo OTLP na 4318.
+**Stack pronta** em [`observability/`](../../observability/docker-compose.yml): Prometheus v3.5 (coleta a cada 15 s, 30 dias), 6 alertas ligados aos portões da seção 4 (turno p95 > 20 s, mais de 10% de turnos com erro, modelo reserva em uso, mais de 20% de buscas degradadas, busca p95 > 2,5 s, app fora do ar), Grafana 12.1 com o painel "Farol Desk · agent e busca" (12 painéis) provisionado e Jaeger 2.9 recebendo OTLP na 4318.
 
 ### Provas
 

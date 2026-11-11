@@ -22,7 +22,7 @@ const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1
 const options = <T extends string>(values: readonly T[], labels: Record<T, string>) => values.map((value) => ({ value, label: capitalize(labels[value]) }));
 
 interface EditorProps {
-  /** O Nexo está respondendo: salvar fica para depois, como o Confirmar. */
+  /** O Farol está respondendo: salvar fica para depois, como o Confirmar. */
   locked: boolean;
   onSave: (fields: DraftEditFields) => Promise<unknown>;
   onClose: () => void;
@@ -168,7 +168,7 @@ function EditorShell({
         <Button size="sm" variant="ghost" disabled={busy} onClick={onClose}>
           Voltar
         </Button>
-        {locked && <span className="text-xs text-muted-foreground">Aguarde o Nexo responder para salvar.</span>}
+        {locked && <span className="text-xs text-muted-foreground">Aguarde o Farol responder para salvar.</span>}
         {error && (
           <span role="alert" className="text-xs text-danger">
             {error}

@@ -62,8 +62,8 @@ export function missingApiKey(model: string, env: Partial<Record<ApiKeyVar, stri
  */
 export function missingKeyMessage(keyVar: ApiKeyVar, production: boolean): string {
   return production
-    ? "O Nexo Assist está indisponível no momento. Tente de novo mais tarde."
-    : `O Nexo Assist não está configurado neste ambiente: defina ${keyVar} no .env e reinicie o servidor.`;
+    ? "O Farol Desk está indisponível no momento. Tente de novo mais tarde."
+    : `O Farol Desk não está configurado neste ambiente: defina ${keyVar} no .env e reinicie o servidor.`;
 }
 
 type ProviderOptions =

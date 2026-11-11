@@ -118,6 +118,6 @@ interface HasRequestContext {
 
 export function turnFrom(context: HasRequestContext | undefined): TurnContext {
   const turn = context?.requestContext?.get(TURN_KEY) as TurnContext | undefined;
-  if (!turn) throw new Error("Tool chamada fora de um turno do Nexo Assist.");
+  if (!turn) throw new Error("Tool chamada fora de um turno do Farol Desk.");
   return turn;
 }

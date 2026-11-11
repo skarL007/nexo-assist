@@ -11,7 +11,7 @@ const SUGGESTIONS = [
 export function WelcomeMessage({ firstName, onPick }: { firstName: string; onPick: (text: string) => void }) {
   return (
     <div className="flex flex-col items-start gap-3">
-      <span className="text-xs font-semibold">Nexo Assist</span>
+      <span className="text-xs font-semibold">Farol Desk</span>
       <div className="rounded-2xl rounded-tl-sm border bg-surface px-4 py-3 text-sm shadow-xs">
         Olá, {firstName}! Me conte o que está acontecendo com as suas palavras. Posso tirar dúvidas, ver seus chamados, abrir
         um novo ou chamar um analista.

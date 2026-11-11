@@ -1,5 +1,5 @@
 /**
- * G-Eval (Liu et al., 2023 — https://arxiv.org/abs/2303.16634) adaptado ao Nexo Assist.
+ * G-Eval (Liu et al., 2023 — https://arxiv.org/abs/2303.16634) adaptado ao Farol Desk.
  *
  *   1. Auto-CoT: o juiz escreve, uma vez, os passos de avaliação de cada critério.
  *      Os passos ficam congelados em JSON (reprodutível e revisável por gente).
@@ -92,7 +92,7 @@ export function stepsPrompt(criterion: Criterion) {
     {
       role: "user" as const,
       content: [
-        "Você receberá uma conversa entre um funcionário e o Nexo Assist, o agent de service desk de TI de uma empresa brasileira.",
+        "Você receberá uma conversa entre um funcionário e o Farol Desk, o agent de service desk de TI de uma empresa brasileira.",
         "A conversa traz as mensagens, as ações do agent (tools com entrada e saída), os cards exibidos e, em cada turno, o registro de entendimento do agent (intenção, o que entendeu, confiança de 0 a 1 e motivo), que o funcionário vê no painel 'por quê?'.",
         "Sua tarefa é avaliar a conversa em um critério.",
         "",
@@ -132,7 +132,7 @@ export function judgePrompt(transcript: string, steps: Steps) {
     },
     {
       role: "user" as const,
-      content: ["Avalie esta conversa entre um funcionário e o Nexo Assist.", "", transcript].join("\n"),
+      content: ["Avalie esta conversa entre um funcionário e o Farol Desk.", "", transcript].join("\n"),
     },
   ];
 }

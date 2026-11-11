@@ -1,4 +1,4 @@
-# Pesquisa de fronteira: agentes de IA para service desk de TI (2025–2026) e o que levar para o Nexo Assist
+# Pesquisa de fronteira: agentes de IA para service desk de TI (2025–2026) e o que levar para o Farol Desk
 
 Pesquisa feita em 28/10/2026, com todas as URLs acessadas nessa data. A data entre parênteses é a de publicação ou atualização da página; "sem data" indica que a página não informa. **(fonte única)** marca afirmações encontradas em uma só fonte, e **(secundária)** marca afirmações vindas de imprensa ou de terceiros, e não do fornecedor.
 

@@ -27,7 +27,7 @@ export function reportOf(detail: ConsoleConversationDetail): ConversationReport 
 
 /** Contexto da sugestão de resposta: o relatório e as últimas mensagens, sem traces nem cards. */
 export function suggestionContext(detail: ConsoleConversationDetail, lastMessages = 8): string {
-  const who = { employee: firstName(detail.employee.name), agent: "Nexo Assist", system: "Sistema" } as const;
+  const who = { employee: firstName(detail.employee.name), agent: "Farol Desk", system: "Sistema" } as const;
   const lines = detail.messages.slice(-lastMessages).map((m) => `${m.role === "analyst" ? `Analista (${m.authorName ?? "service desk"})` : who[m.role]}: ${m.text}`);
   return `${reportAsText(reportOf(detail))}\n\nÚltimas mensagens:\n${lines.join("\n")}`;
 }

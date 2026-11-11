@@ -48,7 +48,7 @@ describe("G-Eval: nota ponderada pela probabilidade", () => {
   it("formulário: parte fixa (regras, critérios, formato) primeiro e a conversa por último, para o cache", () => {
     const [system, user] = judgePrompt("FUNCIONÁRIO: oi\nAGENT: Olá!", {});
     for (const c of CRITERIA) expect(system.content).toContain(`${c.id}: <nota>`);
-    expect(system.content).toContain("Nexo Assist");
+    expect(system.content).toContain("Farol Desk");
     expect(system.content).not.toContain("FUNCIONÁRIO: oi");
     expect(user.content.endsWith("AGENT: Olá!")).toBe(true);
     // O prefixo é idêntico para conversas diferentes.

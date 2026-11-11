@@ -131,7 +131,7 @@ export function ChatScreen({ firstName }: { firstName: string }) {
               message={message}
               viewer="employee"
               draftStatuses={conversation.draftStatuses}
-              // Escolhas só valem na última resposta; rascunhos pendentes valem sempre, mas travam enquanto o Nexo responde.
+              // Escolhas só valem na última resposta; rascunhos pendentes valem sempre, mas travam enquanto o Farol responde.
               actions={index === lastAgentIndex && !sending ? actions : { draftActions: actions.draftActions }}
               // "Isso resolveu?" só na última resposta de verdade do agent (com trace), enquanto ele atende.
               feedback={
@@ -169,7 +169,7 @@ export function ChatScreen({ firstName }: { firstName: string }) {
           ref={composer}
           onSend={send}
           disabled={sending || limitReached}
-          placeholder={limitReached ? "Limite desta sessão atingido. Comece uma nova conversa." : "Escreva para o Nexo…"}
+          placeholder={limitReached ? "Limite desta sessão atingido. Comece uma nova conversa." : "Escreva para o Farol…"}
           remaining={conversation.remainingMessages}
           limit={conversation.messageLimit}
         />
@@ -198,7 +198,7 @@ function ConversationStatus({ conversation }: { conversation: ConversationView }
 function PausedNotice({ conversation }: { conversation: ConversationView }) {
   const text =
     conversation.status === "waiting_analyst"
-      ? "Um analista vai continuar por aqui. O Nexo Assist está pausado — pode mandar mais detalhes enquanto isso."
+      ? "Um analista vai continuar por aqui. O Farol Desk está pausado — pode mandar mais detalhes enquanto isso."
       : `${conversation.analystName ?? "Um analista"} está atendendo você agora.`;
   return (
     <p className="mb-2 flex items-center gap-2 rounded-lg bg-warning-soft px-3 py-2 text-xs text-amber-800">

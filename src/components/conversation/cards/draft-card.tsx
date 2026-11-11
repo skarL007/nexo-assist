@@ -25,7 +25,7 @@ export interface DraftActions {
   onSave: (fields: DraftEditFields) => Promise<unknown>;
   /** Só o rascunho pendente mais recente atende ao Ctrl/⌘ + Enter. */
   shortcut?: boolean;
-  /** O Nexo está respondendo: a resposta usa os rascunhos de antes, então confirmar agora a deixaria desatualizada. */
+  /** O Farol está respondendo: a resposta usa os rascunhos de antes, então confirmar agora a deixaria desatualizada. */
   locked?: boolean;
 }
 
@@ -78,7 +78,7 @@ export function DraftCard({ draft, status, actions }: { draft: DraftSnapshot; st
       <Button size="sm" variant="ghost" disabled={disabled} onClick={() => run(actions.onCancel)}>
         Cancelar
       </Button>
-      {actions.locked && <span className="text-xs text-muted-foreground">Aguarde o Nexo responder para confirmar.</span>}
+      {actions.locked && <span className="text-xs text-muted-foreground">Aguarde o Farol responder para confirmar.</span>}
       {error && (
         <span role="alert" className="text-xs text-danger">
           {error}

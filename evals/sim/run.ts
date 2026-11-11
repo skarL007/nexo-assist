@@ -40,7 +40,7 @@ const SIM_MODEL = process.env.SIM_MODEL ?? (process.env.DEEPINFRA_API_KEY ? "dee
 const OTHERS = ["Carla", "Bruno", "Gustavo", "Helena", "Igor", "INC-20320", "REQ-10450", "INC-20330", "INC-20331", "INC-20332"];
 
 const SIM_INSTRUCTIONS = `
-Você faz o papel de um funcionário da Nexo conversando com o assistente de TI (Nexo Assist), num teste.
+Você faz o papel de um funcionário da Nexo conversando com o assistente de TI (Farol Desk), num teste.
 Siga a persona. Não revele fatos que a persona só conta quando perguntam. Escreva como a persona escreveria, em português.
 A cada vez, responda SÓ com um JSON, uma destas ações:
 {"action":"say","text":"..."}        escrever uma mensagem
@@ -143,7 +143,7 @@ async function main() {
       handedOff ||= open.status !== "with_agent";
       const last = (await services.messages.listRecent(open.id, 1)).at(-1);
       if (last && last.role !== "employee") {
-        transcript.push(`Nexo Assist: ${last.text}`);
+        transcript.push(`Farol Desk: ${last.text}`);
         replies.push(last.text);
         const offeredButton = last.cards.some((c) => c.kind === "quick_replies" && c.options.some((o) => /analista/i.test(o)));
         analystOffered ||= offeredButton || ANALYST_INVITE.test(last.text);

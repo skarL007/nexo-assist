@@ -1,4 +1,4 @@
-# Custos e economia do Nexo Assist
+# Custos e economia do Farol Desk
 
 Quanto custa cada atendimento, o que cada decisão de projeto economizou e como isso se compara ao custo de um chamado atendido por pessoa. Os números medidos vêm da gravação de 02/11/2026 (build de produção local, `deepinfra/deepseek-ai/DeepSeek-V4-Flash`, tokens gravados no trace de cada turno). As comparações de mercado vêm de fontes externas, citadas no fim, e os cenários de economia são hipóteses marcadas como tal.
 

@@ -17,7 +17,7 @@ export function agentModels(): { model: string; maxRetries: number }[] {
 export function nexoAgent(): Agent {
   agent ??= new Agent({
     id: "nexo-assist",
-    name: "Nexo Assist",
+    name: "Farol Desk",
     instructions: NEXO_INSTRUCTIONS,
     model: agentModels(),
     tools: nexoTools,

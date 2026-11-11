@@ -112,7 +112,7 @@ describe("relatório da conversa para o analista", () => {
       messages: [
         msg("employee", "Posso instalar um plugin no Figma?", 0),
         msg("system", "Transferido para o service desk", 2, { cards: [{ kind: "handoff", reason: "low_confidence", summary: "Bruno quer um plugin de IA no Figma." }] }),
-        msg("system", "Rafael devolveu a conversa ao Nexo Assist", 30),
+        msg("system", "Rafael devolveu a conversa ao Farol Desk", 30),
       ],
     });
     expect(report.need).toBe("Bruno quer um plugin de IA no Figma.");
