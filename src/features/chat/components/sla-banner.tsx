@@ -60,15 +60,15 @@ export function SlaBanner({ disabled, onAskAnalyst }: { disabled: boolean; onAsk
                 <AlarmClock className="size-4" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="font-medium">{alert.headline}</p>
-                <p className="text-xs text-muted-foreground">{alert.title}</p>
+                <p className="leading-snug font-medium text-pretty">{alert.headline}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{alert.title}</p>
               </div>
               <Button size="icon-xs" variant="ghost" aria-label={`Dispensar aviso do ${alert.code}`} onClick={() => dismiss(alert.code)}>
                 <X />
               </Button>
             </div>
             {open === alert.code && (
-              <ul className="mt-3 ml-10 list-disc space-y-1 pl-4 text-xs leading-relaxed text-muted-foreground marker:text-border">
+              <ul className="reveal mt-3 ml-10 list-disc space-y-1 pl-4 text-xs leading-relaxed text-muted-foreground marker:text-muted-foreground/50">
                 {alert.lines.map((line) => (
                   <li key={line}>{line}</li>
                 ))}

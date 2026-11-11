@@ -7,7 +7,6 @@ import type { DraftSnapshot, DraftStatus } from "@/domain/message";
 import { CATEGORY_LABEL, IMPACT_LABEL, PRIORITY_LABEL, TICKET_TYPE_LABEL } from "@/domain/ticket";
 import { formatDayTime, formatDeadline } from "@/lib/format";
 import { messageOf } from "@/lib/api-client";
-import { cn } from "@/lib/utils";
 import { CardShell, Field } from "./card-shell";
 import { DraftEditor, PRIORITY_TONE, type DraftEditFields } from "./draft-editor";
 
@@ -69,16 +68,22 @@ export function DraftCard({ draft, status, actions }: { draft: DraftSnapshot; st
 
   const footer = pending ? (
     <>
-      <Button size="sm" disabled={disabled} onClick={() => run(actions.onConfirm)}>
-        Confirmar {actions.shortcut && <kbd className="ml-1 rounded bg-primary-foreground/20 px-1.5 py-px font-mono text-[10px] font-normal">Ctrl ↵</kbd>}
+      {/* Card estreito (celular, tablet): o Confirmar ocupa a linha toda e os outros dois dividem a de baixo. O atalho só aparece onde há teclado. */}
+      <Button size="sm" className="h-10 basis-full @md:h-8 @md:basis-auto" disabled={disabled} onClick={() => run(actions.onConfirm)}>
+        Confirmar{" "}
+        {actions.shortcut && (
+          <kbd className="ml-1 hidden rounded-[5px] border border-primary-foreground/35 px-1.5 py-px font-sans text-[10px] leading-4 font-medium @md:inline-block pointer-coarse:hidden!">
+            Ctrl ↵
+          </kbd>
+        )}
       </Button>
-      <Button size="sm" variant="outline" disabled={disabled} onClick={() => setEditing(true)}>
+      <Button size="sm" variant="outline" className="h-10 flex-1 @md:h-8 @md:flex-none" disabled={disabled} onClick={() => setEditing(true)}>
         Alterar detalhes
       </Button>
-      <Button size="sm" variant="ghost" className="sm:ml-auto" disabled={disabled} onClick={() => run(actions.onCancel)}>
+      <Button size="sm" variant="ghost" className="h-10 flex-1 @md:ml-auto @md:h-8 @md:flex-none" disabled={disabled} onClick={() => run(actions.onCancel)}>
         Cancelar
       </Button>
-      {actions.locked && <span className="ml-1 text-xs text-muted-foreground">Aguarde o Farol responder para confirmar.</span>}
+      {actions.locked && <span className="basis-full text-xs text-muted-foreground">Aguarde o Farol responder para confirmar.</span>}
       {error && (
         <span role="alert" className="basis-full text-xs text-danger-foreground">
           {error}
@@ -87,23 +92,32 @@ export function DraftCard({ draft, status, actions }: { draft: DraftSnapshot; st
     </>
   ) : undefined;
 
-  const badge = <StatusDot tone={STATUS[status].tone}>{STATUS[status].label}</StatusDot>;
+  const badge = (
+    <StatusDot tone={STATUS[status].tone} className="whitespace-nowrap">
+      {STATUS[status].label}
+    </StatusDot>
+  );
   // Rascunho que já não vale (substituído ou descartado) fica apagado, para o atual se destacar.
   const stale = status === "replaced" || status === "cancelled";
 
   if (draft.kind === "update") {
     const { fields } = draft;
     return (
-      <div data-testid="draft-card" className={cn(stale && "opacity-60")}>
+      <div data-testid="draft-card">
         <CardShell
           eyebrow={`Atualização · Rascunho D-${draft.id}`}
           status={badge}
           title={`${fields.ticketCode} · ${fields.ticketTitle}`}
           description={fields.comment}
           footer={footer}
+          muted={stale}
         >
-          <Field label="Chamado">{fields.ticketCode}</Field>
-          <Field label="Efeito">{fields.reopen ? "Reabre o chamado" : "Adiciona comentário"}</Field>
+          <Field label="Chamado">
+            <span className="font-mono text-[13px]">{fields.ticketCode}</span>
+          </Field>
+          <Field label="Efeito" wrap className="@md:col-span-3">
+            {fields.reopen ? "Reabre o chamado" : "Adiciona comentário"}
+          </Field>
         </CardShell>
       </div>
     );
@@ -111,13 +125,14 @@ export function DraftCard({ draft, status, actions }: { draft: DraftSnapshot; st
 
   const { fields } = draft;
   return (
-    <div data-testid="draft-card" className={cn(stale && "opacity-60")}>
+    <div data-testid="draft-card">
       <CardShell
         eyebrow={`Novo chamado · Rascunho D-${draft.id}`}
         status={badge}
         title={fields.title}
         description={fields.description}
         footer={footer}
+        muted={stale}
       >
         <Field label="Tipo">{TICKET_TYPE_LABEL[fields.type]}</Field>
         <Field label="Categoria">{CATEGORY_LABEL[fields.category]}</Field>
@@ -126,7 +141,7 @@ export function DraftCard({ draft, status, actions }: { draft: DraftSnapshot; st
             <StatusPill tone={PRIORITY_TONE[fields.priority]}>{PRIORITY_LABEL[fields.priority]}</StatusPill>
             {status === "pending" && (
               <span className="text-xs font-normal whitespace-normal text-muted-foreground">
-                resposta até <span className="font-mono">{formatDeadline(draft.deadline)}</span>
+                resposta até <span className="whitespace-nowrap tabular-nums">{formatDeadline(draft.deadline)}</span>
               </span>
             )}
           </span>

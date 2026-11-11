@@ -99,18 +99,18 @@ export function AgentReply({
   const right = viewer === "analyst";
 
   return (
-    <div className={cn("flex max-w-[88%] gap-3", right && "ml-auto")} data-testid="agent-reply">
-      {/* O farol como avatar: identifica o agent em qualquer lado da conversa. */}
-      <BrandMark className="mt-0.5 size-7 rounded-[8px]" />
+    <div className={cn("flex w-full gap-3 sm:max-w-[88%]", right && "ml-auto")} data-testid="agent-reply">
+      {/* O farol como avatar: identifica o agent em qualquer lado da conversa. No celular ele sobe para a linha do nome, e os cartões ganham a largura toda. */}
+      <BrandMark className="mt-0.5 size-7 rounded-[8px] max-sm:hidden" />
       <div className="flex min-w-0 flex-1 flex-col items-start gap-2.5">
         <AgentSteps steps={steps} working={working} open={open} onToggle={trace ? () => setOpen((v) => !v) : undefined} time={time} />
         {open && trace && (
-          <div className="w-full">
+          <div className="reveal w-full">
             <DecisionDetails trace={trace} />
           </div>
         )}
         {(text || working) && (
-          <div className="max-w-full rounded-[20px] rounded-tl-md bg-surface px-4 py-2.5 text-[15px] leading-[1.55] whitespace-pre-wrap shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.04)]">
+          <div className="max-w-full rounded-[20px] rounded-tl-md bg-surface px-4 py-2.5 text-[15px] leading-[1.55] break-words whitespace-pre-wrap shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.04)]">
             {text || <TypingDots />}
           </div>
         )}
@@ -139,7 +139,7 @@ function AttachedImage({ message, viewer }: { message: ChatMessage; viewer: View
         <img src={src} alt="Imagem anexada pelo funcionário" className="max-h-48 rounded-lg border border-black/5" loading="lazy" />
       </a>
       {viewer === "analyst" && message.screenshot.status === "read" && message.screenshot.description && (
-        <p className="max-w-md rounded-md bg-muted px-2 py-1.5 text-xs text-muted-foreground">
+        <p className="max-w-md rounded-lg bg-muted px-2.5 py-1.5 text-xs leading-relaxed text-muted-foreground">
           <span className="font-medium text-foreground">Leitura automática:</span> {message.screenshot.description}
         </p>
       )}
@@ -164,11 +164,11 @@ function Bubble({
   children: React.ReactNode;
 }) {
   return (
-    <div className={cn("flex max-w-[78%] flex-col gap-1", side === "right" ? "ml-auto items-end" : "items-start")}>
-      {label && <span className="px-1 text-[12px] font-semibold text-success-foreground">{label}</span>}
+    <div className={cn("flex max-w-[85%] flex-col gap-1 sm:max-w-[78%]", side === "right" ? "ml-auto items-end" : "items-start")}>
+      {label && <span className="px-1.5 text-[12px] font-semibold text-success-foreground">{label}</span>}
       <div
         className={cn(
-          "rounded-[20px] px-4 py-2.5 text-[15px] leading-[1.5] whitespace-pre-wrap",
+          "rounded-[20px] px-4 py-2.5 text-[15px] leading-[1.5] break-words whitespace-pre-wrap",
           side === "right" ? "rounded-br-md" : "rounded-bl-md",
           className,
         )}
@@ -182,8 +182,8 @@ function Bubble({
 
 function SystemDivider({ text, time }: { text: string; time: string }) {
   return (
-    <p className="mx-auto max-w-md py-3 text-center text-[12px] leading-relaxed text-muted-foreground" role="note">
-      <span className="font-medium text-foreground/70">{text}</span>
+    <p className="mx-auto max-w-md py-2 text-center text-[12px] leading-relaxed text-pretty text-muted-foreground" role="note">
+      <span className="font-medium">{text}</span>
       <span className="tabular-nums"> · {time}</span>
     </p>
   );
@@ -193,7 +193,7 @@ function TypingDots() {
   return (
     <span className="inline-flex gap-1 py-1.5" aria-label="digitando">
       {[0, 150, 300].map((delay) => (
-        <span key={delay} className="size-1.5 animate-bounce rounded-full bg-muted-foreground/50" style={{ animationDelay: `${delay}ms` }} />
+        <span key={delay} className="size-1.5 animate-bounce rounded-full bg-muted-foreground/60" style={{ animationDelay: `${delay}ms` }} />
       ))}
     </span>
   );

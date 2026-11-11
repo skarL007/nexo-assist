@@ -5,7 +5,6 @@ import { useState } from "react";
 import { StatusDot } from "@/components/nexo/status-pill";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { describeChanges, DRAFT_LIMITS, reviseNewTicket, urgencyOf, type NewTicketEdit } from "@/domain/draft-revision";
 import type { DraftSnapshot } from "@/domain/message";
@@ -14,6 +13,7 @@ import { CATEGORIES, CATEGORY_LABEL, IMPACTS, IMPACT_LABEL, PRIORITY_LABEL, TICK
 import { formatDeadline } from "@/lib/format";
 import { messageOf } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import { CodeText } from "./card-shell";
 
 export type DraftEditFields = NewTicketEdit | { comment: string };
 
@@ -72,26 +72,26 @@ function NewTicketEditor({ draft, locked, onSave, onClose }: EditorProps & { dra
         invalid={!descriptionOk}
         multiline
       />
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-5 @md:grid-cols-2">
         <ChoiceGroup label="Tipo" value={edit.type} options={options(TICKET_TYPES, TICKET_TYPE_LABEL)} onChange={set("type")} />
         <ChoiceGroup label="Afetados" value={edit.impact} options={options(IMPACTS, IMPACT_LABEL)} onChange={set("impact")} />
       </div>
       <ChoiceGroup label="Categoria" value={edit.category} options={options(CATEGORIES, CATEGORY_LABEL)} onChange={set("category")} />
       <ChoiceGroup label="Urgência" value={edit.urgency} options={options(URGENCIES, URGENCY_LABEL)} onChange={set("urgency")} />
 
-      <div data-testid="draft-preview" aria-live="polite" className="space-y-1.5 rounded-xl bg-beam-soft/60 shadow-[0_0_0_1px_oklch(0.83_0.145_82/0.25)] px-3.5 py-3 text-sm">
-        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-          <span className="eyebrow text-[10px]">Prioridade</span>
-          <StatusDot tone={PRIORITY_TONE[next.priority]} className="text-sm text-foreground">
+      <div data-testid="draft-preview" aria-live="polite" className="space-y-1.5 rounded-xl bg-background px-4 py-3 text-sm">
+        <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+          <span className="eyebrow">Prioridade</span>
+          <StatusDot tone={PRIORITY_TONE[next.priority]} className="text-sm font-semibold text-foreground">
             {PRIORITY_LABEL[next.priority]}
           </StatusDot>
           <span className="text-xs text-muted-foreground">
-            · {SLA_LABEL[next.priority]}, resposta até <span className="font-mono">{formatDeadline(deadline)}</span>
+            {SLA_LABEL[next.priority]}, resposta até <span className="whitespace-nowrap tabular-nums">{formatDeadline(deadline)}</span>
           </span>
         </div>
-        <p className="text-xs text-muted-foreground">{next.priorityReason}</p>
-        {next.priority === "critical" && <p className="text-xs text-danger-foreground">Crítico: ao confirmar, um analista é chamado na hora.</p>}
-        <p className="text-xs">
+        <p className="text-xs leading-relaxed text-muted-foreground">{next.priorityReason}</p>
+        {next.priority === "critical" && <p className="text-xs font-medium text-danger-foreground">Crítico: ao confirmar, um analista é chamado na hora.</p>}
+        <p className="text-xs leading-relaxed">
           <span className="font-medium">O que muda: </span>
           {changes.length ? describeChanges(changes) : <span className="text-muted-foreground">nada ainda.</span>}
         </p>
@@ -111,8 +111,8 @@ function CommentEditor({ draft, locked, onSave, onClose }: EditorProps & { draft
       onSave={() => onSave({ comment })}
       onClose={onClose}
     >
-      <p className="font-serif text-lg leading-snug font-semibold tracking-tight">
-        <span className="font-mono text-sm font-medium text-muted-foreground">{draft.fields.ticketCode}</span> · {draft.fields.ticketTitle}
+      <p className="font-serif text-lg leading-snug font-semibold tracking-tight text-pretty">
+        <span className="font-mono text-[0.9em] font-medium tracking-tight text-muted-foreground">{draft.fields.ticketCode}</span> · {draft.fields.ticketTitle}
       </p>
       <TextField
         id={`d${draft.id}-comment`}
@@ -157,20 +157,22 @@ function EditorShell({
   };
 
   return (
-    <div data-testid="draft-card" className="overflow-hidden rounded-xl border border-primary/40 bg-surface shadow-xs ring-4 ring-primary/5">
-      <div className="space-y-5 px-5 py-4">
-        <p className="eyebrow">{eyebrow}</p>
+    <div data-testid="draft-card" className="reveal @container overflow-hidden rounded-2xl border border-primary/40 bg-surface shadow-xs ring-4 ring-primary/5">
+      <div className="space-y-5 px-4 py-4 @md:px-5">
+        <p className="eyebrow">
+          <CodeText text={eyebrow} />
+        </p>
         {children}
       </div>
-      <div className="flex flex-wrap items-center gap-2 border-t bg-background/60 px-5 py-3">
-        <Button size="sm" disabled={!canSave || busy || locked} onClick={save}>
+      <div className="flex flex-wrap items-center gap-2 border-t bg-background/60 px-4 py-3 @md:px-5">
+        <Button size="sm" className="h-10 flex-1 @md:h-8 @md:flex-none" disabled={!canSave || busy || locked} onClick={save}>
           {busy && <Loader2 className="size-3.5 animate-spin" />}
           Salvar alterações
         </Button>
-        <Button size="sm" variant="ghost" disabled={busy} onClick={onClose}>
+        <Button size="sm" variant="ghost" className="h-10 @md:h-8" disabled={busy} onClick={onClose}>
           Voltar
         </Button>
-        {locked && <span className="ml-1 text-xs text-muted-foreground">Aguarde o Farol responder para salvar.</span>}
+        {locked && <span className="basis-full text-xs text-muted-foreground">Aguarde o Farol responder para salvar.</span>}
         {error && (
           <span role="alert" className="basis-full text-xs text-danger-foreground">
             {error}
@@ -202,10 +204,10 @@ function TextField({
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between gap-2">
-        <Label htmlFor={id} className="text-[11px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+        <label htmlFor={id} className="eyebrow">
           {label}
-        </Label>
-        <span className={cn("font-mono text-[11px] tabular-nums", invalid ? "text-danger-foreground" : "text-muted-foreground")}>
+        </label>
+        <span className={cn("text-[11px] tabular-nums", invalid ? "font-medium text-danger-foreground" : "text-muted-foreground")}>
           {invalid && value.trim().length < min ? `mínimo ${min}` : `${value.trim().length}/${max}`}
         </span>
       </div>
@@ -229,7 +231,7 @@ function ChoiceGroup<T extends string>({
   return (
     <div className="space-y-1.5">
       <p className="eyebrow">{label}</p>
-      <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-1.5">
+      <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-2 @md:gap-1.5">
         {choices.map((choice) => {
           const selected = choice.value === value;
           return (
@@ -240,7 +242,7 @@ function ChoiceGroup<T extends string>({
               aria-checked={selected}
               onClick={() => onChange(choice.value)}
               className={cn(
-                "h-8 rounded-full border px-3.5 text-[13px] transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:outline-none",
+                "tap-target h-8 rounded-full border px-3.5 text-[13px] whitespace-nowrap transition-[color,background-color,border-color,scale] duration-150 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:outline-none active:scale-[0.97] max-md:h-9",
                 selected ? "border-primary bg-primary font-medium text-primary-foreground" : "bg-surface text-foreground/80 hover:border-input hover:bg-muted",
               )}
             >
