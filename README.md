@@ -2,6 +2,8 @@
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/skarL007/nexo-assist/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/skarL007/nexo-assist/tree/main) [![Docker Hub](https://img.shields.io/badge/docker%20hub-skarl007%2Fnexo--assist-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/skarl007/nexo-assist)
 
+> **Farol Desk** é o nome novo do projeto que nasceu como *Nexo Assist* (até 11/11/2026). A Nexo continua sendo a empresa fictícia da demonstração. O repositório, a URL da demo e a imagem Docker mantêm o nome antigo, para os links já enviados continuarem funcionando.
+
 Agent de atendimento do service desk de TI da Nexo. O funcionário descreve o problema com as próprias palavras. O agent consulta os chamados dele, busca na central de ajuda, abre ou atualiza chamados (sempre com confirmação) e chama um analista quando precisa. O analista atende pelo console: vê a fila, assume a conversa com o agent pausado e depois devolve ou encerra.
 
 Cada resposta do agent mostra **o que ele entendeu, o que fez e por quê**: passos ao vivo, decisão com confiança, chamadas de tool com entrada e saída, regras que agiram, tokens e latência.
@@ -73,7 +75,7 @@ Outros comandos:
 
 ```bash
 npm run verify                    # tipos + lint + unitários + E2E + E2E da demo — sem LLM
-npm test                          # 563 testes unitários em 77 arquivos — sem LLM
+npm test                          # 573 testes unitários em 77 arquivos — sem LLM
 npx playwright install chromium   # só na primeira vez, antes do E2E
 npm run test:e2e                  # 48 testes E2E contra o build de produção — sem LLM
 npm run test:e2e:demo             # isolamento entre visitantes na demo pública — sem LLM
@@ -241,7 +243,7 @@ A decisão de projeto mais importante foi esta: **o modelo decide o que fazer, e
 | Aviso de prazo em risco (75% do prazo útil), com a conta explicada | [`domain/sla-risk.ts`](src/domain/sla-risk.ts) |
 | Modelo reserva: se o modelo principal falhar (ex.: 503), o passo vai para o reserva (`LLM_FALLBACK_MODEL`), e o trace diz quem respondeu; o custo usa o preço de quem respondeu | [`agent/model-fallback.ts`](src/agent/model-fallback.ts) |
 | Entendimento registrado uma vez por turno: chamadas paralelas repetidas não transferem nem avisam de novo | [`agent/turn-context.ts`](src/agent/turn-context.ts) (`recordDecision`) |
-| Imagem anexada (captura de tela ou foto do equipamento): formato conferido pelos bytes, até 1 MB, 5 por conversa; um modelo de visão barato descreve e o agent recebe só a descrição, como dado não confiável; a imagem só é servida à dona da conversa e aos analistas | [`domain/screenshot.ts`](src/domain/screenshot.ts), [`application/screenshot-service.ts`](src/application/screenshot-service.ts), [spec](docs/specs/02-agent.md#captura-de-tela) |
+| Imagem anexada (captura de tela ou foto do equipamento): formato conferido pelos bytes, até 1 MB, 5 por conversa, 10 por pessoa no dia e 100 no total do dia; um modelo de visão barato descreve e o agent recebe só a descrição, como dado não confiável; a imagem só é servida à dona da conversa e aos analistas | [`domain/screenshot.ts`](src/domain/screenshot.ts), [`application/screenshot-service.ts`](src/application/screenshot-service.ts), [spec](docs/specs/02-agent.md#captura-de-tela) |
 | Privacidade: o funcionário vem do cookie assinado, nunca de argumento do modelo; chamado de outra pessoa responde "não encontrado" | [`agent/turn-context.ts`](src/agent/turn-context.ts), `TicketService.getMine` |
 
 O [`step-policy.ts`](src/agent/step-policy.ts) segue o padrão *action-selector* da literatura de defesa contra injeção ([arXiv 2506.08837](https://arxiv.org/abs/2506.08837)): o código decide quais tools existem em cada passo, e o modelo só escolhe entre elas. Um texto malicioso pode mudar o que o modelo *quer* fazer, mas não o que ele *consegue* fazer.
@@ -256,7 +258,7 @@ Teste unitário não prova que um LLM decide bem, então a qualidade tem quatro 
 
 | Camada | O que cobre | Comando |
 |---|---|---|
-| **Testes unitários** (Vitest, 563 em 77 arquivos) | verificações de diagnóstico e a sincronização da central sem apagar dados, provedores de embeddings em ordem com disjuntor, avaliador de relevância (aplica, talvez ou nenhum), prazos com fim de semana, matriz de prioridade, pergunta sobre alternativa antes da prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória e só explícita, prazo × necessidade, assunto do chamado, categoria E-mail, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, espaço isolado da demo, modelo reserva, o estimador pass^k e a simulação do roteamento em cascata | `npm test` |
+| **Testes unitários** (Vitest, 573 em 77 arquivos) | verificações de diagnóstico e a sincronização da central sem apagar dados, provedores de embeddings em ordem com disjuntor, avaliador de relevância (aplica, talvez ou nenhum), prazos com fim de semana, matriz de prioridade, pergunta sobre alternativa antes da prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória e só explícita, prazo × necessidade, assunto do chamado, categoria E-mail, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, espaço isolado da demo, modelo reserva, o estimador pass^k e a simulação do roteamento em cascata | `npm test` |
 | **E2E** (Playwright, 48 + 1 da demo) | login (inclusive SSO contra um provedor OIDC falso), link para o estudo de caso e prévia ao compartilhar (Open Graph), permissões, transferência de ponta a ponta, relatório, sugestão de resposta, indicadores, prazos em risco, incidente em massa, frustração, tempo real com latência medida, estados de erro e a página 404, contra o build de produção. A suíte da demo sobe o app com `PUBLIC_DEMO=1` e prova que o visitante B não lê, não assume e não pede sugestão da conversa do visitante A | `npm run test:e2e` · `npm run test:e2e:demo` |
 | **Evals** (36 cenários, modelo real) | intenção, tools esperadas e proibidas, verificações de diagnóstico e o "já tentado" no chamado, transferência (e quando *não* transferir), caso crítico, reabertura, escopo de TI, vazamento de dados, incidente em massa, frustração, os achados do funcionário simulado e 8 ataques mapeados ao OWASP ([red-team](docs/validacao/RED-TEAM.md)) | `npm run eval` |
 | **Funcionário simulado** (pass^k, 10 personas) | um modelo faz o papel do funcionário, com fatos que só conta se perguntarem, e clica em Confirmar, Descartar ou numa resposta rápida; o estado no banco é conferido em k execuções, cada uma a partir do seed ([resultado e falhas](docs/validacao/SIMULACAO.md)) | `npm run eval:sim` |

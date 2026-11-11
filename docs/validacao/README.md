@@ -12,6 +12,7 @@ Cada melhoria grande tem uma pergunta, um método que outra pessoa pode repetir,
 
 | O que | Pergunta | Resultado | Como repetir |
 |---|---|---|---|
+| [Revisão de 11/11](REVISAO-2026-11-11.md) | O app funciona de ponta a ponta depois da troca de marca e do anexo de imagem, e o que a revisão de segurança achou? | 573 unitários, 48 E2E, fluxo real no navegador; 1 achado alto e 2 médios corrigidos com teste | `npm run verify` |
 | [Antes e depois de 29–30/10](AVALIACAO-2026-10-30.md) | Diagnóstico guiado, GPT-6 Luna, o novo provedor dos embeddings e o avaliador de relevância melhoraram o sistema, a que custo? | Busca em produção **56/81 → 78/81**, com **0 artigo errado** (eram 10); pedido × defeito × fora da central **9/18 → 18/18**; custo por cenário de eval **−95%** | ver o documento |
 | [Avaliador de relevância](BUSCA.md#avaliador-de-relevância-30102026) | A busca para de mostrar artigo do assunto certo que não se aplica? | 78/81, 0 com artigo errado, em duas rodadas; 18/18 no conjunto congelado antes da correção | `npm run eval:busca` |
 | [Busca na central](BUSCA.md) | A busca híbrida acha mais artigos certos, sem responder com artigo sem relação? | Acerto geral **84% → 94%** em 50 perguntas; no conjunto separado, hit@1 92% → 100%. Com 14 artigos e o mesmo modelo pelo OpenRouter (30/10): **58/63 (92%)**, contra 47/63 (75%) só com palavras; o mais barato dos outros quatro modelos medidos fez 55/63 | `npm run eval:busca` · `evals/retrieval/compare-models.ts` |

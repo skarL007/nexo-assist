@@ -24,7 +24,7 @@ Tokens somados dos traces da conversa gravada:
 
 O livro-caixa da gravação somou **US$ 0,0135** para 10 turnos do agente e uma leitura de imagem, o mesmo valor que sai dos tokens (US$ 0,0134 do agente e US$ 0,0001 da imagem).
 
-**O que o livro-caixa ainda não registra:** a sugestão de resposta do analista, os embeddings da pergunta e o avaliador de relevância. Pelos tamanhos dos pedidos, somam menos de US$ 0,001 por conversa, mas ficam fora do teto. Corrigir isso é a primeira melhoria de custo da lista abaixo.
+**O que o livro-caixa ainda não registra:** os embeddings da pergunta e o avaliador de relevância. Pelos tamanhos dos pedidos, somam menos de US$ 0,001 por conversa, mas ficam fora do teto. A sugestão de resposta do analista entrou em 11/11/2026: passa pelo teto em dólares antes de chamar o modelo e registra o custo pelos tokens.
 
 Em mil atendimentos do tipo "resolvido sem analista", o gasto com modelo fica perto de **US$ 5**; em mil que viram chamado, perto de **US$ 7,50**.
 
@@ -83,7 +83,7 @@ A taxa de resolução sem analista ainda não foi medida com usuários reais; os
 
 ## Próximas economias, em ordem
 
-1. **Registrar tudo no livro-caixa:** sugestão de resposta, embeddings e avaliador passam a contar no teto.
+1. **Registrar tudo no livro-caixa:** embeddings e avaliador passam a contar no teto (a sugestão de resposta já conta desde 11/11/2026).
 2. **Cache de prompt:** com a parte fixa do prompt primeiro, a entrada repetida é cobrada a 20% do preço. Como a entrada é mais de 95% do custo de um turno, a economia esperada fica perto de 60% do gasto do agente; medir antes e depois com a mesma conversa.
 3. **Roteamento em cascata:** perguntas simples (saudação, horário, status de chamado) para um modelo menor; a simulação já existe nos evals.
 4. **Menos perguntas por chamado:** na gravação, o chamado do ponto levou 6 turnos; as perguntas que não mudam a prioridade podem sair, o que corta tempo e custo juntos.
