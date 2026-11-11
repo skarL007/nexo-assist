@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { env } from "@/config/env";
 import { Brand } from "@/components/nexo/brand";
+import { Button } from "@/components/ui/button";
 import type { InsightsReport } from "@/domain/insights";
 import { LoginForm } from "@/features/auth/login-form";
 import { createServices } from "@/infrastructure/container";
@@ -56,7 +57,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         </div>
 
         <div className="relative space-y-3 border-t border-border pt-6">
-          <dl className="grid grid-cols-3 gap-6">
+          <dl className="grid grid-cols-3 gap-8">
             <Stat value={stats?.avgLatencyMs != null ? formatSeconds(stats.avgLatencyMs) : "—"} label="resposta do agent, em média" />
             <Stat value={stats?.resolvedWithoutHuman != null ? percent(stats.resolvedWithoutHuman) : "—"} label="resolvido sem analista" />
             <Stat value={stats ? String(stats.analysts) : "—"} label="analistas no service desk" />
@@ -65,33 +66,40 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         </div>
       </section>
 
-      <section className="flex flex-col bg-surface p-6 sm:p-12">
-        <p className="text-right text-sm text-muted-foreground">
-          Problema para entrar? <span className="font-medium text-primary">Ligue no ramal 4000</span>
-        </p>
-        <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-8">
-          <div className="lg:hidden">
+      <section className="flex flex-col bg-surface px-5 py-6 sm:p-12">
+        <div className="flex items-center justify-between gap-4">
+          <div className="lg:invisible">
             <Brand />
           </div>
+          <p className="text-right text-[13px] leading-snug text-muted-foreground sm:text-sm">
+            Problema para entrar? <span className="font-medium whitespace-nowrap text-foreground">Ligue no ramal 4000</span>
+          </p>
+        </div>
+        <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-7 py-10">
           <div className="space-y-2">
-            <h2 className="font-serif text-4xl tracking-tight">Entrar</h2>
-            <p className="text-sm text-muted-foreground">
+            <h2 className="font-serif text-[34px] leading-tight font-semibold tracking-[-0.02em]">Entrar</h2>
+            <p className="text-[15px] leading-relaxed text-muted-foreground">
               {demoLogin ? "Use seu e-mail corporativo e a senha de rede Nexo." : `Entre com a sua conta corporativa (${sso?.label ?? "SSO"}).`}
             </p>
           </div>
           {ssoError && (
-            <p role="alert" className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger-foreground">
+            <p role="alert" className="rounded-xl bg-danger-soft px-3.5 py-2.5 text-sm leading-relaxed text-danger-foreground">
               {ssoError}
             </p>
           )}
           {sso && (
-            <a href="/api/auth/sso" className="flex h-11 items-center justify-center rounded-lg border bg-card text-sm font-medium hover:bg-muted">
-              Entrar com {sso.label}
-            </a>
+            <Button asChild variant="outline" size="lg" className="w-full">
+              <a href="/api/auth/sso">Entrar com {sso.label}</a>
+            </Button>
+          )}
+          {sso && demoLogin && (
+            <p className="flex items-center gap-3 text-xs text-muted-foreground before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border">
+              ou com e-mail e senha
+            </p>
           )}
           {demoLogin && <LoginForm />}
         </div>
-        <footer className="flex justify-between text-xs text-muted-foreground">
+        <footer className="flex flex-col items-center gap-1 text-center text-xs text-muted-foreground sm:flex-row sm:justify-between sm:text-left">
           <span>© Nexo · Tecnologia da Informação</span>
           <span>Protótipo · todos os dados são fictícios</span>
         </footer>
@@ -117,8 +125,8 @@ function ChatPreview() {
 function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div>
-      <dt className="font-serif text-[32px] leading-none font-semibold tracking-[-0.02em]">{value}</dt>
-      <dd className="text-xs text-muted-foreground">{label}</dd>
+      <dt className="font-serif text-[32px] leading-none font-semibold tracking-[-0.02em] tabular-nums">{value}</dt>
+      <dd className="mt-2 text-xs leading-snug text-muted-foreground">{label}</dd>
     </div>
   );
 }
