@@ -29,10 +29,15 @@ export interface CheckDone {
   result: CheckResult;
 }
 
-/** Botões de cada verificação. "Resolveu" encerra sem chamado e não entra no "já tentado". */
-export const CHECK_OPTIONS = ["Já estava assim", "Ajustei, mas continua", "Resolveu", "Não consigo verificar"] as const;
+/**
+ * Botões de cada verificação. "Resolveu" encerra sem chamado e não entra no "já tentado".
+ * O primeiro era "Já estava assim": diante de uma pergunta de sim ou não ("o cabo está encaixado?"),
+ * não dava para saber se "assim" era encaixado ou solto. "Já estava certo" só tem uma leitura.
+ */
+export const CHECK_OPTIONS = ["Já estava certo", "Ajustei, mas continua", "Resolveu", "Não consigo verificar"] as const;
 const RESULT_BY_OPTION = new Map<string, CheckResult>([
-  ["ja estava assim", "ok"],
+  ["ja estava certo", "ok"],
+  ["ja estava assim", "ok"], // rótulo antigo, em conversas já gravadas
   ["ajustei, mas continua", "adjusted"],
   ["nao consigo verificar", "not_done"],
 ]);

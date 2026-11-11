@@ -61,7 +61,7 @@ describe("checksFromHistory", () => {
     const history = [
       said("Meu computador não liga"),
       ask("energia-cabo"),
-      said("Já estava assim"),
+      said("Já estava certo"),
       ask("energia-tomada"),
       said("ajustei, mas continua"),
       ask("energia-chave-fonte"),
@@ -84,6 +84,10 @@ describe("checksFromHistory", () => {
   });
 
   it("os botões são os quatro resultados possíveis", () => {
-    expect(CHECK_OPTIONS).toEqual(["Já estava assim", "Ajustei, mas continua", "Resolveu", "Não consigo verificar"]);
+    expect(CHECK_OPTIONS).toEqual(["Já estava certo", "Ajustei, mas continua", "Resolveu", "Não consigo verificar"]);
+  });
+
+  it("o rótulo antigo do botão continua valendo nas conversas já gravadas", () => {
+    expect(checksFromHistory([ask("energia-cabo"), said("Já estava assim")])).toEqual([{ checkId: "energia-cabo", result: "ok" }]);
   });
 });

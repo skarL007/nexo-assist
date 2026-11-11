@@ -237,8 +237,8 @@ export const scenarios: Scenario[] = [
     employee: ANA,
     turns: [
       "Meu computador de mesa não liga. Só comigo, e estou parada sem conseguir trabalhar.",
-      "Já estava assim",
-      "Já estava assim",
+      "Já estava certo",
+      "Já estava certo",
       "Ajustei, mas continua",
       "Não resolveu, o que faço agora?",
     ],
