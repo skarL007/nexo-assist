@@ -40,7 +40,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
 
   return (
     <main className="grid min-h-screen lg:grid-cols-2">
-      <section className="relative hidden flex-col justify-between overflow-hidden border-r bg-ink p-14 text-ink-foreground lg:flex">
+      <section className="relative hidden flex-col justify-between gap-10 overflow-hidden border-r bg-ink p-10 text-ink-foreground lg:flex xl:p-14">
 
         <div className="relative">
           <Brand inverted />
@@ -48,8 +48,8 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
 
         <div className="relative max-w-md space-y-6">
           <p className="text-sm font-medium text-muted-foreground">Service desk de TI da Nexo</p>
-          <h1 className="font-serif text-[56px] leading-[1.04] font-semibold tracking-[-0.03em]">Seu problema de TI, resolvido em uma conversa.</h1>
-          <p className="text-lg leading-relaxed text-muted-foreground">
+          <h1 className="font-serif text-[44px] leading-[1.04] font-semibold tracking-[-0.03em] text-balance xl:text-[56px]">Seu problema de TI, resolvido em uma conversa.</h1>
+          <p className="text-[17px] leading-relaxed text-muted-foreground xl:text-lg">
             Descreva o que está acontecendo. O assistente consulta seus chamados, busca na central de ajuda e chama um analista
             quando precisa — e mostra o porquê de cada decisão.
           </p>
@@ -67,8 +67,8 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       </section>
 
       <section className="flex flex-col bg-surface px-5 py-6 sm:p-12">
-        <div className="flex items-center justify-between gap-4">
-          <div className="lg:invisible">
+        <div className="flex items-center justify-between gap-4 lg:justify-end">
+          <div className="lg:hidden">
             <Brand />
           </div>
           <p className="text-right text-[13px] leading-snug text-muted-foreground sm:text-sm">
@@ -112,10 +112,11 @@ function ChatPreview() {
   return (
     <div className="space-y-2.5 rounded-3xl bg-surface p-5 text-sm shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.12)]">
       <p className="ml-auto w-fit rounded-[18px] rounded-br-md bg-primary px-3.5 py-2 text-primary-foreground">Meu notebook não conecta na VPN. Erro 809.</p>
-      <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-        <span className="size-1.5 rounded-full bg-beam" />
-        {PRODUCT_NAME} · consultou a central · montou o chamado
-        <span className="rounded-full bg-beam-soft px-2 py-px font-medium text-beam-foreground">por quê?</span>
+      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+        <span className="size-1.5 shrink-0 rounded-full bg-beam" />
+        <span className="font-medium text-foreground">{PRODUCT_NAME}</span>
+        <span>consultou a central · montou o chamado</span>
+        <span className="rounded-full bg-beam-soft px-2 py-px font-medium whitespace-nowrap text-beam-foreground">por quê?</span>
       </p>
       <p className="w-fit rounded-[18px] rounded-bl-md bg-muted px-3.5 py-2">Prioridade alta. Um analista responde até as 13h.</p>
     </div>
