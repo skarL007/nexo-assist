@@ -3,6 +3,7 @@ import type { Employee } from "@/domain/employee";
 import { ConversationService } from "./conversation-service";
 import type { BudgetRepository, ReplyWriter, SuggestionRepository } from "./ports";
 import { ReplySuggestionService } from "./reply-suggestion-service";
+import { SpendLedger, type SpendStore } from "./spend-ledger";
 import { fixedClock, InMemoryConversationRepository, InMemoryMessageRepository } from "./test-doubles";
 
 const analyst = (id: string, name: string): Employee => ({ id, name, email: `${id}@nexo.com.br`, role: "analyst", department: "Suporte", passwordChangedAt: new Date() });
@@ -19,6 +20,9 @@ class FakeWriter implements ReplyWriter {
 }
 class FakeBudget implements BudgetRepository {
   constructor(private left: number) {}
+  get remaining() {
+    return this.left;
+  }
   async reserve() {
     return this.left-- > 0;
   }
@@ -36,15 +40,31 @@ class FakeSuggestions implements SuggestionRepository {
   }
 }
 
-async function setup(text = "Oi, Carla! Liberei o perfil de aprovação no SAP. Pode testar?", budget = 10) {
+class MemorySpend implements SpendStore {
+  values = new Map<string, number>();
+  async get(key: string) {
+    return this.values.get(key) ?? 0;
+  }
+  async add(key: string, micros: number) {
+    this.values.set(key, (this.values.get(key) ?? 0) + micros);
+  }
+}
+
+async function setup(text = "Oi, Carla! Liberei o perfil de aprovação no SAP. Pode testar?", budget = 10, spentTodayUsd = 0) {
   const conversations = new ConversationService(new InMemoryConversationRepository(), new InMemoryMessageRepository(), fixedClock("2026-10-27T13:00:00Z"));
   const { id } = await conversations.getOrStart("carla");
   await conversations.handoff(id, { reason: "employee_request", summary: "SAP", ticketCode: "INC-20320", confidence: null });
   await conversations.assume(id, rafael);
   const writer = new FakeWriter(text);
   const suggestions = new FakeSuggestions();
-  const service = new ReplySuggestionService(conversations, new FakeBudget(budget), writer, suggestions, 100);
-  return { id, service, writer, suggestions };
+  const spendStore = new MemorySpend();
+  const clock = fixedClock("2026-10-27T13:00:00Z");
+  const ledger = new SpendLedger(spendStore, { dailyUsd: 0.07 }, clock);
+  await ledger.record(spentTodayUsd);
+  const fakeBudget = new FakeBudget(budget);
+  // US$ 1 por milhão de tokens de entrada e US$ 2 por milhão de saída.
+  const service = new ReplySuggestionService(conversations, fakeBudget, writer, suggestions, 100, { ledger, price: { input: 1e-6, output: 2e-6 } }, clock);
+  return { id, service, writer, suggestions, spendStore, fakeBudget };
 }
 const context = "Relatório: Carla precisa de perfil de aprovação no SAP (INC-20320).";
 
@@ -66,6 +86,19 @@ describe("sugestão de resposta para o analista", () => {
     const { id, service, writer } = await setup(undefined, 0);
     await expect(service.suggest(id, rafael, context)).rejects.toMatchObject({ code: "daily_limit" });
     expect(writer.calls).toBe(0);
+  });
+
+  it("teto de gasto em dólares atingido: não chama o modelo nem gasta a vaga de turno", async () => {
+    const { id, service, writer, fakeBudget } = await setup(undefined, 10, 0.07);
+    await expect(service.suggest(id, rafael, context)).rejects.toMatchObject({ code: "spend_limit" });
+    expect(writer.calls).toBe(0);
+    expect(fakeBudget.remaining).toBe(10);
+  });
+
+  it("o custo da sugestão entra no livro-caixa (900 de entrada e 60 de saída)", async () => {
+    const { id, service, spendStore } = await setup();
+    await service.suggest(id, rafael, context);
+    expect(spendStore.values.get("usd_micros")).toBe(1020); // 900 × 1 + 60 × 2 micros
   });
 
   it("número de chamado que não está na conversa vira aviso para o analista conferir", async () => {
