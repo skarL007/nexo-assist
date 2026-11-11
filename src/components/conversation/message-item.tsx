@@ -1,7 +1,7 @@
 "use client";
 
-import { ArrowLeftRight } from "lucide-react";
 import { useState } from "react";
+import { BrandMark } from "@/components/nexo/brand";
 import type { Card, ChatMessage, DraftStatus, TraceStep, TurnTrace } from "@/domain/message";
 import { formatClock } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -36,7 +36,7 @@ export function MessageItem({ message, viewer, actions, draftStatuses, feedback 
           {message.text}
         </Bubble>
       ) : (
-        <Bubble side="left" className="border bg-surface shadow-xs" time={time}>
+        <Bubble side="left" className="bg-surface shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.04)]" time={time}>
           <AttachedImage message={message} viewer={viewer} />
           {message.text}
         </Bubble>
@@ -46,7 +46,7 @@ export function MessageItem({ message, viewer, actions, draftStatuses, feedback 
       return (
         <Bubble
           side={viewer === "analyst" ? "right" : "left"}
-          className="border border-success/25 bg-success-soft"
+          className="bg-success-soft text-foreground shadow-[0_0_0_1px_oklch(0.6_0.15_152/0.18)]"
           label={`${message.authorName ?? "Analista"} · service desk`}
           time={time}
         >
@@ -99,21 +99,28 @@ export function AgentReply({
   const right = viewer === "analyst";
 
   return (
-    <div className={cn("relative flex max-w-[92%] flex-col gap-3 pl-5", right && "ml-auto")} data-testid="agent-reply">
-      {/* Linha do tempo da resposta: o ponto âmbar é o início (a luz acendendo) e a linha fina leva aos passos e aos cartões. */}
-      <span aria-hidden="true" className="absolute top-3 bottom-0 left-[3px] w-px bg-border" />
-      <span aria-hidden="true" className="absolute top-[3px] left-0 size-[7px] rounded-full bg-beam ring-[3px] ring-background" />
-      <AgentSteps steps={steps} working={working} open={open} onToggle={trace ? () => setOpen((v) => !v) : undefined} time={time} />
-      {open && trace && (
-        <div className="w-full">
-          <DecisionDetails trace={trace} />
-        </div>
-      )}
-      {(text || working) && <div className="text-sm leading-relaxed whitespace-pre-wrap">{text || <TypingDots />}</div>}
-      <div className="w-full">
-        <MessageCards cards={cards} actions={actions} draftStatuses={draftStatuses} />
+    <div className={cn("flex max-w-[88%] gap-3", right && "ml-auto")} data-testid="agent-reply">
+      {/* O farol como avatar: identifica o agent em qualquer lado da conversa. */}
+      <BrandMark className="mt-0.5 size-7 rounded-[8px]" />
+      <div className="flex min-w-0 flex-1 flex-col items-start gap-2.5">
+        <AgentSteps steps={steps} working={working} open={open} onToggle={trace ? () => setOpen((v) => !v) : undefined} time={time} />
+        {open && trace && (
+          <div className="w-full">
+            <DecisionDetails trace={trace} />
+          </div>
+        )}
+        {(text || working) && (
+          <div className="max-w-full rounded-[20px] rounded-tl-md bg-surface px-4 py-2.5 text-[15px] leading-[1.55] whitespace-pre-wrap shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.04)]">
+            {text || <TypingDots />}
+          </div>
+        )}
+        {cards.length > 0 && (
+          <div className="w-full">
+            <MessageCards cards={cards} actions={actions} draftStatuses={draftStatuses} />
+          </div>
+        )}
+        {feedback && !working && <ReplyFeedback {...feedback} />}
       </div>
-      {feedback && !working && <ReplyFeedback {...feedback} />}
     </div>
   );
 }
@@ -158,32 +165,27 @@ function Bubble({
 }) {
   return (
     <div className={cn("flex max-w-[78%] flex-col gap-1", side === "right" ? "ml-auto items-end" : "items-start")}>
-      {label && <span className="text-xs font-semibold text-success-foreground">{label}</span>}
+      {label && <span className="px-1 text-[12px] font-semibold text-success-foreground">{label}</span>}
       <div
         className={cn(
-          "rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap",
+          "rounded-[20px] px-4 py-2.5 text-[15px] leading-[1.5] whitespace-pre-wrap",
           side === "right" ? "rounded-br-md" : "rounded-bl-md",
           className,
         )}
       >
         {children}
       </div>
-      <span className="px-1 font-mono text-[11px] text-muted-foreground tabular-nums">{time}</span>
+      <span className="px-1.5 text-[11px] text-muted-foreground tabular-nums">{time}</span>
     </div>
   );
 }
 
 function SystemDivider({ text, time }: { text: string; time: string }) {
   return (
-    <div className="flex items-center gap-3 py-2 text-xs text-muted-foreground" role="note">
-      <span className="h-px flex-1 bg-border" />
-      <span className="inline-flex items-center gap-2 rounded-full border bg-surface px-3 py-1">
-        <ArrowLeftRight className="size-3 text-primary" />
-        <span>{text}</span>
-        <span className="font-mono text-[11px] tabular-nums">· {time}</span>
-      </span>
-      <span className="h-px flex-1 bg-border" />
-    </div>
+    <p className="mx-auto max-w-md py-3 text-center text-[12px] leading-relaxed text-muted-foreground" role="note">
+      <span className="font-medium text-foreground/70">{text}</span>
+      <span className="tabular-nums"> · {time}</span>
+    </p>
   );
 }
 

@@ -1,5 +1,5 @@
 import { ArrowUpRight, ClipboardList, Clock, Monitor, ShieldAlert, type LucideIcon } from "lucide-react";
-import { PRODUCT_NAME } from "@/lib/brand";
+import { BrandMark } from "@/components/nexo/brand";
 
 const SUGGESTIONS: { text: string; icon: LucideIcon }[] = [
   { text: "Minha VPN dá erro 809", icon: ShieldAlert },
@@ -11,26 +11,23 @@ const SUGGESTIONS: { text: string; icon: LucideIcon }[] = [
 /** Primeira tela de uma conversa nova: saudação grande e quatro atalhos em cartões. */
 export function WelcomeMessage({ firstName, onPick }: { firstName: string; onPick: (text: string) => void }) {
   return (
-    <section className="flex flex-col gap-8 pt-2 md:pt-8">
-      <div className="space-y-3">
-        <h1 className="font-serif text-4xl leading-[1.1] font-semibold tracking-tight md:text-5xl">Olá, {firstName}.</h1>
-        <span className="inline-flex items-center gap-2 text-sm font-semibold">
-          <span aria-hidden="true" className="size-2 rounded-full bg-beam ring-4 ring-beam/20" />
-          {PRODUCT_NAME}
-        </span>
-        <p className="max-w-xl text-[15px] leading-relaxed text-muted-foreground">
+    <section className="flex flex-col items-center gap-10 pt-6 text-center md:pt-14">
+      <div className="flex flex-col items-center gap-4">
+        <BrandMark className="size-14 rounded-[16px] [&_svg]:size-8" />
+        <h1 className="font-serif text-[40px] leading-[1.05] font-semibold tracking-[-0.03em] md:text-[52px]">Olá, {firstName}.</h1>
+        <p className="max-w-md text-[17px] leading-relaxed text-muted-foreground text-balance">
           Me conte o que está acontecendo com as suas palavras. Posso tirar dúvidas, ver seus chamados, abrir um novo ou chamar um analista.
         </p>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid w-full gap-2.5 text-left sm:grid-cols-2">
         {SUGGESTIONS.map(({ text, icon: Icon }) => (
           <button
             key={text}
             type="button"
             onClick={() => onPick(text)}
-            className="group flex items-center gap-3.5 rounded-xl border bg-surface p-3.5 text-left text-sm font-medium shadow-xs transition-colors duration-150 outline-none hover:border-primary/40 hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="group flex items-center gap-3.5 rounded-2xl bg-surface p-3.5 text-left text-[15px] font-medium shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.04)] transition-shadow duration-150 outline-none hover:shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_8px_24px_-10px_rgba(0,0,0,0.18)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
-            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent text-accent-foreground transition-colors duration-150 group-hover:bg-primary group-hover:text-primary-foreground">
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent text-accent-foreground transition-colors duration-150 group-hover:bg-primary group-hover:text-primary-foreground">
               <Icon className="size-4" strokeWidth={1.75} />
             </span>
             <span className="min-w-0 flex-1">{text}</span>

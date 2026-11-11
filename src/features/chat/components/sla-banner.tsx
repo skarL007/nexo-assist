@@ -53,10 +53,10 @@ export function SlaBanner({ disabled, onAskAnalyst }: { disabled: boolean; onAsk
         return (
           <div
             key={alert.code}
-            className={cn("rounded-xl border border-l-[3px] bg-surface p-3.5 text-sm shadow-xs", overdue ? "border-danger/25 border-l-danger" : "border-warning/25 border-l-warning")}
+            className={cn("rounded-2xl p-3.5 text-sm", overdue ? "bg-danger-soft/70 shadow-[0_0_0_1px_oklch(0.6_0.21_27/0.14)]" : "bg-warning-soft/80 shadow-[0_0_0_1px_oklch(0.72_0.17_60/0.18)]")}
           >
             <div className="flex items-start gap-3">
-              <span className={cn("mt-px grid size-7 shrink-0 place-items-center rounded-lg", overdue ? "bg-danger-soft text-danger-foreground" : "bg-warning-soft text-warning-foreground")}>
+              <span className={cn("mt-px grid size-7 shrink-0 place-items-center rounded-full bg-surface", overdue ? "text-danger-foreground" : "text-warning-foreground")}>
                 <AlarmClock className="size-4" />
               </span>
               <div className="min-w-0 flex-1">

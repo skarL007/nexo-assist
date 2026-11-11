@@ -79,7 +79,7 @@ function NewTicketEditor({ draft, locked, onSave, onClose }: EditorProps & { dra
       <ChoiceGroup label="Categoria" value={edit.category} options={options(CATEGORIES, CATEGORY_LABEL)} onChange={set("category")} />
       <ChoiceGroup label="Urgência" value={edit.urgency} options={options(URGENCIES, URGENCY_LABEL)} onChange={set("urgency")} />
 
-      <div data-testid="draft-preview" aria-live="polite" className="space-y-1.5 rounded-lg border border-l-[3px] border-l-beam bg-background px-3.5 py-3 text-sm">
+      <div data-testid="draft-preview" aria-live="polite" className="space-y-1.5 rounded-xl bg-beam-soft/60 shadow-[0_0_0_1px_oklch(0.83_0.145_82/0.25)] px-3.5 py-3 text-sm">
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
           <span className="eyebrow text-[10px]">Prioridade</span>
           <StatusDot tone={PRIORITY_TONE[next.priority]} className="text-sm text-foreground">

@@ -65,7 +65,7 @@ export function ConversationPanel({ conversation, analystId }: { conversation: C
         <div className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-8">
           {showReport && <ConversationReportPanel conversation={conversation} onClose={() => setShowReport(false)} />}
           {!showReport && conversation.handoffSummary && (
-            <div className="rounded-xl border border-l-[3px] border-warning/30 border-l-warning bg-warning-soft p-4 text-sm leading-relaxed">
+            <div className="rounded-2xl bg-warning-soft shadow-[0_0_0_1px_oklch(0.72_0.17_60/0.2)] p-4 text-sm leading-relaxed">
               <p className="eyebrow mb-1.5 text-warning-foreground">
                 Resumo da transferência · {conversation.handoffReason && HANDOFF_REASON_LABEL[conversation.handoffReason]}
                 {conversation.handoffConfidence !== null && ` · confiança ${percent(conversation.handoffConfidence)}`}

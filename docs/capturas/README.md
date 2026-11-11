@@ -11,3 +11,4 @@ Estas imagens não são feitas à mão: `npm run docs:capturas` sobe o build de 
 | Relatório da conversa | ![Relatório](05-relatorio.png) |
 | Indicadores do service desk | ![Indicadores](06-indicadores.png) |
 | `/api/metrics` no formato do Prometheus | ![Métricas](07-metricas-prometheus.png) |
+| Chat da funcionária com o rascunho de chamado para confirmar | ![Rascunho](08-rascunho.png) |

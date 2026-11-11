@@ -1,5 +1,6 @@
 import { test, type Page } from "@playwright/test";
-import { expect, login, RAFAEL } from "../e2e/helpers";
+import type { ConversationView } from "@/contracts/chat";
+import { ANA, expect, login, RAFAEL } from "../e2e/helpers";
 
 const ELISA = "elisa.prado@nexo.com.br";
 
@@ -102,4 +103,69 @@ test("07 · métricas para o Prometheus", async ({ page, request }) => {
   expect(lines.length).toBeGreaterThan(8);
   await page.setContent(`<pre style="font: 13px/1.5 ui-monospace, Consolas, monospace; padding: 24px; background: #0f1b2d; color: #e6edf6; margin: 0; min-height: 100vh">GET /api/metrics (Authorization: Bearer …)\n\n${lines.map((l) => l.replace(/&/g, "&amp;").replace(/</g, "&lt;")).join("\n")}</pre>`);
   await shot(page, "07-metricas-prometheus");
+});
+
+/**
+ * Sem LLM: a conversa da Ana ganha uma troca de exemplo com o rascunho pendente (o mesmo formato
+ * que o agent produz), para mostrar o cartão que a pessoa confirma.
+ */
+async function withDraftExample(page: Page) {
+  await page.route("**/api/chat", async (route) => {
+    if (route.request().method() !== "GET") return route.continue();
+    const response = await route.fetch();
+    const view = (await response.json()) as ConversationView;
+    const at = new Date().toISOString();
+    view.draftStatuses = { ...view.draftStatuses, 900: "pending" };
+    view.messages.push(
+      { id: "doc-func", conversationId: view.id ?? "conv", role: "employee", authorName: null, text: "Meu monitor não liga desde hoje cedo. Tenho reunião com cliente às 15h.", cards: [], trace: null, createdAt: at } as never,
+      {
+        id: "doc-rascunho",
+        conversationId: view.id ?? "conv",
+        role: "agent",
+        authorName: null,
+        text: "Conferimos o cabo e a tomada e o monitor continua sem imagem. Montei o chamado: confira e confirme.",
+        cards: [
+          {
+            kind: "draft",
+            draft: {
+              id: 900,
+              kind: "create",
+              status: "pending",
+              deadline: at,
+              fields: {
+                type: "INC",
+                category: "hardware",
+                title: "Monitor não liga",
+                description: "O monitor não liga desde hoje cedo. Cabo de energia e HDMI conferidos, sem imagem. Reunião com cliente às 15h.",
+                impact: "me",
+                priority: "high",
+                priorityReason: "Impacto: somente você · urgência: compromisso hoje",
+              },
+            },
+          },
+        ],
+        trace: null,
+        createdAt: at,
+      } as never,
+    );
+    await route.fulfill({ response, json: view });
+  });
+  await login(page, ANA);
+  await expect(page.getByTestId("draft-card")).toBeVisible();
+  await page.getByRole("button", { name: /Dispensar aviso/ }).first().click();
+  await page.getByTestId("draft-card").scrollIntoViewIfNeeded();
+}
+
+test("08 · chat da funcionária com o rascunho de chamado", async ({ page }) => {
+  await withDraftExample(page);
+  await shot(page, "08-rascunho");
+});
+
+test("08b · detalhe da conversa com o rascunho, em alta resolução", async ({ browser }) => {
+  // Para páginas e materiais em que a tela inteira ficaria pequena demais: só a conversa, em 2x.
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 });
+  const page = await context.newPage();
+  await withDraftExample(page);
+  await page.locator("main").first().screenshot({ path: "docs/capturas/08b-rascunho-detalhe.png" });
+  await context.close();
 });

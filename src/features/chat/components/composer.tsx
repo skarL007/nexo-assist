@@ -61,7 +61,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
   return (
     <div className="space-y-2">
       {image && (
-        <div className="flex w-fit items-center gap-3 rounded-xl border bg-surface p-1.5 pr-2 text-xs text-muted-foreground shadow-xs">
+        <div className="flex w-fit items-center gap-3 rounded-2xl bg-surface p-1.5 pr-2 text-xs text-muted-foreground shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_4px_14px_-6px_rgba(0,0,0,0.12)]">
           {/* eslint-disable-next-line @next/next/no-img-element -- prévia local (blob:), fora do otimizador */}
           <img src={image.previewUrl} alt="Imagem anexada" className="size-12 rounded-lg border border-black/5 object-cover" />
           <span className="font-medium text-foreground">Imagem anexada</span>
@@ -76,7 +76,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
         </p>
       )}
       <form
-        className="flex items-end gap-1.5 rounded-2xl border bg-surface p-2 shadow-[0_10px_30px_-14px_oklch(0.24_0.028_232/0.28)] transition-colors duration-150 focus-within:border-ring focus-within:ring-4 focus-within:ring-ring/15 has-[textarea:disabled]:bg-muted/60 has-[textarea:disabled]:shadow-none"
+        className="flex items-end gap-1 rounded-[26px] bg-surface/90 p-1.5 shadow-[0_0_0_1px_rgba(0,0,0,0.07),0_8px_28px_-10px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-shadow duration-150 focus-within:shadow-[0_0_0_1px_var(--ring),0_0_0_4px_oklch(0.6_0.1_214/0.14),0_8px_28px_-10px_rgba(0,0,0,0.16)] has-[textarea:disabled]:bg-muted/70 has-[textarea:disabled]:shadow-[0_0_0_1px_rgba(0,0,0,0.05)]"
         onSubmit={(e) => {
           e.preventDefault();
           submit();
@@ -97,7 +97,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
           type="button"
           size="icon"
           variant="ghost"
-          className="rounded-xl"
+          className="text-muted-foreground"
           disabled={disabled}
           aria-label="Anexar imagem"
           title="Anexar captura de tela ou foto"
@@ -126,22 +126,25 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
               submit();
             }
           }}
-          className="max-h-32 min-h-9 flex-1 resize-none bg-transparent px-2 py-2 text-sm leading-relaxed outline-none placeholder:text-muted-foreground/80 disabled:cursor-not-allowed"
+          className="max-h-32 min-h-9 flex-1 resize-none bg-transparent px-1.5 py-2 text-[15px] leading-normal outline-none placeholder:text-muted-foreground/80 disabled:cursor-not-allowed"
         />
-        <Button type="submit" size="icon" className="rounded-xl sm:w-auto sm:px-3.5" disabled={!canSend}>
-          <ArrowUp /> <span className="max-sm:sr-only">Enviar</span>
+        {/* Envio em círculo, como no iMessage: desligado fica cinza (não um petróleo desbotado). */}
+        <Button
+          type="submit"
+          size="icon"
+          className="disabled:bg-black/[0.08] disabled:text-muted-foreground disabled:opacity-100 disabled:shadow-none"
+          disabled={!canSend}
+        >
+          <ArrowUp className="size-[18px]" strokeWidth={2.5} /> <span className="sr-only">Enviar</span>
         </Button>
       </form>
-      <p className="flex flex-col gap-0.5 px-1 text-[11px] leading-relaxed text-muted-foreground sm:flex-row sm:justify-between sm:gap-4">
+      <p className="flex flex-col gap-0.5 px-4 text-[11px] leading-relaxed text-muted-foreground sm:flex-row sm:justify-between sm:gap-4">
         {/* As mensagens vão para um modelo de IA externo: nada de senha ou dado pessoal real. */}
         <span>
           Protótipo com dados fictícios · não envie senhas nem dados pessoais. <AboutPrototypeLink />
         </span>
         <span className="shrink-0 tabular-nums">
-          <span className="font-mono">
-            {limit - remaining}/{limit}
-          </span>{" "}
-          mensagens nesta sessão
+          {limit - remaining}/{limit} mensagens nesta sessão
         </span>
       </p>
     </div>

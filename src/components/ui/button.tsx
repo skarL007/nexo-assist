@@ -21,11 +21,11 @@ const buttonVariants = cva(
       },
       size: {
         default: "h-9 gap-1.5 px-3.5",
-        xs: "h-7 gap-1 rounded-md px-2.5 text-xs [&_svg:not([class*='size-'])]:size-3.5",
+        xs: "h-7 gap-1 px-2.5 text-xs [&_svg:not([class*='size-'])]:size-3.5",
         sm: "h-8 gap-1.5 px-3 text-[13px] [&_svg:not([class*='size-'])]:size-3.5",
         lg: "h-11 gap-2 px-5",
         icon: "size-9",
-        "icon-xs": "size-7 rounded-md [&_svg:not([class*='size-'])]:size-3.5",
+        "icon-xs": "size-7 [&_svg:not([class*='size-'])]:size-3.5",
         "icon-sm": "size-8 [&_svg:not([class*='size-'])]:size-3.5",
         "icon-lg": "size-11",
       },

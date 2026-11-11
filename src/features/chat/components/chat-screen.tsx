@@ -156,7 +156,7 @@ export function ChatScreen({ firstName }: { firstName: string }) {
           ))}
 
           {optimisticText && (
-            <div className="ml-auto max-w-[78%] rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-sm leading-relaxed text-primary-foreground opacity-70">
+            <div className="ml-auto max-w-[78%] rounded-[20px] rounded-br-md bg-primary px-4 py-2.5 text-[15px] leading-[1.5] text-primary-foreground opacity-70">
               {optimisticImage && (
                 // eslint-disable-next-line @next/next/no-img-element -- prévia local (blob:)
                 <img src={optimisticImage} alt="Imagem anexada" className="mb-2 max-h-48 rounded-lg" />
@@ -218,7 +218,7 @@ function PausedNotice({ conversation }: { conversation: ConversationView }) {
 
 function ErrorBanner({ message, onClose, onRetry }: { message: string; onClose?: () => void; onRetry?: () => void }) {
   return (
-    <div role="alert" className="flex items-center gap-3 rounded-xl border border-l-[3px] border-danger/25 border-l-danger bg-danger-soft px-3.5 py-2.5 text-sm text-danger-foreground">
+    <div role="alert" className="flex items-center gap-3 rounded-2xl bg-danger-soft shadow-[0_0_0_1px_oklch(0.6_0.21_27/0.16)] px-3.5 py-2.5 text-sm text-danger-foreground">
       <AlertCircle className="size-4 shrink-0" />
       <span className="flex-1">{message}</span>
       {onRetry && (
