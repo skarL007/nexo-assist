@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { StatusDot, type Tone } from "@/components/nexo/status-pill";
+import { StatusDot, StatusPill, type Tone } from "@/components/nexo/status-pill";
 import type { DraftSnapshot, DraftStatus } from "@/domain/message";
 import { CATEGORY_LABEL, IMPACT_LABEL, PRIORITY_LABEL, TICKET_TYPE_LABEL } from "@/domain/ticket";
 import { formatDayTime, formatDeadline } from "@/lib/format";
@@ -70,17 +70,17 @@ export function DraftCard({ draft, status, actions }: { draft: DraftSnapshot; st
   const footer = pending ? (
     <>
       <Button size="sm" disabled={disabled} onClick={() => run(actions.onConfirm)}>
-        Confirmar {actions.shortcut && <kbd className="ml-1 rounded bg-primary-foreground/20 px-1 text-[10px]">Ctrl ↵</kbd>}
+        Confirmar {actions.shortcut && <kbd className="ml-1 rounded bg-primary-foreground/20 px-1.5 py-px font-mono text-[10px] font-normal">Ctrl ↵</kbd>}
       </Button>
       <Button size="sm" variant="outline" disabled={disabled} onClick={() => setEditing(true)}>
         Alterar detalhes
       </Button>
-      <Button size="sm" variant="ghost" disabled={disabled} onClick={() => run(actions.onCancel)}>
+      <Button size="sm" variant="ghost" className="sm:ml-auto" disabled={disabled} onClick={() => run(actions.onCancel)}>
         Cancelar
       </Button>
-      {actions.locked && <span className="text-xs text-muted-foreground">Aguarde o Farol responder para confirmar.</span>}
+      {actions.locked && <span className="ml-1 text-xs text-muted-foreground">Aguarde o Farol responder para confirmar.</span>}
       {error && (
-        <span role="alert" className="text-xs text-danger">
+        <span role="alert" className="basis-full text-xs text-danger-foreground">
           {error}
         </span>
       )}
@@ -121,13 +121,13 @@ export function DraftCard({ draft, status, actions }: { draft: DraftSnapshot; st
       >
         <Field label="Tipo">{TICKET_TYPE_LABEL[fields.type]}</Field>
         <Field label="Categoria">{CATEGORY_LABEL[fields.category]}</Field>
-        <Field label="Prioridade">
-          <span title={`${fields.priorityReason} · resposta até ${formatDayTime(draft.deadline)}`}>
-            <StatusDot tone={PRIORITY_TONE[fields.priority]} className="text-sm text-foreground">
-              {PRIORITY_LABEL[fields.priority]}
-            </StatusDot>
+        <Field label="Prioridade" wrap>
+          <span title={`${fields.priorityReason} · resposta até ${formatDayTime(draft.deadline)}`} className="flex flex-col items-start gap-1">
+            <StatusPill tone={PRIORITY_TONE[fields.priority]}>{PRIORITY_LABEL[fields.priority]}</StatusPill>
             {status === "pending" && (
-              <span className="block text-xs font-normal whitespace-normal text-muted-foreground">resposta até {formatDeadline(draft.deadline)}</span>
+              <span className="text-xs font-normal whitespace-normal text-muted-foreground">
+                resposta até <span className="font-mono">{formatDeadline(draft.deadline)}</span>
+              </span>
             )}
           </span>
         </Field>

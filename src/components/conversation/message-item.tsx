@@ -31,12 +31,12 @@ export function MessageItem({ message, viewer, actions, draftStatuses, feedback 
 
     case "employee":
       return viewer === "employee" ? (
-        <Bubble side="right" className="bg-navy text-navy-foreground" time={time}>
+        <Bubble side="right" className="bg-primary text-primary-foreground" time={time}>
           <AttachedImage message={message} viewer={viewer} />
           {message.text}
         </Bubble>
       ) : (
-        <Bubble side="left" className="border bg-surface" time={time}>
+        <Bubble side="left" className="border bg-surface shadow-xs" time={time}>
           <AttachedImage message={message} viewer={viewer} />
           {message.text}
         </Bubble>
@@ -46,7 +46,7 @@ export function MessageItem({ message, viewer, actions, draftStatuses, feedback 
       return (
         <Bubble
           side={viewer === "analyst" ? "right" : "left"}
-          className="border border-success/20 bg-success-soft"
+          className="border border-success/25 bg-success-soft"
           label={`${message.authorName ?? "Analista"} · service desk`}
           time={time}
         >
@@ -99,24 +99,17 @@ export function AgentReply({
   const right = viewer === "analyst";
 
   return (
-    <div className={cn("flex max-w-[85%] flex-col gap-2", right ? "ml-auto items-end" : "items-start")} data-testid="agent-reply">
-      <AgentSteps steps={steps} working={working} open={open} onToggle={trace ? () => setOpen((v) => !v) : undefined} />
+    <div className={cn("relative flex max-w-[92%] flex-col gap-3 pl-5", right && "ml-auto")} data-testid="agent-reply">
+      {/* Linha do tempo da resposta: o ponto âmbar é o início (a luz acendendo) e a linha fina leva aos passos e aos cartões. */}
+      <span aria-hidden="true" className="absolute top-3 bottom-0 left-[3px] w-px bg-border" />
+      <span aria-hidden="true" className="absolute top-[3px] left-0 size-[7px] rounded-full bg-beam ring-[3px] ring-background" />
+      <AgentSteps steps={steps} working={working} open={open} onToggle={trace ? () => setOpen((v) => !v) : undefined} time={time} />
       {open && trace && (
         <div className="w-full">
           <DecisionDetails trace={trace} />
         </div>
       )}
-      {(text || working) && (
-        <div
-          className={cn(
-            "rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap",
-            right ? "rounded-tr-sm bg-info-soft" : "rounded-tl-sm border bg-surface shadow-xs",
-          )}
-        >
-          {text || <TypingDots />}
-          {time && <span className="ml-2 text-[11px] text-muted-foreground">{time}</span>}
-        </div>
-      )}
+      {(text || working) && <div className="text-sm leading-relaxed whitespace-pre-wrap">{text || <TypingDots />}</div>}
       <div className="w-full">
         <MessageCards cards={cards} actions={actions} draftStatuses={draftStatuses} />
       </div>
@@ -136,7 +129,7 @@ function AttachedImage({ message, viewer }: { message: ChatMessage; viewer: View
     <div className="mb-2 space-y-1.5">
       <a href={src} target="_blank" rel="noreferrer" title="Abrir a imagem em tamanho real">
         {/* eslint-disable-next-line @next/next/no-img-element -- imagem privada, servida com sessão */}
-        <img src={src} alt="Imagem anexada pelo funcionário" className="max-h-48 rounded-lg" loading="lazy" />
+        <img src={src} alt="Imagem anexada pelo funcionário" className="max-h-48 rounded-lg border border-black/5" loading="lazy" />
       </a>
       {viewer === "analyst" && message.screenshot.status === "read" && message.screenshot.description && (
         <p className="max-w-md rounded-md bg-muted px-2 py-1.5 text-xs text-muted-foreground">
@@ -164,29 +157,30 @@ function Bubble({
   children: React.ReactNode;
 }) {
   return (
-    <div className={cn("flex max-w-[75%] flex-col gap-1", side === "right" ? "ml-auto items-end" : "items-start")}>
-      {label && <span className="text-xs font-semibold">{label}</span>}
+    <div className={cn("flex max-w-[78%] flex-col gap-1", side === "right" ? "ml-auto items-end" : "items-start")}>
+      {label && <span className="text-xs font-semibold text-success-foreground">{label}</span>}
       <div
         className={cn(
           "rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap",
-          side === "right" ? "rounded-tr-sm" : "rounded-tl-sm",
+          side === "right" ? "rounded-br-md" : "rounded-bl-md",
           className,
         )}
       >
         {children}
-        <span className="ml-2 text-[11px] opacity-60">{time}</span>
       </div>
+      <span className="px-1 font-mono text-[11px] text-muted-foreground tabular-nums">{time}</span>
     </div>
   );
 }
 
 function SystemDivider({ text, time }: { text: string; time: string }) {
   return (
-    <div className="flex items-center gap-3 py-1 text-xs text-muted-foreground" role="note">
+    <div className="flex items-center gap-3 py-2 text-xs text-muted-foreground" role="note">
       <span className="h-px flex-1 bg-border" />
-      <ArrowLeftRight className="size-3.5" />
-      <span>
-        {text} · {time}
+      <span className="inline-flex items-center gap-2 rounded-full border bg-surface px-3 py-1">
+        <ArrowLeftRight className="size-3 text-primary" />
+        <span>{text}</span>
+        <span className="font-mono text-[11px] tabular-nums">· {time}</span>
       </span>
       <span className="h-px flex-1 bg-border" />
     </div>
@@ -195,9 +189,9 @@ function SystemDivider({ text, time }: { text: string; time: string }) {
 
 function TypingDots() {
   return (
-    <span className="inline-flex gap-1 py-1" aria-label="digitando">
+    <span className="inline-flex gap-1 py-1.5" aria-label="digitando">
       {[0, 150, 300].map((delay) => (
-        <span key={delay} className="size-1.5 animate-bounce rounded-full bg-muted-foreground/60" style={{ animationDelay: `${delay}ms` }} />
+        <span key={delay} className="size-1.5 animate-bounce rounded-full bg-muted-foreground/50" style={{ animationDelay: `${delay}ms` }} />
       ))}
     </span>
   );

@@ -5,10 +5,10 @@ import { cn } from "@/lib/utils";
 export type Tone = "success" | "warning" | "danger" | "info" | "neutral";
 
 const TONE: Record<Tone, { dot: string; text: string }> = {
-  success: { dot: "bg-success", text: "text-success" },
-  warning: { dot: "bg-warning", text: "text-amber-700" },
-  danger: { dot: "bg-danger", text: "text-danger" },
-  info: { dot: "bg-primary", text: "text-primary" },
+  success: { dot: "bg-success", text: "text-success-foreground" },
+  warning: { dot: "bg-warning", text: "text-warning-foreground" },
+  danger: { dot: "bg-danger", text: "text-danger-foreground" },
+  info: { dot: "bg-primary", text: "text-accent-foreground" },
   neutral: { dot: "bg-muted-foreground/60", text: "text-muted-foreground" },
 };
 
@@ -26,7 +26,7 @@ export function StatusDot({ tone, children, className }: { tone: Tone; children:
 export function StatusPill({ tone, children }: { tone: Tone; children: React.ReactNode }) {
   const bg = { success: "bg-success-soft", warning: "bg-warning-soft", danger: "bg-danger-soft", info: "bg-info-soft", neutral: "bg-muted" }[tone];
   return (
-    <span className={cn("inline-flex items-center rounded-full px-2.5 py-1", bg)}>
+    <span className={cn("inline-flex items-center rounded-full px-2.5 py-1 whitespace-nowrap ring-1 ring-inset ring-foreground/5", bg)}>
       <StatusDot tone={tone}>{children}</StatusDot>
     </span>
   );

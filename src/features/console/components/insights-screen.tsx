@@ -30,21 +30,22 @@ export function InsightsScreen({
     <div className="flex h-screen">
       <ConsoleRail active="indicadores" analystName={analystName} />
       <main className="flex-1 overflow-y-auto bg-background">
-        <div className="mx-auto max-w-5xl space-y-6 px-6 py-8">
+        <div className="mx-auto max-w-5xl space-y-8 px-8 py-10">
           <header className="flex flex-wrap items-end justify-between gap-2">
             <div>
-              <h1 className="font-serif text-3xl">Indicadores</h1>
-              <p className="text-sm text-muted-foreground">
+              <h1 className="font-serif text-4xl leading-tight font-semibold tracking-tight">Indicadores</h1>
+              <p className="mt-1 font-mono text-xs text-muted-foreground">
                 Últimos {days} dias · atualizado às {formatClock(generatedAt)}
               </p>
             </div>
-            <a href="/console/indicadores" className="text-sm font-medium text-primary hover:underline">
+            <a href="/console/indicadores" className="rounded text-sm font-medium text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring">
               Atualizar
             </a>
           </header>
 
           <section aria-label="Principais indicadores" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Tile
+              featured
               label="Resolvido pelo agent"
               value={pct(insights.resolution.rate)}
               detail={`${insights.resolution.confirmed} confirmadas · ${insights.resolution.presumed} presumidas · ${insights.resolution.total} conversas`}
@@ -97,8 +98,8 @@ export function InsightsScreen({
 
           <GapsSection gaps={insights.knowledgeGaps} />
 
-          <section aria-labelledby="sla-title" className="rounded-xl border bg-surface p-5">
-            <h2 id="sla-title" className="font-semibold">
+          <section aria-labelledby="sla-title" className="rounded-xl border bg-surface p-6">
+            <h2 id="sla-title" className="font-serif text-xl font-semibold tracking-tight">
               Prazos em risco agora
             </h2>
             <p className="mb-4 text-xs text-muted-foreground">Chamados abertos vencidos ou com 75% ou mais do prazo usado, com a conta do prazo.</p>
@@ -112,14 +113,14 @@ export function InsightsScreen({
                     <li key={risk.code} className="py-3 text-sm">
                       <details>
                         <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1">
-                          <span className={risk.level === "overdue" ? "font-medium text-danger" : "font-medium text-amber-800"}>
+                          <span className={risk.level === "overdue" ? "font-medium text-danger-foreground" : "font-medium text-warning-foreground"}>
                             {risk.level === "overdue" ? "Vencido" : "Em risco"}
                           </span>
                           <span className="font-medium">{text.headline}</span>
                           <span className="text-muted-foreground">
                             {risk.title} · {risk.ownerName}
                           </span>
-                          <span className="text-xs text-primary">por quê?</span>
+                          <span className="text-xs font-medium text-beam-foreground underline decoration-beam decoration-2 underline-offset-4">por quê?</span>
                         </summary>
                         <ul className="mt-2 list-disc space-y-0.5 pl-5 text-xs text-muted-foreground">
                           {text.lines.map((line) => (
@@ -134,8 +135,8 @@ export function InsightsScreen({
             )}
           </section>
 
-          <section aria-labelledby="handoffs-title" className="rounded-xl border bg-surface p-5">
-            <h2 id="handoffs-title" className="font-semibold">
+          <section aria-labelledby="handoffs-title" className="rounded-xl border bg-surface p-6">
+            <h2 id="handoffs-title" className="font-serif text-xl font-semibold tracking-tight">
               Transferências por motivo
             </h2>
             <p className="mb-4 text-xs text-muted-foreground">Por que as conversas foram para um analista.</p>
@@ -144,7 +145,7 @@ export function InsightsScreen({
                 <li key={reason} className="grid grid-cols-[minmax(8rem,14rem)_1fr_2.5rem] items-center gap-3 text-sm" title={`${HANDOFF_REASON_LABEL[reason]}: ${count}`}>
                   <span className="truncate text-muted-foreground">{HANDOFF_REASON_LABEL[reason]}</span>
                   <span className="h-2.5 rounded-full bg-muted">
-                    <span className="block h-full rounded-full bg-primary" style={{ width: `${(count / maxHandoff) * 100}%` }} />
+                    <span className={count === maxHandoff ? "block h-full rounded-full bg-beam" : "block h-full rounded-full bg-primary"} style={{ width: `${(count / maxHandoff) * 100}%` }} />
                   </span>
                   <span className="text-right font-medium tabular-nums">{count}</span>
                 </li>
@@ -177,8 +178,8 @@ const RESOLUTION_ROWS: { key: keyof ResolutionSummary; label: string; resolved?:
 function ResolutionSection({ resolution, withoutHuman }: { resolution: ResolutionSummary; withoutHuman: number | null }) {
   const max = Math.max(1, ...RESOLUTION_ROWS.map((row) => resolution[row.key] as number));
   return (
-    <section aria-labelledby="resolution-title" className="rounded-xl border bg-surface p-5">
-      <h2 id="resolution-title" className="font-semibold">
+    <section aria-labelledby="resolution-title" className="rounded-xl border bg-surface p-6">
+      <h2 id="resolution-title" className="font-serif text-xl font-semibold tracking-tight">
         Resolução honesta
       </h2>
       <p className="mb-4 text-xs text-muted-foreground">
@@ -194,7 +195,7 @@ function ResolutionSection({ resolution, withoutHuman }: { resolution: Resolutio
                 {row.resolved && <span className="sr-only"> (conta como resolvida)</span>}
               </span>
               <span className="h-2.5 rounded-full bg-muted">
-                <span className={row.resolved ? "block h-full rounded-full bg-primary" : "block h-full rounded-full bg-muted-foreground/40"} style={{ width: `${(count / max) * 100}%` }} />
+                <span className={count === max ? "block h-full rounded-full bg-beam" : row.resolved ? "block h-full rounded-full bg-primary" : "block h-full rounded-full bg-muted-foreground/40"} style={{ width: `${(count / max) * 100}%` }} />
               </span>
               <span className="text-right font-medium tabular-nums">{count}</span>
             </li>
@@ -202,7 +203,7 @@ function ResolutionSection({ resolution, withoutHuman }: { resolution: Resolutio
         })}
       </ul>
       <details className="mt-4 text-xs">
-        <summary className="cursor-pointer font-medium text-primary">Como contamos</summary>
+        <summary className="cursor-pointer rounded font-medium text-primary outline-none focus-visible:ring-2 focus-visible:ring-ring">Como contamos</summary>
         <dl className="mt-2 grid gap-x-4 gap-y-1 text-muted-foreground sm:grid-cols-[10rem_1fr]">
           {RESOLUTION_ROWS.map((row) => (
             <div key={row.key} className="contents">
@@ -218,8 +219,8 @@ function ResolutionSection({ resolution, withoutHuman }: { resolution: Resolutio
 
 function GapsSection({ gaps }: { gaps: InsightsReport["knowledgeGaps"] }) {
   return (
-    <section aria-labelledby="gaps-title" className="rounded-xl border bg-surface p-5">
-      <h2 id="gaps-title" className="font-semibold">
+    <section aria-labelledby="gaps-title" className="rounded-xl border bg-surface p-6">
+      <h2 id="gaps-title" className="font-serif text-xl font-semibold tracking-tight">
         Lacunas da central
       </h2>
       <p className="mb-4 text-xs text-muted-foreground">
@@ -247,12 +248,12 @@ function GapsSection({ gaps }: { gaps: InsightsReport["knowledgeGaps"] }) {
   );
 }
 
-function Tile({ label, value, detail, small = false }: { label: string; value: string; detail: string; small?: boolean }) {
+function Tile({ label, value, detail, small = false, featured = false }: { label: string; value: string; detail: string; small?: boolean; featured?: boolean }) {
   return (
-    <div className="rounded-xl border bg-surface p-4">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className={small ? "mt-1 font-serif text-2xl" : "mt-1 font-serif text-4xl"}>{value}</p>
-      <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
+    <div className={featured ? "rounded-xl border border-t-[3px] border-beam/40 border-t-beam bg-surface p-5" : "rounded-xl border bg-surface p-5"}>
+      <p className="eyebrow">{label}</p>
+      <p className={small ? "mt-2 font-serif text-3xl font-semibold tracking-tight" : "mt-2 font-serif text-4xl leading-none font-semibold tracking-tight whitespace-nowrap"}>{value}</p>
+      <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{detail}</p>
     </div>
   );
 }

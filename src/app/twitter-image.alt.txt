@@ -1,1 +1,1 @@
-Console do analista do Farol Desk ao lado do chat da funcionária: a conversa chega transferida, com resumo, e o agent fica pausado à espera do analista.
+Farol Desk: a frase "Service desk de TI, com o porquê à vista" ao lado de um trecho de conversa em que o agent responde sobre um erro de VPN e oferece o botão "por quê?".

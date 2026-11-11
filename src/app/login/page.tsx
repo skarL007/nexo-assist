@@ -4,6 +4,7 @@ import { Brand } from "@/components/nexo/brand";
 import type { InsightsReport } from "@/domain/insights";
 import { LoginForm } from "@/features/auth/login-form";
 import { createServices } from "@/infrastructure/container";
+import { PRODUCT_NAME } from "@/lib/brand";
 import { formatSeconds, percent } from "@/lib/format";
 import { logError } from "@/server/http";
 import { demoLoginEnabled } from "@/server/auth-mode";
@@ -38,26 +39,29 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
 
   return (
     <main className="grid min-h-screen lg:grid-cols-2">
-      <section className="hidden flex-col justify-between bg-navy p-12 text-navy-foreground lg:flex">
-        <Brand inverted />
+      <section className="relative hidden flex-col justify-between overflow-hidden border-r bg-ink p-14 text-ink-foreground lg:flex">
 
-        <div className="max-w-md space-y-6">
-          <p className="text-xs tracking-[0.2em] text-navy-foreground/60 uppercase">Service desk de TI da Nexo</p>
-          <h1 className="font-serif text-5xl leading-tight">Seu problema de TI, resolvido em uma conversa.</h1>
-          <p className="text-navy-foreground/70">
+        <div className="relative">
+          <Brand inverted />
+        </div>
+
+        <div className="relative max-w-md space-y-6">
+          <p className="text-sm font-medium text-muted-foreground">Service desk de TI da Nexo</p>
+          <h1 className="font-serif text-[56px] leading-[1.04] font-semibold tracking-[-0.03em]">Seu problema de TI, resolvido em uma conversa.</h1>
+          <p className="text-lg leading-relaxed text-muted-foreground">
             Descreva o que está acontecendo. O assistente consulta seus chamados, busca na central de ajuda e chama um analista
-            quando precisa.
+            quando precisa — e mostra o porquê de cada decisão.
           </p>
           <ChatPreview />
         </div>
 
-        <div className="space-y-3 border-t border-white/10 pt-6">
+        <div className="relative space-y-3 border-t border-border pt-6">
           <dl className="grid grid-cols-3 gap-6">
             <Stat value={stats?.avgLatencyMs != null ? formatSeconds(stats.avgLatencyMs) : "—"} label="resposta do agent, em média" />
             <Stat value={stats?.resolvedWithoutHuman != null ? percent(stats.resolvedWithoutHuman) : "—"} label="resolvido sem analista" />
             <Stat value={stats ? String(stats.analysts) : "—"} label="analistas no service desk" />
           </dl>
-          <p className="text-xs text-navy-foreground/50">Números deste ambiente nos últimos 30 dias.</p>
+          <p className="text-xs text-muted-foreground">Números deste ambiente nos últimos 30 dias.</p>
         </div>
       </section>
 
@@ -70,18 +74,18 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
             <Brand />
           </div>
           <div className="space-y-2">
-            <h2 className="font-serif text-4xl">Entrar</h2>
+            <h2 className="font-serif text-4xl tracking-tight">Entrar</h2>
             <p className="text-sm text-muted-foreground">
               {demoLogin ? "Use seu e-mail corporativo e a senha de rede Nexo." : `Entre com a sua conta corporativa (${sso?.label ?? "SSO"}).`}
             </p>
           </div>
           {ssoError && (
-            <p role="alert" className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
+            <p role="alert" className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger-foreground">
               {ssoError}
             </p>
           )}
           {sso && (
-            <a href="/api/auth/sso" className="flex h-10 items-center justify-center rounded-lg border bg-card text-sm font-medium hover:bg-muted">
+            <a href="/api/auth/sso" className="flex h-11 items-center justify-center rounded-lg border bg-card text-sm font-medium hover:bg-muted">
               Entrar com {sso.label}
             </a>
           )}
@@ -98,10 +102,14 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
 
 function ChatPreview() {
   return (
-    <div className="space-y-2 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm">
-      <p className="ml-auto w-fit rounded-xl rounded-tr-sm bg-white px-3 py-2 text-navy">Meu notebook não conecta na VPN. Erro 809.</p>
-      <p className="text-xs text-navy-foreground/60">Farol Desk · consultou a central · montou o chamado</p>
-      <p className="w-fit rounded-xl rounded-tl-sm bg-white/10 px-3 py-2">Prioridade alta. Um analista responde até as 13h.</p>
+    <div className="space-y-2.5 rounded-3xl bg-surface p-5 text-sm shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.12)]">
+      <p className="ml-auto w-fit rounded-[18px] rounded-br-md bg-primary px-3.5 py-2 text-primary-foreground">Meu notebook não conecta na VPN. Erro 809.</p>
+      <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+        <span className="size-1.5 rounded-full bg-beam" />
+        {PRODUCT_NAME} · consultou a central · montou o chamado
+        <span className="rounded-full bg-beam-soft px-2 py-px font-medium text-beam-foreground">por quê?</span>
+      </p>
+      <p className="w-fit rounded-[18px] rounded-bl-md bg-muted px-3.5 py-2">Prioridade alta. Um analista responde até as 13h.</p>
     </div>
   );
 }
@@ -109,8 +117,8 @@ function ChatPreview() {
 function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div>
-      <dt className="font-serif text-3xl">{value}</dt>
-      <dd className="text-xs text-navy-foreground/60">{label}</dd>
+      <dt className="font-serif text-[32px] leading-none font-semibold tracking-[-0.02em]">{value}</dt>
+      <dd className="text-xs text-muted-foreground">{label}</dd>
     </div>
   );
 }

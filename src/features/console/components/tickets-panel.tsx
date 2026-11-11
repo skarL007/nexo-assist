@@ -25,7 +25,7 @@ export function TicketsPanel({
     return (
       <aside className="hidden w-80 shrink-0 flex-col border-l bg-surface xl:flex">
         <header className="border-b px-5 py-4">
-          <h2 className="font-semibold">Chamados de {firstName(employeeName)}</h2>
+          <h2 className="font-serif text-lg font-semibold tracking-tight">Chamados de {firstName(employeeName)}</h2>
         </header>
         <p role="status" className="p-5 text-sm text-muted-foreground">
           O sistema de chamados não respondeu agora. Tentando de novo em instantes…
@@ -40,8 +40,8 @@ export function TicketsPanel({
   return (
     <aside className="hidden w-80 shrink-0 flex-col border-l bg-surface xl:flex">
       <header className="border-b px-5 py-4">
-        <h2 className="font-semibold">Chamados de {firstName(employeeName)}</h2>
-        <p className="text-xs text-muted-foreground">
+        <h2 className="font-serif text-lg font-semibold tracking-tight">Chamados de {firstName(employeeName)}</h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">
           {plural(open, "aberto", "abertos")} · {plural(tickets.length - open, "encerrado", "encerrados")}
         </p>
       </header>
@@ -49,11 +49,11 @@ export function TicketsPanel({
       <div className="flex-1 space-y-5 overflow-y-auto p-4">
         {slaAlerts.length > 0 && (
           <section aria-label="Prazos" className="space-y-2">
-            <h3 className="text-xs text-muted-foreground">Prazos</h3>
+            <h3 className="eyebrow">Prazos</h3>
             {slaAlerts.map((alert) => (
               <details key={alert.code} className={cn("rounded-xl border p-3 text-xs", alert.level === "overdue" ? "border-danger/30 bg-danger-soft" : "border-warning/30 bg-warning-soft")}>
                 <summary className="flex cursor-pointer list-none items-start gap-2 text-sm font-medium">
-                  <AlarmClock className={cn("mt-0.5 size-4 shrink-0", alert.level === "overdue" ? "text-danger" : "text-amber-700")} />
+                  <AlarmClock className={cn("mt-0.5 size-4 shrink-0", alert.level === "overdue" ? "text-danger-foreground" : "text-warning-foreground")} />
                   <span>
                     {alert.headline}
                     <span className="block text-xs font-normal text-muted-foreground">{alert.title} · por quê?</span>
@@ -70,9 +70,9 @@ export function TicketsPanel({
         )}
         {current && (
           <section className="space-y-2">
-            <h3 className="text-xs text-muted-foreground">Desta conversa</h3>
-            <div className="space-y-2 rounded-xl border p-3">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <h3 className="eyebrow">Desta conversa</h3>
+            <div className="space-y-2 rounded-xl border bg-background p-3.5">
+              <div className="flex items-center justify-between font-mono text-xs text-muted-foreground">
                 {current.code}
                 <TicketStatus status={current.status} overdue={current.overdue} />
               </div>
@@ -88,19 +88,19 @@ export function TicketsPanel({
         )}
 
         <section className="space-y-1">
-          <h3 className="text-xs text-muted-foreground">{current ? "Outros chamados" : "Chamados"}</h3>
+          <h3 className="eyebrow">{current ? "Outros chamados" : "Chamados"}</h3>
           {others.length === 0 && <p className="text-sm text-muted-foreground">Nenhum chamado.</p>}
           <ul>
             {others.map((t) => (
-              <li key={t.code} className="flex items-center gap-3 rounded-md px-1 py-2 hover:bg-muted/60">
+              <li key={t.code} className="flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors duration-150 hover:bg-muted/60">
                 <span className={cn("size-2 shrink-0 rounded-full", DOT[ticketTone(t.status, t.overdue)])} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{t.title}</p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {t.code} · {t.overdue ? "vencido" : STATUS_LABEL[t.status].toLowerCase()} · {formatDayMonth(t.updatedAt)}
+                    <span className="font-mono">{t.code}</span> · {t.overdue ? "vencido" : STATUS_LABEL[t.status].toLowerCase()} · {formatDayMonth(t.updatedAt)}
                   </p>
                 </div>
-                <ChevronRight className="size-4 text-muted-foreground" />
+                <ChevronRight className="size-4 text-muted-foreground/60" />
               </li>
             ))}
           </ul>

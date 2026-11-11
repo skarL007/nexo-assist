@@ -56,26 +56,27 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
     setImage(null);
   };
 
+  const canSend = !disabled && (!!text.trim() || !!image);
+
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       {image && (
-        <div className="flex items-center gap-2 rounded-lg border bg-surface p-1.5 pr-2 text-xs text-muted-foreground w-fit">
+        <div className="flex w-fit items-center gap-3 rounded-xl border bg-surface p-1.5 pr-2 text-xs text-muted-foreground shadow-xs">
           {/* eslint-disable-next-line @next/next/no-img-element -- prévia local (blob:), fora do otimizador */}
-          <img src={image.previewUrl} alt="Imagem anexada" className="size-12 rounded object-cover" />
-          <span>Imagem anexada</span>
-          <button
-            type="button"
-            className="rounded p-1 hover:bg-muted"
-            aria-label="Remover imagem"
-            onClick={() => setImage(null)}
-          >
-            <X className="size-3.5" />
-          </button>
+          <img src={image.previewUrl} alt="Imagem anexada" className="size-12 rounded-lg border border-black/5 object-cover" />
+          <span className="font-medium text-foreground">Imagem anexada</span>
+          <Button type="button" size="icon-xs" variant="ghost" aria-label="Remover imagem" onClick={() => setImage(null)}>
+            <X />
+          </Button>
         </div>
       )}
-      {imageError && <p role="alert" className="text-xs text-destructive">{imageError}</p>}
+      {imageError && (
+        <p role="alert" className="text-xs text-destructive">
+          {imageError}
+        </p>
+      )}
       <form
-        className="flex items-end gap-2 rounded-xl border bg-surface p-2 shadow-xs focus-within:ring-2 focus-within:ring-ring/30"
+        className="flex items-end gap-1.5 rounded-2xl border bg-surface p-2 shadow-[0_10px_30px_-14px_oklch(0.24_0.028_232/0.28)] transition-colors duration-150 focus-within:border-ring focus-within:ring-4 focus-within:ring-ring/15 has-[textarea:disabled]:bg-muted/60 has-[textarea:disabled]:shadow-none"
         onSubmit={(e) => {
           e.preventDefault();
           submit();
@@ -94,14 +95,15 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
         />
         <Button
           type="button"
-          size="sm"
+          size="icon"
           variant="ghost"
+          className="rounded-xl"
           disabled={disabled}
           aria-label="Anexar imagem"
           title="Anexar captura de tela ou foto"
           onClick={() => fileRef.current?.click()}
         >
-          <ImagePlus className="size-4" />
+          <ImagePlus />
         </Button>
         <textarea
           ref={inputRef}
@@ -124,19 +126,22 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
               submit();
             }
           }}
-          className="max-h-32 min-h-9 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
+          className="max-h-32 min-h-9 flex-1 resize-none bg-transparent px-2 py-2 text-sm leading-relaxed outline-none placeholder:text-muted-foreground/80 disabled:cursor-not-allowed"
         />
-        <Button type="submit" size="sm" disabled={disabled || (!text.trim() && !image)}>
-          <ArrowUp className="size-4" /> Enviar
+        <Button type="submit" size="icon" className="rounded-xl sm:w-auto sm:px-3.5" disabled={!canSend}>
+          <ArrowUp /> <span className="max-sm:sr-only">Enviar</span>
         </Button>
       </form>
-      <p className="flex justify-between gap-4 text-xs text-muted-foreground">
+      <p className="flex flex-col gap-0.5 px-1 text-[11px] leading-relaxed text-muted-foreground sm:flex-row sm:justify-between sm:gap-4">
         {/* As mensagens vão para um modelo de IA externo: nada de senha ou dado pessoal real. */}
         <span>
           Protótipo com dados fictícios · não envie senhas nem dados pessoais. <AboutPrototypeLink />
         </span>
-        <span className="shrink-0">
-          {limit - remaining}/{limit} mensagens nesta sessão
+        <span className="shrink-0 tabular-nums">
+          <span className="font-mono">
+            {limit - remaining}/{limit}
+          </span>{" "}
+          mensagens nesta sessão
         </span>
       </p>
     </div>

@@ -25,34 +25,34 @@ export function ConversationReportPanel({ conversation, onClose }: { conversatio
   };
 
   return (
-    <section ref={panel} aria-label="Relatório da conversa" className="rounded-xl border bg-surface p-4 text-sm shadow-sm">
+    <section ref={panel} aria-label="Relatório da conversa" className="rounded-xl border bg-surface p-5 text-sm shadow-xs">
       <header className="mb-3 flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <h2 className="font-semibold">Relatório da conversa</h2>
-          <p className="text-xs text-muted-foreground">{countsLine(report)}</p>
+          <h2 className="font-serif text-xl font-semibold tracking-tight">Relatório da conversa</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">{countsLine(report)}</p>
         </div>
         <Button size="sm" variant="outline" onClick={() => void copy()}>
-          {copied ? <Check className="size-4" /> : <Copy className="size-4" />} {copied ? "Copiado" : "Copiar"}
+          {copied ? <Check /> : <Copy />} {copied ? "Copiado" : "Copiar"}
         </Button>
         <Button size="icon-sm" variant="ghost" aria-label="Fechar relatório" onClick={onClose}>
-          <X className="size-4" />
+          <X />
         </Button>
       </header>
 
-      <div className="space-y-3">
+      <div className="space-y-4 border-t pt-4">
         {report.need && (
           <div>
-            <p className="text-xs font-semibold text-muted-foreground">Precisa</p>
-            <p>{report.need}</p>
+            <p className="eyebrow mb-1">Precisa</p>
+            <p className="font-serif text-[17px] leading-snug tracking-tight">{report.need}</p>
           </div>
         )}
-        {report.handoff && <p className="text-xs text-amber-800">{handoffLine(report.handoff)}</p>}
+        {report.handoff && <p className="text-xs text-warning-foreground">{handoffLine(report.handoff)}</p>}
         <Section title="O agent já fez" items={report.actions} />
         <Section title="Artigos da central de ajuda" items={report.articles} />
-        <Section title="Falhas" items={report.failures} tone="text-danger" />
+        <Section title="Falhas" items={report.failures} tone="text-danger-foreground" />
         <Section title="Chamados citados" items={report.tickets.map(ticketLine)} />
-        <Section title="Pendências" items={report.pending.map((item) => pendingLine(item, report.employee.name))} tone="text-amber-800" />
-        {report.frustration && <p className="text-xs font-medium text-danger">{frustrationLine(report.frustration)}</p>}
+        <Section title="Pendências" items={report.pending.map((item) => pendingLine(item, report.employee.name))} tone="text-warning-foreground" />
+        {report.frustration && <p className="text-xs font-medium text-danger-foreground">{frustrationLine(report.frustration)}</p>}
         {report.lowestConfidence !== null && <p className="text-xs text-muted-foreground">Menor confiança do agent: {percent(report.lowestConfidence)}</p>}
       </div>
     </section>
@@ -63,8 +63,8 @@ function Section({ title, items, tone }: { title: string; items: string[]; tone?
   if (!items.length) return null;
   return (
     <div>
-      <p className="text-xs font-semibold text-muted-foreground">{title}</p>
-      <ul className={`list-disc space-y-0.5 pl-5 ${tone ?? ""}`}>
+      <p className="eyebrow mb-1">{title}</p>
+      <ul className={`list-disc space-y-1 pl-5 ${tone ?? ""}`}>
         {items.map((item) => (
           <li key={item}>{item}</li>
         ))}

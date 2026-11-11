@@ -17,7 +17,7 @@ export function ReplyFeedback({ value, onRate, onEscalate }: ReplyFeedbackProps)
   if (!onRate) {
     if (value === undefined) return null;
     return (
-      <p className={`flex items-center gap-1 text-xs ${value ? "text-success" : "text-danger"}`}>
+      <p className={`flex items-center gap-1.5 text-xs font-medium ${value ? "text-success-foreground" : "text-danger-foreground"}`}>
         {value ? <ThumbsUp className="size-3.5" /> : <ThumbsDown className="size-3.5" />}
         {value ? "Funcionário: resolveu" : "Funcionário: não resolveu"}
       </p>
@@ -26,8 +26,8 @@ export function ReplyFeedback({ value, onRate, onEscalate }: ReplyFeedbackProps)
 
   if (value === true) {
     return (
-      <p className="flex items-center gap-1 text-xs text-muted-foreground">
-        <Check className="size-3.5 text-success" /> Obrigado pelo retorno!
+      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Check className="size-3.5 text-success-foreground" /> Obrigado pelo retorno!
       </p>
     );
   }
@@ -41,7 +41,11 @@ export function ReplyFeedback({ value, onRate, onEscalate }: ReplyFeedbackProps)
             <Headset className="size-3.5" /> Falar com um analista
           </Button>
         )}
-        <button type="button" className="underline-offset-2 hover:underline" onClick={() => onRate(true)}>
+        <button
+          type="button"
+          className="rounded underline-offset-2 outline-none hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+          onClick={() => onRate(true)}
+        >
           Na verdade, resolveu
         </button>
       </div>
@@ -50,11 +54,11 @@ export function ReplyFeedback({ value, onRate, onEscalate }: ReplyFeedbackProps)
 
   return (
     <div className="flex items-center gap-1 text-xs text-muted-foreground" role="group" aria-label="Isso resolveu?">
-      <span className="mr-1">Isso resolveu?</span>
-      <Button size="xs" variant="ghost" onClick={() => onRate(true)}>
+      <span className="mr-1.5">Isso resolveu?</span>
+      <Button size="xs" variant="outline" onClick={() => onRate(true)}>
         <ThumbsUp className="size-3.5" /> Sim
       </Button>
-      <Button size="xs" variant="ghost" onClick={() => onRate(false)}>
+      <Button size="xs" variant="outline" onClick={() => onRate(false)}>
         <ThumbsDown className="size-3.5" /> Não
       </Button>
     </div>

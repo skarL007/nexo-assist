@@ -34,10 +34,10 @@ export function ConversationPanel({ conversation, analystId }: { conversation: C
 
   return (
     <section className="flex min-w-0 flex-1 flex-col bg-background">
-      <header className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b bg-surface px-5 py-3">
+      <header className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b bg-surface px-6 py-3.5">
         <PersonAvatar name={conversation.employee.name} online={conversation.status !== "closed"} />
         <div className="min-w-40 flex-1">
-          <p className="truncate font-semibold">{conversation.employee.name}</p>
+          <p className="truncate font-serif text-lg leading-tight font-semibold tracking-tight">{conversation.employee.name}</p>
           <div className="flex min-w-0 items-center gap-2">
             <StatusPill tone={STATUS_TONE[conversation.status]}>{STATUS_LABEL[conversation.status]}</StatusPill>
             <p className="truncate text-xs text-muted-foreground">
@@ -47,26 +47,26 @@ export function ConversationPanel({ conversation, analystId }: { conversation: C
           </div>
         </div>
         <Button size="sm" variant="outline" className="shrink-0" aria-pressed={showReport} onClick={() => setShowReport((open) => !open)}>
-          <FileText className="size-4" /> Relatório
+          <FileText /> Relatório
         </Button>
         {mine && (
           <div className="flex shrink-0 gap-2">
             <Button size="sm" variant="outline" disabled={actState.isLoading} onClick={() => run("release")}>
-              <Undo2 className="size-4" /> Devolver ao agent
+              <Undo2 /> Devolver ao agent
             </Button>
-            <Button size="sm" variant="outline" className="text-danger" disabled={actState.isLoading} onClick={() => run("close")}>
-              <LogOut className="size-4" /> Encerrar atendimento
+            <Button size="sm" variant="outline" className="text-danger-foreground hover:bg-danger-soft" disabled={actState.isLoading} onClick={() => run("close")}>
+              <LogOut /> Encerrar atendimento
             </Button>
           </div>
         )}
       </header>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto flex max-w-3xl flex-col gap-4 px-6 py-6">
+        <div className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-8">
           {showReport && <ConversationReportPanel conversation={conversation} onClose={() => setShowReport(false)} />}
           {!showReport && conversation.handoffSummary && (
-            <div className="rounded-xl border border-warning/30 bg-warning-soft p-4 text-sm">
-              <p className="mb-1 text-xs font-semibold text-amber-800">
+            <div className="rounded-xl border border-l-[3px] border-warning/30 border-l-warning bg-warning-soft p-4 text-sm leading-relaxed">
+              <p className="eyebrow mb-1.5 text-warning-foreground">
                 Resumo da transferência · {conversation.handoffReason && HANDOFF_REASON_LABEL[conversation.handoffReason]}
                 {conversation.handoffConfidence !== null && ` · confiança ${percent(conversation.handoffConfidence)}`}
               </p>
@@ -86,8 +86,8 @@ export function ConversationPanel({ conversation, analystId }: { conversation: C
         </div>
       </div>
 
-      <footer className="border-t bg-surface px-5 py-3">
-        {actState.isError && <p className="mb-2 text-sm text-danger">{apiErrorMessage(actState.error)}</p>}
+      <footer className="border-t bg-surface px-6 py-3.5">
+        {actState.isError && <p role="alert" className="mb-2 text-sm text-danger-foreground">{apiErrorMessage(actState.error)}</p>}
         {mine ? (
           <AnalystComposer conversationId={conversation.id} employeeFirstName={first} />
         ) : (
@@ -95,12 +95,12 @@ export function ConversationPanel({ conversation, analystId }: { conversation: C
             <FooterNotice conversation={conversation} />
             {conversation.status === "waiting_analyst" && (
               <Button size="sm" variant="outline" disabled={actState.isLoading} onClick={() => run("release")}>
-                <Bot className="size-4" /> Devolver ao agent
+                <Bot /> Devolver ao agent
               </Button>
             )}
             {(conversation.status === "waiting_analyst" || conversation.status === "with_agent") && (
               <Button size="sm" disabled={actState.isLoading} onClick={() => run("assume")}>
-                {actState.isLoading ? <Loader2 className="size-4 animate-spin" /> : <Headset className="size-4" />} Assumir atendimento
+                {actState.isLoading ? <Loader2 className="animate-spin" /> : <Headset />} Assumir atendimento
               </Button>
             )}
           </div>
@@ -121,7 +121,7 @@ function FooterNotice({ conversation }: { conversation: ConsoleConversationDetai
 
   return (
     <p className="flex flex-1 items-center gap-2 text-sm text-muted-foreground">
-      {conversation.status === "waiting_analyst" && <Hand className="size-4 text-warning" />}
+      {conversation.status === "waiting_analyst" && <Hand className="size-4 text-warning-foreground" />}
       {text}
     </p>
   );
@@ -157,7 +157,7 @@ function AnalystComposer({ conversationId, employeeFirstName }: { conversationId
 
   return (
     <form
-      className="space-y-1"
+      className="space-y-2"
       onSubmit={(e) => {
         e.preventDefault();
         void submit();
@@ -165,18 +165,18 @@ function AnalystComposer({ conversationId, employeeFirstName }: { conversationId
     >
       <div className="flex items-center justify-between gap-2">
         <Button type="button" size="xs" variant="ghost" disabled={suggestion.isLoading} onClick={() => void askSuggestion()}>
-          {suggestion.isLoading ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+          {suggestion.isLoading ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="text-beam-foreground" />}
           {suggestion.isLoading ? "Escrevendo sugestão…" : "Sugerir resposta"}
         </Button>
         {suggested !== null && <span className="text-xs text-muted-foreground">Sugestão do Farol: revise antes de enviar.</span>}
       </div>
       {warnings.map((warning) => (
-        <p key={warning} role="alert" className="text-xs text-amber-800">
+        <p key={warning} role="alert" className="text-xs text-warning-foreground">
           {warning}
         </p>
       ))}
-      {suggestion.isError && <p className="text-xs text-danger">{apiErrorMessage(suggestion.error)}</p>}
-      <div className="flex items-center gap-2 rounded-xl border px-2 py-1.5 focus-within:ring-2 focus-within:ring-ring/30">
+      {suggestion.isError && <p className="text-xs text-danger-foreground">{apiErrorMessage(suggestion.error)}</p>}
+      <div className="flex items-center gap-2 rounded-xl border bg-background px-2 py-1.5 transition-colors duration-150 focus-within:border-ring focus-within:ring-4 focus-within:ring-ring/15">
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -185,10 +185,10 @@ function AnalystComposer({ conversationId, employeeFirstName }: { conversationId
           className="h-9 flex-1 bg-transparent px-2 text-sm outline-none"
         />
         <Button type="submit" size="icon-sm" disabled={isLoading || !text.trim()} aria-label="Enviar">
-          <Send className="size-4" />
+          <Send />
         </Button>
       </div>
-      {isError && <p className="text-xs text-danger">{apiErrorMessage(error)}</p>}
+      {isError && <p className="text-xs text-danger-foreground">{apiErrorMessage(error)}</p>}
     </form>
   );
 }

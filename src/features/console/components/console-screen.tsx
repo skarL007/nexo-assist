@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useLiveUpdates } from "@/lib/use-live-updates";
@@ -38,10 +39,10 @@ export function ConsoleScreen({ analyst }: { analyst: { id: string; name: string
       <ConsoleRail active="conversas" analystName={analyst.name} queueSize={queueSize} />
 
       {list.isLoading ? (
-        <Centered>Carregando conversas…</Centered>
+        <Centered><Loading>Carregando conversas…</Loading></Centered>
       ) : list.isError ? (
         <Centered>
-          <span role="alert" className="flex flex-col items-center gap-3">
+          <span role="alert" className="flex flex-col items-center gap-3 text-danger-foreground">
             Não foi possível carregar as conversas.
             <Button size="sm" variant="outline" onClick={() => void list.refetch()}>
               Tentar de novo
@@ -67,11 +68,19 @@ export function ConsoleScreen({ analyst }: { analyst: { id: string; name: string
               </span>
             </Centered>
           ) : (
-            <Centered>{activeId ? "Carregando conversa…" : "Selecione uma conversa."}</Centered>
+            <Centered>{activeId ? <Loading>Carregando conversa…</Loading> : "Selecione uma conversa."}</Centered>
           )}
         </>
       )}
     </div>
+  );
+}
+
+function Loading({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-2">
+      <Loader2 className="size-4 animate-spin" /> {children}
+    </span>
   );
 }
 

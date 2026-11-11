@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, Hand, RotateCcw, X } from "lucide-react";
+import { AlertCircle, Hand, Loader2, RotateCcw, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { AgentReply, MessageItem } from "@/components/conversation/message-item";
@@ -90,8 +90,14 @@ export function ChatScreen({ firstName }: { firstName: string }) {
     return (
       <>
         <PageHeader page="Atendimento" />
-        <div className="grid flex-1 place-items-center text-sm text-muted-foreground">
-          {error ? <ErrorBanner message={error} onRetry={() => dispatch(loadConversation())} /> : "Carregando conversa…"}
+        <div className="grid flex-1 place-items-center px-4 text-sm text-muted-foreground">
+          {error ? (
+            <ErrorBanner message={error} onRetry={() => dispatch(loadConversation())} />
+          ) : (
+            <span className="inline-flex items-center gap-2">
+              <Loader2 className="size-4 animate-spin" /> Carregando conversa…
+            </span>
+          )}
         </div>
       </>
     );
@@ -103,18 +109,21 @@ export function ChatScreen({ firstName }: { firstName: string }) {
   return (
     <>
       <PageHeader page="Atendimento">
-        <div className="flex items-center gap-3">
-          <ConversationStatus conversation={conversation} />
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* No celular o estado já aparece no aviso acima do campo; a pílula só disputaria espaço com o título. */}
+          <span className="max-[420px]:hidden">
+            <ConversationStatus conversation={conversation} />
+          </span>
           {conversation.id && (
-            <Button variant="ghost" size="sm" onClick={() => dispatch(startNewConversation())} disabled={sending}>
-              <RotateCcw className="size-3.5" /> Nova conversa
+            <Button variant="outline" size="sm" onClick={() => dispatch(startNewConversation())} disabled={sending}>
+              <RotateCcw /> <span className="max-sm:sr-only">Nova conversa</span>
             </Button>
           )}
         </div>
       </PageHeader>
 
       <main className="flex-1 overflow-y-auto">
-        <div className="mx-auto flex max-w-3xl flex-col gap-5 px-6 py-8">
+        <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6 sm:px-6 md:py-8">
           {conversation.status === "with_agent" && (
             <SlaBanner
               disabled={sending}
@@ -147,7 +156,7 @@ export function ChatScreen({ firstName }: { firstName: string }) {
           ))}
 
           {optimisticText && (
-            <div className="ml-auto max-w-[75%] rounded-2xl rounded-tr-sm bg-navy px-4 py-2.5 text-sm text-navy-foreground opacity-70">
+            <div className="ml-auto max-w-[78%] rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-sm leading-relaxed text-primary-foreground opacity-70">
               {optimisticImage && (
                 // eslint-disable-next-line @next/next/no-img-element -- prévia local (blob:)
                 <img src={optimisticImage} alt="Imagem anexada" className="mb-2 max-h-48 rounded-lg" />
@@ -163,7 +172,7 @@ export function ChatScreen({ firstName }: { firstName: string }) {
         </div>
       </main>
 
-      <footer className="mx-auto w-full max-w-3xl px-6 pb-5">
+      <footer className="mx-auto w-full max-w-3xl px-4 pt-2 pb-4 sm:px-6 sm:pb-5">
         {paused && <PausedNotice conversation={conversation} />}
         <Composer
           ref={composer}
@@ -201,15 +210,15 @@ function PausedNotice({ conversation }: { conversation: ConversationView }) {
       ? "Um analista vai continuar por aqui. O Farol Desk está pausado — pode mandar mais detalhes enquanto isso."
       : `${conversation.analystName ?? "Um analista"} está atendendo você agora.`;
   return (
-    <p className="mb-2 flex items-center gap-2 rounded-lg bg-warning-soft px-3 py-2 text-xs text-amber-800">
-      <Hand className="size-3.5" /> {text}
+    <p className="mb-2.5 flex items-start gap-2.5 rounded-xl border border-warning/25 bg-warning-soft px-3.5 py-2.5 text-xs leading-relaxed text-warning-foreground">
+      <Hand className="mt-px size-3.5 shrink-0" /> {text}
     </p>
   );
 }
 
 function ErrorBanner({ message, onClose, onRetry }: { message: string; onClose?: () => void; onRetry?: () => void }) {
   return (
-    <div role="alert" className="flex items-center gap-2 rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
+    <div role="alert" className="flex items-center gap-3 rounded-xl border border-l-[3px] border-danger/25 border-l-danger bg-danger-soft px-3.5 py-2.5 text-sm text-danger-foreground">
       <AlertCircle className="size-4 shrink-0" />
       <span className="flex-1">{message}</span>
       {onRetry && (
@@ -218,9 +227,9 @@ function ErrorBanner({ message, onClose, onRetry }: { message: string; onClose?:
         </Button>
       )}
       {onClose && (
-        <button type="button" onClick={onClose} aria-label="Fechar aviso">
-          <X className="size-4" />
-        </button>
+        <Button type="button" size="icon-xs" variant="ghost" onClick={onClose} aria-label="Fechar aviso" className="text-danger-foreground hover:bg-danger/10">
+          <X />
+        </Button>
       )}
     </div>
   );

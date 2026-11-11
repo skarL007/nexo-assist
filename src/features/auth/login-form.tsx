@@ -110,7 +110,7 @@ export function LoginForm() {
       {notice && !error && <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">{notice}</p>}
 
       {error && (
-        <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">
+        <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger-foreground">
           {error}
         </p>
       )}
@@ -119,14 +119,14 @@ export function LoginForm() {
         {loading ? <Loader2 className="size-4 animate-spin" /> : "Entrar →"}
       </Button>
 
-      <div className="space-y-2 rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
+      <div className="space-y-2.5 rounded-xl border border-beam/50 bg-beam-soft/50 p-3.5 text-xs text-muted-foreground">
         <p>Ambiente de demonstração: qualquer senha funciona. Entre direto como:</p>
         <div className="flex flex-wrap gap-2">
           {DEMO_ACCOUNTS.map((account) => (
             <button
               key={account.email}
               type="button"
-              className="rounded-md bg-muted px-2 py-1 font-medium text-foreground hover:bg-accent disabled:opacity-60"
+              className="rounded-full border bg-surface px-3 py-1.5 text-sm font-medium text-foreground shadow-xs transition-colors hover:border-primary hover:text-primary disabled:opacity-60"
               disabled={loading}
               onClick={() => {
                 setEmail(account.email);

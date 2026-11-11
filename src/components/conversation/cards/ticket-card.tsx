@@ -17,7 +17,7 @@ export function TicketCard({ ticket }: { ticket: TicketSnapshot }) {
       <Field label="Prioridade">{PRIORITY_LABEL[ticket.priority]}</Field>
       <Field label="Aberto em">{formatDayTime(ticket.createdAt)}</Field>
       <Field label="Última atualização">
-        <span className={cn(ticket.overdue && "font-semibold text-danger")}>{formatRelative(ticket.updatedAt)}</span>
+        <span className={cn(ticket.overdue && "font-semibold text-danger-foreground")}>{formatRelative(ticket.updatedAt)}</span>
       </Field>
     </CardShell>
   );

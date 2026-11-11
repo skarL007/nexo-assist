@@ -47,39 +47,44 @@ export function SlaBanner({ disabled, onAskAnalyst }: { disabled: boolean; onAsk
   if (!visible.length) return null;
 
   return (
-    <section aria-label="Prazos dos seus chamados" className="space-y-2">
-      {visible.map((alert) => (
-        <div
-          key={alert.code}
-          className={cn("rounded-xl border p-3 text-sm", alert.level === "overdue" ? "border-danger/30 bg-danger-soft" : "border-warning/30 bg-warning-soft")}
-        >
-          <div className="flex items-start gap-2">
-            <AlarmClock className={cn("mt-0.5 size-4 shrink-0", alert.level === "overdue" ? "text-danger" : "text-amber-700")} />
-            <div className="min-w-0 flex-1">
-              <p className="font-medium">{alert.headline}</p>
-              <p className="text-xs text-muted-foreground">{alert.title}</p>
+    <section aria-label="Prazos dos seus chamados" className="space-y-2.5">
+      {visible.map((alert) => {
+        const overdue = alert.level === "overdue";
+        return (
+          <div
+            key={alert.code}
+            className={cn("rounded-xl border border-l-[3px] bg-surface p-3.5 text-sm shadow-xs", overdue ? "border-danger/25 border-l-danger" : "border-warning/25 border-l-warning")}
+          >
+            <div className="flex items-start gap-3">
+              <span className={cn("mt-px grid size-7 shrink-0 place-items-center rounded-lg", overdue ? "bg-danger-soft text-danger-foreground" : "bg-warning-soft text-warning-foreground")}>
+                <AlarmClock className="size-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="font-medium">{alert.headline}</p>
+                <p className="text-xs text-muted-foreground">{alert.title}</p>
+              </div>
+              <Button size="icon-xs" variant="ghost" aria-label={`Dispensar aviso do ${alert.code}`} onClick={() => dismiss(alert.code)}>
+                <X />
+              </Button>
             </div>
-            <button type="button" aria-label={`Dispensar aviso do ${alert.code}`} className="text-muted-foreground hover:text-foreground" onClick={() => dismiss(alert.code)}>
-              <X className="size-4" />
-            </button>
+            {open === alert.code && (
+              <ul className="mt-3 ml-10 list-disc space-y-1 pl-4 text-xs leading-relaxed text-muted-foreground marker:text-border">
+                {alert.lines.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            )}
+            <div className="mt-3 ml-10 flex flex-wrap items-center gap-2">
+              <Button size="xs" variant="outline" disabled={disabled} onClick={() => onAskAnalyst(alert)}>
+                <Headset /> Falar com um analista
+              </Button>
+              <Button size="xs" variant="beam" aria-expanded={open === alert.code} onClick={() => setOpen(open === alert.code ? null : alert.code)}>
+                por quê? <ChevronDown className={cn("transition-transform duration-150", open === alert.code && "rotate-180")} />
+              </Button>
+            </div>
           </div>
-          {open === alert.code && (
-            <ul className="mt-2 ml-6 list-disc space-y-0.5 pl-4 text-xs text-muted-foreground">
-              {alert.lines.map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ul>
-          )}
-          <div className="mt-2 ml-6 flex flex-wrap gap-2">
-            <Button size="xs" variant="outline" disabled={disabled} onClick={() => onAskAnalyst(alert)}>
-              <Headset className="size-3.5" /> Falar com um analista
-            </Button>
-            <Button size="xs" variant="ghost" aria-expanded={open === alert.code} onClick={() => setOpen(open === alert.code ? null : alert.code)}>
-              por quê? <ChevronDown className={cn("size-3.5 transition-transform", open === alert.code && "rotate-180")} />
-            </Button>
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </section>
   );
 }

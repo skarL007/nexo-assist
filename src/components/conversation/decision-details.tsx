@@ -1,94 +1,163 @@
-import { AlertTriangle, Check, ShieldCheck, X } from "lucide-react";
-import { INTENT_LABEL, type RetrievalTrace, type TurnTrace } from "@/domain/message";
+import { AlertTriangle, Check, ChevronRight, ShieldCheck, X } from "lucide-react";
+import { INTENT_LABEL, type RetrievalTrace, type ToolCallLog, type TurnTrace } from "@/domain/message";
 import { percent } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /**
  * O "porquê" de cada resposta: o que o agent entendeu, com que segurança,
  * que passos deu, que regras do sistema agiram e quanto custou.
+ * É a assinatura do produto: um painel "iluminado", com o topo âmbar do feixe.
  */
 export function DecisionDetails({ trace }: { trace: TurnTrace }) {
   const { decision } = trace;
 
   return (
-    <div className="space-y-4 rounded-xl border bg-muted/40 p-4 text-sm" data-testid="decision-details">
+    <div
+      className="overflow-hidden rounded-xl border border-beam/40 border-t-[3px] border-t-beam bg-surface text-sm shadow-[0_10px_30px_-14px_oklch(0.83_0.145_82/0.55)]"
+      data-testid="decision-details"
+    >
       {decision ? (
-        <dl className="grid gap-3 sm:grid-cols-[8rem_1fr]">
-          <dt className="text-muted-foreground">Entendeu</dt>
-          <dd>{decision.understanding}</dd>
-
-          <dt className="text-muted-foreground">Intenção</dt>
-          <dd>
-            <span className="rounded-md bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
-              {INTENT_LABEL[decision.intent]}
-            </span>
-          </dd>
-
-          <dt className="text-muted-foreground">Segurança</dt>
-          <dd className="flex items-center gap-2">
-            <ConfidenceBar value={decision.confidence} />
-            <span className="font-medium tabular-nums">{percent(decision.confidence)}</span>
-          </dd>
-
-          <dt className="text-muted-foreground">Por quê</dt>
-          <dd>{decision.reasoning}</dd>
+        <dl className="divide-y divide-border/70">
+          <Row label="Entendeu" className="bg-beam-soft/40">
+            <dd className="font-serif text-[17px] leading-snug tracking-tight">{decision.understanding}</dd>
+          </Row>
+          <Row label="Intenção">
+            <dd>
+              <span className="inline-flex items-center rounded-full bg-accent px-2.5 py-0.5 text-xs font-medium text-accent-foreground">
+                {INTENT_LABEL[decision.intent]}
+              </span>
+            </dd>
+          </Row>
+          <Row label="Segurança">
+            <dd className="flex items-center gap-3">
+              <ConfidenceBar value={decision.confidence} />
+              <span className="font-mono text-sm font-medium tabular-nums">{percent(decision.confidence)}</span>
+            </dd>
+          </Row>
+          <Row label="Por quê">
+            <dd className="leading-relaxed text-foreground/90">{decision.reasoning}</dd>
+          </Row>
         </dl>
       ) : (
-        <p className="text-muted-foreground">Ação executada pelo sistema, sem decisão do modelo.</p>
+        <p className="bg-beam-soft/40 px-5 py-4 text-muted-foreground">Ação executada pelo sistema, sem decisão do modelo.</p>
       )}
 
-      {trace.steps.length > 0 && (
-        <section>
-          <h5 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Ações</h5>
-          <ol className="space-y-1.5">
-            {trace.steps.map((step, index) => (
-              <li key={index} className="flex gap-2">
-                {step.ok ? <Check className="mt-0.5 size-4 shrink-0 text-success" /> : <X className="mt-0.5 size-4 shrink-0 text-danger" />}
-                <span>
-                  <span className="font-medium">{step.label}</span>
-                  {step.detail && <span className="text-muted-foreground"> — {step.detail}</span>}
-                </span>
-              </li>
-            ))}
-          </ol>
-        </section>
-      )}
+      <div className="divide-y divide-border/70 border-t border-border/70">
+        {trace.steps.length > 0 && (
+          <Section title="Ações">
+            <ol className="space-y-2">
+              {trace.steps.map((step, index) => (
+                <li key={index} className="flex gap-2.5">
+                  <span
+                    className={cn(
+                      "mt-0.5 grid size-4 shrink-0 place-items-center rounded-full",
+                      step.ok ? "bg-success-soft text-success-foreground" : "bg-danger-soft text-danger-foreground",
+                    )}
+                  >
+                    {step.ok ? <Check className="size-2.5" strokeWidth={3} /> : <X className="size-2.5" strokeWidth={3} />}
+                  </span>
+                  <span>
+                    <span className="font-medium">{step.label}</span>
+                    {step.detail && <span className="text-muted-foreground"> — {step.detail}</span>}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </Section>
+        )}
 
-      {trace.guardrails.length > 0 && (
-        <section>
-          <h5 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Regras do sistema</h5>
-          <ul className="space-y-1.5">
-            {trace.guardrails.map((rule, index) => (
-              <li key={index} className="flex gap-2">
-                <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
-                {rule}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+        {trace.guardrails.length > 0 && (
+          <Section title="Regras do sistema">
+            <ul className="space-y-2">
+              {trace.guardrails.map((rule, index) => (
+                <li key={index} className="flex gap-2.5">
+                  <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
+                  {rule}
+                </li>
+              ))}
+            </ul>
+          </Section>
+        )}
 
-      <footer className="flex flex-wrap gap-x-4 gap-y-1 border-t pt-3 text-xs text-muted-foreground">
-        {trace.model && <span>Modelo: {trace.model}</span>}
-        {trace.usage && (
+        <Telemetry trace={trace} />
+
+        {trace.toolCalls.length > 0 && (
+          <div className="px-5 py-4">
+            <details className="group text-xs">
+              <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded text-muted-foreground transition-colors duration-150 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
+                <ChevronRight className="size-3.5 transition-transform group-open:rotate-90" />
+                Log técnico ({trace.toolCalls.length} chamadas de ferramenta)
+              </summary>
+              <div className="mt-3 space-y-3">
+                {trace.toolCalls.map((call, index) => (
+                  <ToolCallBlock key={index} call={call} />
+                ))}
+              </div>
+            </details>
+          </div>
+        )}
+      </div>
+
+      <footer className="flex flex-wrap gap-x-5 gap-y-1 border-t border-border/70 bg-muted/50 px-5 py-3 text-xs text-muted-foreground">
+        {trace.model && (
           <span>
-            Tokens: {trace.usage.inputTokens} entrada · {trace.usage.outputTokens} saída
+            Modelo: <span className="font-mono text-foreground/80">{trace.model}</span>
           </span>
         )}
-        <span>Tempo: {(trace.latencyMs / 1000).toFixed(1)}s</span>
-        {trace.fallbackFrom && <span className="text-warning">Reserva: {trace.fallbackFrom} falhou</span>}
+        {trace.usage && (
+          <span>
+            Tokens: <span className="font-mono text-foreground/80">{trace.usage.inputTokens}</span> entrada ·{" "}
+            <span className="font-mono text-foreground/80">{trace.usage.outputTokens}</span> saída
+          </span>
+        )}
+        <span>
+          Tempo: <span className="font-mono text-foreground/80">{(trace.latencyMs / 1000).toFixed(1)}s</span>
+        </span>
+        {trace.fallbackFrom && <span className="text-warning-foreground">Reserva: {trace.fallbackFrom} falhou</span>}
       </footer>
+    </div>
+  );
+}
 
-      <Telemetry trace={trace} />
+function Row({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
+  return (
+    <div className={cn("grid gap-1.5 px-5 py-3.5 sm:grid-cols-[6.5rem_1fr] sm:gap-4", className)}>
+      <dt className="eyebrow pt-0.5">{label}</dt>
+      {children}
+    </div>
+  );
+}
 
-      {trace.toolCalls.length > 0 && (
-        <details className="text-xs">
-          <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Log técnico ({trace.toolCalls.length} chamadas de ferramenta)</summary>
-          <pre className="mt-2 max-h-72 overflow-auto rounded-lg bg-navy p-3 font-mono text-[11px] leading-relaxed text-navy-foreground">
-            {JSON.stringify(trace.toolCalls, null, 2)}
-          </pre>
-        </details>
-      )}
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="grid gap-2 px-5 py-4 sm:grid-cols-[6.5rem_1fr] sm:gap-4">
+      <h5 className="eyebrow pt-0.5">{title}</h5>
+      <div className="min-w-0">{children}</div>
+    </section>
+  );
+}
+
+const asJson = (value: unknown) => JSON.stringify(value, null, 2) ?? "—";
+
+/** Entrada e saída de uma ferramenta, em bloco mono sobre o azul-noite. */
+function ToolCallBlock({ call }: { call: ToolCallLog }) {
+  return (
+    <div className="overflow-hidden rounded-lg bg-ink text-ink-foreground">
+      <div className="flex items-center justify-between gap-3 border-b border-white/10 px-3 py-2 font-mono text-[11px]">
+        <span className="font-medium text-beam">{call.tool}</span>
+        <span className="text-ink-foreground/55 tabular-nums">{call.durationMs} ms</span>
+      </div>
+      {(
+        [
+          ["entrada", call.input],
+          ["saída", call.output],
+        ] as const
+      ).map(([label, value]) => (
+        <div key={label} className="border-b border-white/5 px-3 py-2 last:border-b-0">
+          <p className="mb-1 font-mono text-[10px] tracking-[0.14em] text-ink-foreground/45 uppercase">{label}</p>
+          <pre className="scrollbar-quiet max-h-48 overflow-auto font-mono text-[11px] leading-relaxed whitespace-pre-wrap text-ink-foreground/90">{asJson(value)}</pre>
+        </div>
+      ))}
     </div>
   );
 }
@@ -96,7 +165,7 @@ export function DecisionDetails({ trace }: { trace: TurnTrace }) {
 function ConfidenceBar({ value }: { value: number }) {
   const tone = value >= 0.75 ? "bg-success" : value >= 0.5 ? "bg-warning" : "bg-danger";
   return (
-    <span className="h-1.5 w-28 overflow-hidden rounded-full bg-border" aria-hidden>
+    <span className="block h-2 w-32 overflow-hidden rounded-full bg-border" aria-hidden>
       <span className={cn("block h-full rounded-full", tone)} style={{ width: percent(value) }} />
     </span>
   );
@@ -114,57 +183,62 @@ function Telemetry({ trace }: { trace: TurnTrace }) {
   if (!trace.traceId && !trace.toolCalls.length && !trace.retrievals?.length) return null;
 
   return (
-    <section className="space-y-3" data-testid="turn-telemetry">
-      <h5 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Telemetria</h5>
-      {trace.traceId && (
-        <p className="text-xs text-muted-foreground">
-          Trace <code className="rounded bg-muted px-1 font-mono text-foreground select-all">{trace.traceId}</code>
-        </p>
-      )}
+    <section className="grid gap-2 px-5 py-4 sm:grid-cols-[6.5rem_1fr] sm:gap-4" data-testid="turn-telemetry">
+      <h5 className="eyebrow pt-0.5">Telemetria</h5>
+      <div className="min-w-0 space-y-4">
+        {trace.traceId && (
+          <p className="text-xs text-muted-foreground">
+            Trace <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground select-all">{trace.traceId}</code>
+          </p>
+        )}
 
-      {trace.toolCalls.length > 0 && (
-        <ol className="space-y-1 text-xs" aria-label="Tempo de cada ferramenta">
-          {trace.toolCalls.map((call, index) => (
-            <li key={index} className="grid grid-cols-[minmax(0,10rem)_1fr_3.5rem] items-center gap-2">
-              <span className="truncate font-mono">{call.tool}</span>
-              <span className="h-1.5 overflow-hidden rounded-full bg-border" aria-hidden>
-                <span className="block h-full rounded-full bg-primary" style={{ width: `${Math.max(2, (call.durationMs / slowest) * 100)}%` }} />
-              </span>
-              <span className="text-right tabular-nums text-muted-foreground">{call.durationMs} ms</span>
-            </li>
-          ))}
-        </ol>
-      )}
+        {trace.toolCalls.length > 0 && (
+          <ol className="space-y-1.5 text-xs" aria-label="Tempo de cada ferramenta">
+            {trace.toolCalls.map((call, index) => (
+              <li key={index} className="grid grid-cols-[minmax(0,9rem)_1fr_4rem] items-center gap-3">
+                <span className="truncate font-mono">{call.tool}</span>
+                <span className="h-1.5 overflow-hidden rounded-full bg-border" aria-hidden>
+                  <span
+                    className={cn("block h-full rounded-full", call.durationMs === slowest && trace.toolCalls.length > 1 ? "bg-beam" : "bg-primary")}
+                    style={{ width: `${Math.max(2, (call.durationMs / slowest) * 100)}%` }}
+                  />
+                </span>
+                <span className="text-right font-mono tabular-nums text-muted-foreground">{call.durationMs} ms</span>
+              </li>
+            ))}
+          </ol>
+        )}
 
-      {trace.retrievals?.map((retrieval, index) => <RetrievalDetails key={index} retrieval={retrieval} />)}
+        {trace.retrievals?.map((retrieval, index) => <RetrievalDetails key={index} retrieval={retrieval} />)}
+      </div>
     </section>
   );
 }
 
 function RetrievalDetails({ retrieval }: { retrieval: RetrievalTrace }) {
   return (
-    <div className="space-y-2 rounded-lg border bg-card p-3 text-xs" data-testid="retrieval-details">
+    <div className="space-y-2.5 rounded-lg border bg-background p-3.5 text-xs" data-testid="retrieval-details">
       <p>
         <span className="font-medium">Busca na central</span> <span className="text-muted-foreground">“{retrieval.query}”</span>
       </p>
       <p className="flex flex-wrap gap-x-3 gap-y-1 text-muted-foreground">
         <span>{retrieval.mode === "hybrid" ? `Híbrida · ${retrieval.embeddingModel}` : "Só palavras"}</span>
         <span>{retrieval.judgeModel ? `Avaliador ${retrieval.judgeModel}: ${retrieval.verdict ? VERDICT_LABEL[retrieval.verdict] : "—"}` : "Sem avaliador (regra de margem)"}</span>
-        <span className="tabular-nums">{retrieval.latencyMs} ms</span>
+        <span className="font-mono tabular-nums">{retrieval.latencyMs} ms</span>
       </p>
       {retrieval.degraded.map((reason) => (
-        <p key={reason} className="flex gap-1.5 text-warning">
+        <p key={reason} className="flex gap-1.5 text-warning-foreground">
           <AlertTriangle className="mt-px size-3.5 shrink-0" />
           {reason}
         </p>
       ))}
       {retrieval.candidates.length > 0 ? (
         <table className="w-full text-left">
-          <thead className="text-muted-foreground">
-            <tr>
-              <th className="py-1 font-normal">Candidato</th>
-              <th className="py-1 text-right font-normal">Sentido</th>
-              <th className="py-1 pl-3 font-normal">Termos</th>
+          <thead>
+            <tr className="eyebrow text-[10px]">
+              <th className="py-1.5 font-semibold">Candidato</th>
+              <th className="py-1.5 text-right font-semibold">Sentido</th>
+              <th className="py-1.5 pl-3 font-semibold">Termos</th>
             </tr>
           </thead>
           <tbody>
@@ -172,12 +246,12 @@ function RetrievalDetails({ retrieval }: { retrieval: RetrievalTrace }) {
               const chosen = retrieval.chosen.includes(candidate.id);
               return (
                 <tr key={candidate.id} className={cn("border-t", chosen && "font-medium")}>
-                  <td className="py-1">
-                    {chosen && <Check className="mr-1 inline size-3.5 text-success" aria-label="devolvido ao agent" />}
+                  <td className="py-1.5">
+                    {chosen && <Check className="mr-1 inline size-3.5 text-success-foreground" aria-label="devolvido ao agent" />}
                     {candidate.title}
                   </td>
-                  <td className="py-1 text-right tabular-nums">{candidate.similarity === null ? "—" : decimal(candidate.similarity)}</td>
-                  <td className="py-1 pl-3 text-muted-foreground">{candidate.terms.join(", ") || "—"}</td>
+                  <td className="py-1.5 text-right font-mono tabular-nums">{candidate.similarity === null ? "—" : decimal(candidate.similarity)}</td>
+                  <td className="py-1.5 pl-3 font-normal text-muted-foreground">{candidate.terms.join(", ") || "—"}</td>
                 </tr>
               );
             })}

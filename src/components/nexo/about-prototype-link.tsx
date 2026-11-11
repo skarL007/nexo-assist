@@ -1,6 +1,7 @@
+import { CASE_STUDY_URL } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 
-export const CASE_STUDY_URL = "https://skarl007.github.io/nexo-assist/";
+export { CASE_STUDY_URL };
 
 /** Para quem chega à demo sem contexto: o estudo de caso do protótipo, em nova aba. */
 export function AboutPrototypeLink({ className }: { className?: string }) {

@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { StatusDot } from "@/components/nexo/status-pill";
 import { Button } from "@/components/ui/button";
@@ -71,25 +72,25 @@ function NewTicketEditor({ draft, locked, onSave, onClose }: EditorProps & { dra
         invalid={!descriptionOk}
         multiline
       />
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-5 sm:grid-cols-2">
         <ChoiceGroup label="Tipo" value={edit.type} options={options(TICKET_TYPES, TICKET_TYPE_LABEL)} onChange={set("type")} />
         <ChoiceGroup label="Afetados" value={edit.impact} options={options(IMPACTS, IMPACT_LABEL)} onChange={set("impact")} />
       </div>
       <ChoiceGroup label="Categoria" value={edit.category} options={options(CATEGORIES, CATEGORY_LABEL)} onChange={set("category")} />
       <ChoiceGroup label="Urgência" value={edit.urgency} options={options(URGENCIES, URGENCY_LABEL)} onChange={set("urgency")} />
 
-      <div data-testid="draft-preview" aria-live="polite" className="space-y-1 rounded-lg border bg-muted/50 px-3 py-2.5 text-sm">
-        <div className="flex flex-wrap items-center gap-x-2">
-          <span className="text-xs text-muted-foreground">Prioridade</span>
+      <div data-testid="draft-preview" aria-live="polite" className="space-y-1.5 rounded-lg border border-l-[3px] border-l-beam bg-background px-3.5 py-3 text-sm">
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+          <span className="eyebrow text-[10px]">Prioridade</span>
           <StatusDot tone={PRIORITY_TONE[next.priority]} className="text-sm text-foreground">
             {PRIORITY_LABEL[next.priority]}
           </StatusDot>
           <span className="text-xs text-muted-foreground">
-            · {SLA_LABEL[next.priority]}, resposta até {formatDeadline(deadline)}
+            · {SLA_LABEL[next.priority]}, resposta até <span className="font-mono">{formatDeadline(deadline)}</span>
           </span>
         </div>
         <p className="text-xs text-muted-foreground">{next.priorityReason}</p>
-        {next.priority === "critical" && <p className="text-xs text-danger">Crítico: ao confirmar, um analista é chamado na hora.</p>}
+        {next.priority === "critical" && <p className="text-xs text-danger-foreground">Crítico: ao confirmar, um analista é chamado na hora.</p>}
         <p className="text-xs">
           <span className="font-medium">O que muda: </span>
           {changes.length ? describeChanges(changes) : <span className="text-muted-foreground">nada ainda.</span>}
@@ -110,8 +111,8 @@ function CommentEditor({ draft, locked, onSave, onClose }: EditorProps & { draft
       onSave={() => onSave({ comment })}
       onClose={onClose}
     >
-      <p className="text-sm font-semibold">
-        {draft.fields.ticketCode} · {draft.fields.ticketTitle}
+      <p className="font-serif text-lg leading-snug font-semibold tracking-tight">
+        <span className="font-mono text-sm font-medium text-muted-foreground">{draft.fields.ticketCode}</span> · {draft.fields.ticketTitle}
       </p>
       <TextField
         id={`d${draft.id}-comment`}
@@ -156,21 +157,22 @@ function EditorShell({
   };
 
   return (
-    <div data-testid="draft-card" className="overflow-hidden rounded-xl border border-primary/40 bg-surface shadow-xs">
-      <div className="space-y-4 p-4">
-        <p className="text-xs text-muted-foreground">{eyebrow}</p>
+    <div data-testid="draft-card" className="overflow-hidden rounded-xl border border-primary/40 bg-surface shadow-xs ring-4 ring-primary/5">
+      <div className="space-y-5 px-5 py-4">
+        <p className="eyebrow">{eyebrow}</p>
         {children}
       </div>
-      <div className="flex flex-wrap items-center gap-2 border-t bg-muted/50 px-4 py-3">
+      <div className="flex flex-wrap items-center gap-2 border-t bg-background/60 px-5 py-3">
         <Button size="sm" disabled={!canSave || busy || locked} onClick={save}>
+          {busy && <Loader2 className="size-3.5 animate-spin" />}
           Salvar alterações
         </Button>
         <Button size="sm" variant="ghost" disabled={busy} onClick={onClose}>
           Voltar
         </Button>
-        {locked && <span className="text-xs text-muted-foreground">Aguarde o Farol responder para salvar.</span>}
+        {locked && <span className="ml-1 text-xs text-muted-foreground">Aguarde o Farol responder para salvar.</span>}
         {error && (
-          <span role="alert" className="text-xs text-danger">
+          <span role="alert" className="basis-full text-xs text-danger-foreground">
             {error}
           </span>
         )}
@@ -200,10 +202,10 @@ function TextField({
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between gap-2">
-        <Label htmlFor={id} className="text-xs font-normal text-muted-foreground">
+        <Label htmlFor={id} className="text-[11px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
           {label}
         </Label>
-        <span className={cn("text-[11px] tabular-nums", invalid ? "text-danger" : "text-muted-foreground")}>
+        <span className={cn("font-mono text-[11px] tabular-nums", invalid ? "text-danger-foreground" : "text-muted-foreground")}>
           {invalid && value.trim().length < min ? `mínimo ${min}` : `${value.trim().length}/${max}`}
         </span>
       </div>
@@ -226,7 +228,7 @@ function ChoiceGroup<T extends string>({
 }) {
   return (
     <div className="space-y-1.5">
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="eyebrow">{label}</p>
       <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-1.5">
         {choices.map((choice) => {
           const selected = choice.value === value;
@@ -238,8 +240,8 @@ function ChoiceGroup<T extends string>({
               aria-checked={selected}
               onClick={() => onChange(choice.value)}
               className={cn(
-                "rounded-full border px-3 py-1 text-xs transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                selected ? "border-primary bg-primary text-primary-foreground" : "bg-surface hover:bg-muted",
+                "h-8 rounded-full border px-3.5 text-[13px] transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:outline-none",
+                selected ? "border-primary bg-primary font-medium text-primary-foreground" : "bg-surface text-foreground/80 hover:border-input hover:bg-muted",
               )}
             >
               {choice.label}

@@ -27,7 +27,7 @@ test("prévia ao compartilhar: Open Graph e cartão do X com a tela do produto",
   const meta = (selector: string) => page.locator(`head meta[${selector}]`).first();
 
   await expect(meta('property="og:title"')).toHaveAttribute("content", "Farol Desk");
-  await expect(meta('property="og:description"')).toHaveAttribute("content", "Service desk de TI da Nexo, numa conversa.");
+  await expect(meta('property="og:description"')).toHaveAttribute("content", "Service desk de TI da Nexo, numa conversa — com o porquê de cada decisão à vista.");
   await expect(meta('property="og:image"')).toHaveAttribute("content", new RegExp(`^${DEMO_URL}/opengraph-image\\.png`));
   await expect(meta('property="og:image:width"')).toHaveAttribute("content", "1200");
   await expect(meta('property="og:image:height"')).toHaveAttribute("content", "630");

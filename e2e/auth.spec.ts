@@ -4,7 +4,7 @@ import { ANA, expect, login, RAFAEL } from "./helpers";
 test("funcionário entra e cai no chat", async ({ page }) => {
   await login(page, ANA);
   await expect(page).toHaveURL(/\/atendimento$/);
-  await expect(page.getByText("Olá, Ana!")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Olá, Ana." })).toBeVisible();
   await expect(page.getByText("0/30 mensagens nesta sessão")).toBeVisible();
 });
 

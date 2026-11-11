@@ -9,6 +9,46 @@ const ELISA = "elisa.prado@nexo.com.br";
  */
 const shot = (page: Page, name: string) => page.screenshot({ path: `docs/capturas/${name}.png`, fullPage: false, animations: "disabled" });
 
+/** Prévia de link (1200 × 630): composição própria, no visual do app, com a marca e a frase do produto. */
+const OG_HTML = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=block">
+<style>
+  *{box-sizing:border-box;margin:0}
+  body{width:1200px;height:630px;background:#f5f5f7;color:#1d1d1f;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+    display:grid;grid-template-columns:1.05fr .95fr;gap:56px;padding:72px 80px;align-items:center}
+  .brand{display:flex;align-items:center;gap:14px;font-weight:600;font-size:24px;letter-spacing:-.01em;margin-bottom:40px}
+  .mark{width:48px;height:48px;border-radius:13px;background:#1d1d1f;display:grid;place-items:center}
+  h1{font-size:64px;line-height:1.02;font-weight:700;letter-spacing:-.035em}
+  p.sub{margin-top:24px;font-size:24px;line-height:1.4;color:#6e6e73;max-width:24ch;text-wrap:balance}
+  .card{background:#fff;border-radius:28px;padding:28px;box-shadow:0 1px 2px rgba(0,0,0,.04),0 24px 60px -20px rgba(0,0,0,.18);display:flex;flex-direction:column;gap:14px;font-size:19px}
+  .me{align-self:flex-end;background:#0e6a78;color:#fff;border-radius:22px 22px 6px 22px;padding:12px 18px;max-width:90%}
+  .steps{display:flex;align-items:center;gap:10px;color:#6e6e73;font-size:15px;white-space:nowrap}
+  .dot{width:8px;height:8px;border-radius:9px;background:#f2b84b}
+  .why{background:#fbf3df;color:#7a5512;border-radius:999px;padding:3px 12px;font-weight:600;white-space:nowrap}
+  .bot{background:#f2f2f4;border-radius:22px 22px 22px 6px;padding:12px 18px;max-width:92%}
+</style></head><body>
+<div>
+  <div class="brand"><span class="mark"><svg width="30" height="30" viewBox="0 0 24 24" fill="#f2b84b"><path d="M13.2 8.4 22 4.4v8z" opacity=".5"/><path d="M7.6 6.7 10.5 3.6l2.9 3.1z"/><rect x="8.5" y="7.3" width="4" height="2.7" rx=".5"/><path d="M8.8 10.8h3.4l1.1 8.6H7.7z"/><rect x="6.2" y="19.8" width="8.6" height="1.6" rx=".6"/></svg></span>Farol Desk</div>
+  <h1>Service desk de TI, com o porquê à vista.</h1>
+  <p class="sub">O agent resolve em uma conversa e mostra o que entendeu, o que fez e por quê.</p>
+</div>
+<div class="card">
+  <div class="me">Meu notebook não conecta na VPN. Erro 809.</div>
+  <div class="steps"><span class="dot"></span>buscou na central · montou o chamado <span class="why">por quê?</span></div>
+  <div class="bot">Prioridade alta. Um analista responde até as 13h.</div>
+</div>
+</body></html>`;
+
+test("00 · prévia de link (Open Graph)", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 1200, height: 630 } });
+  const page = await context.newPage();
+  await page.setContent(OG_HTML, { waitUntil: "networkidle" });
+  await page.evaluate(() => document.fonts.ready);
+  await expect(page.getByRole("heading", { name: "Service desk de TI, com o porquê à vista." })).toBeVisible();
+  for (const name of ["opengraph-image", "twitter-image"]) await page.screenshot({ path: `src/app/${name}.png` });
+  await context.close();
+});
+
 test("01 · login com SSO e demonstração", async ({ page }) => {
   await page.goto("/login");
   await expect(page.getByRole("heading", { name: "Entrar" })).toBeVisible();
