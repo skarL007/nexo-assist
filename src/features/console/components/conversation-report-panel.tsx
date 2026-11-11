@@ -25,11 +25,11 @@ export function ConversationReportPanel({ conversation, onClose }: { conversatio
   };
 
   return (
-    <section ref={panel} aria-label="Relatório da conversa" className="rounded-xl border bg-surface p-5 text-sm shadow-xs">
-      <header className="mb-3 flex items-start gap-2">
-        <div className="min-w-0 flex-1">
-          <h2 className="font-serif text-xl font-semibold tracking-tight">Relatório da conversa</h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">{countsLine(report)}</p>
+    <section ref={panel} aria-label="Relatório da conversa" className="reveal scroll-mt-6 rounded-2xl border bg-surface p-4 text-sm shadow-xs sm:scroll-mt-8 sm:p-5">
+      <header className="mb-4 flex flex-wrap items-start gap-2">
+        <div className="min-w-48 flex-1">
+          <h2 className="font-serif text-xl leading-tight font-semibold tracking-tight">Relatório da conversa</h2>
+          <p className="mt-1 text-xs leading-relaxed text-pretty text-muted-foreground">{countsLine(report)}</p>
         </div>
         <Button size="sm" variant="outline" onClick={() => void copy()}>
           {copied ? <Check /> : <Copy />} {copied ? "Copiado" : "Copiar"}
@@ -43,10 +43,10 @@ export function ConversationReportPanel({ conversation, onClose }: { conversatio
         {report.need && (
           <div>
             <p className="eyebrow mb-1">Precisa</p>
-            <p className="font-serif text-[17px] leading-snug tracking-tight">{report.need}</p>
+            <p className="font-serif text-[17px] leading-snug tracking-tight text-pretty">{report.need}</p>
           </div>
         )}
-        {report.handoff && <p className="text-xs text-warning-foreground">{handoffLine(report.handoff)}</p>}
+        {report.handoff && <p className="text-xs leading-relaxed text-warning-foreground">{handoffLine(report.handoff)}</p>}
         <Section title="O agent já fez" items={report.actions} />
         <Section title="Artigos da central de ajuda" items={report.articles} />
         <Section title="Falhas" items={report.failures} tone="text-danger-foreground" />
@@ -63,8 +63,8 @@ function Section({ title, items, tone }: { title: string; items: string[]; tone?
   if (!items.length) return null;
   return (
     <div>
-      <p className="eyebrow mb-1">{title}</p>
-      <ul className={`list-disc space-y-1 pl-5 ${tone ?? ""}`}>
+      <p className="eyebrow mb-1.5">{title}</p>
+      <ul className={`list-disc space-y-1 pl-5 leading-relaxed marker:text-muted-foreground/60 ${tone ?? ""}`}>
         {items.map((item) => (
           <li key={item}>{item}</li>
         ))}
