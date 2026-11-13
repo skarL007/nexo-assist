@@ -27,7 +27,10 @@
     "eval:sim": "tsx --env-file-if-exists=.env evals/sim/run.ts",
     "otel:local": "tsx scripts/otel-local.ts",
     "docs:capturas": "playwright test -c playwright.docs.config.ts",
-    "eval:ouro": "tsx --env-file-if-exists=.env evals/retrieval/gold-run.ts"
+    "eval:ouro": "tsx --env-file-if-exists=.env evals/retrieval/gold-run.ts",
+    "support:import": "tsx scripts/support-corpus.ts import",
+    "support:query": "tsx scripts/support-corpus.ts query",
+    "support:eval": "tsx scripts/support-corpus.ts eval"
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",

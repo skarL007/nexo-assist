@@ -17,3 +17,4 @@ Fluxo para qualquer mudança:
 | [04-arquitetura](04-arquitetura.md) | Camadas, dependências e onde cada coisa mora |
 | [05-demo-publica](05-demo-publica.md) | Isolamento de visitantes, exemplos fictícios, expiração e limites globais |
 | [06-layout-responsivo](06-layout-responsivo.md) | Do celular ao desktop: o que cada largura mostra, sem rolagem horizontal |
+| [07-corpus-de-suporte](07-corpus-de-suporte.md) | Importação oficial versionada, grafo de referências e avaliação offline |

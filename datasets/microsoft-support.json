@@ -1,0 +1,67 @@
+{
+  "revision": "53a6ab748bdc2c4e916e906d7d20696e0fc7eeb4",
+  "articles": [
+    {
+      "id": "teams-sign-in-errors",
+      "title": "Fix Teams sign-in errors",
+      "sourcePath": "Teams/teams-sign-in/resolve-sign-in-errors.md",
+      "sourceUrl": "https://learn.microsoft.com/en-us/troubleshoot/microsoftteams/teams-sign-in/resolve-sign-in-errors",
+      "products": [
+        "Microsoft Teams"
+      ],
+      "audience": "ITPro",
+      "language": "en-US",
+      "sha256": "315fdfcb49c400676f46d3323f47b6a52800cceb53fe2332b7319634d0862e9a"
+    },
+    {
+      "id": "teams-sign-in-loop",
+      "title": "Microsoft Teams sign-in loop",
+      "sourcePath": "Teams/teams-sign-in/sign-in-loop.md",
+      "sourceUrl": "https://learn.microsoft.com/en-us/troubleshoot/microsoftteams/teams-sign-in/sign-in-loop",
+      "products": [
+        "Microsoft Teams"
+      ],
+      "audience": "ITPro",
+      "language": "en-US",
+      "sha256": "060a66050e6809360ede965fc7475da1f1f9ad3136a873e7b38e63507b685e3c"
+    },
+    {
+      "id": "teams-clear-cache",
+      "title": "Clear the Teams client cache",
+      "sourcePath": "Teams/teams-administration/clear-teams-cache.md",
+      "sourceUrl": "https://learn.microsoft.com/en-us/troubleshoot/microsoftteams/teams-administration/clear-teams-cache",
+      "products": [
+        "Classic Microsoft Teams",
+        "New Microsoft Teams"
+      ],
+      "audience": "ITPro",
+      "language": "en-US",
+      "sha256": "bc9c13b182daa67c8d73f92901fdca8d93fc2e1277b1e1d83abdb8a94b668569"
+    },
+    {
+      "id": "outlook-modern-auth",
+      "title": "Outlook disconnected after enabling modern authentication",
+      "sourcePath": "Outlook/classic-outlook-for-windows/authentication/outlook-shows-disconnected-after-enabling-modern-authentication.md",
+      "sourceUrl": "https://learn.microsoft.com/en-us/troubleshoot/outlook/authentication/outlook-shows-disconnected-after-enabling-modern-authentication",
+      "products": [
+        "Outlook",
+        "Microsoft 365"
+      ],
+      "audience": "ITPro",
+      "language": "en-US",
+      "sha256": "9d3e566df16a9f563d8ee208e62e4eb43210b5a7a6a10e2c3b0351d6d3d02985"
+    },
+    {
+      "id": "windows-update",
+      "title": "Troubleshoot Windows Update issues",
+      "sourcePath": "support/windows-client/installing-updates-features-roles/troubleshoot-windows-update-issues.md",
+      "sourceUrl": "https://learn.microsoft.com/en-us/troubleshoot/windows-client/installing-updates-features-roles/troubleshoot-windows-update-issues",
+      "products": [
+        "Windows Client"
+      ],
+      "audience": "ITPro",
+      "language": "en-US",
+      "sha256": "d3d3db5d0d0aaf6ce225b81678f7cf95ca172e995c0068890db60d89be0e0e78"
+    }
+  ]
+}
