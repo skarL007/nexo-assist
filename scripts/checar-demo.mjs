@@ -10,7 +10,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const base = (process.argv[2] ?? "https://nexo-assist-puce.vercel.app").replace(/\/$/, "");
+const base = (process.argv[2] ?? "https://farol-desk.vercel.app").replace(/\/$/, "");
 const cookieFile = join(tmpdir(), "nexo-checar-demo.cookie");
 const results = [];
 
@@ -48,6 +48,16 @@ await step("página de login", async () => {
   return "200";
 });
 
+await step("landing do Farol Desk", async () => {
+  const response = await get(`${base}/`);
+  if (response.status !== 200) throw new Error(`respondeu ${response.status}`);
+  const html = await response.text();
+  if (!/<title>Farol Desk/.test(html) || !html.includes('id="imersao"')) {
+    throw new Error("landing ou marca do Farol Desk ausente");
+  }
+  return "200, marca e landing atuais";
+});
+
 await step("conversa da Ana pela API (banco)", async () => {
   let cookie = existsSync(cookieFile) ? readFileSync(cookieFile, "utf8") : await login();
   let response = await get(`${base}/api/chat`, cookie);
@@ -59,7 +69,7 @@ await step("conversa da Ana pela API (banco)", async () => {
 });
 
 await step("estudo de caso no portfólio", async () => {
-  const response = await get("https://skarl007.github.io/nexo-assist/");
+  const response = await get("https://skarl007.github.io/farol-desk/");
   if (response.status !== 200) throw new Error(`respondeu ${response.status}`);
   return "200";
 });

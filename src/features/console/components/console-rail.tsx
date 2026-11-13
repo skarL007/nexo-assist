@@ -30,7 +30,7 @@ const item = (selected: boolean, className: string) =>
 
 function NavLinks({ active, queueSize, className }: { active: Section; queueSize: number; className: string }) {
   return NAV.map(({ id, href, label, icon: Icon }) => (
-    <Link key={id} href={href} className={item(active === id, className)} title={label} aria-label={label} aria-current={active === id ? "page" : undefined}>
+    <Link key={id} href={href} className={item(active === id, className)} title={label} aria-label={id === "conversas" && queueSize > 0 ? `${label}, ${queueSize} aguardando atendimento` : label} aria-current={active === id ? "page" : undefined}>
       <Icon className="size-[18px]" strokeWidth={active === id ? 2.25 : 2} />
       {id === "conversas" && queueSize > 0 && (
         <span className="absolute -top-1 -right-1 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] leading-none font-semibold text-primary-foreground tabular-nums ring-2 ring-ink">

@@ -6,4 +6,4 @@ export const PRODUCT_NAME = "Farol Desk";
 /** Como a interface chama o assistente no meio de uma frase ("Aguarde o Farol responder"). */
 export const ASSISTANT_SHORT_NAME = "Farol";
 export const PRODUCT_DESCRIPTION = "Service desk de TI da Nexo, numa conversa — com o porquê de cada decisão à vista.";
-export const CASE_STUDY_URL = "https://skarl007.github.io/nexo-assist/";
+export const CASE_STUDY_URL = "https://skarl007.github.io/farol-desk/";

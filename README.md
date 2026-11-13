@@ -2,15 +2,15 @@
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/skarL007/nexo-assist/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/skarL007/nexo-assist/tree/main) [![Docker Hub](https://img.shields.io/badge/docker%20hub-skarl007%2Fnexo--assist-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/skarl007/nexo-assist)
 
-> **Farol Desk** é o nome novo do projeto que nasceu como *Nexo Assist* (até 11/11/2026). A Nexo continua sendo a empresa fictícia da demonstração. O repositório, a URL da demo e a imagem Docker mantêm o nome antigo, para os links já enviados continuarem funcionando.
+> **Farol Desk** é o produto. A Nexo é a empresa fictícia da demonstração. O repositório e a imagem Docker preservam identificadores antigos por compatibilidade; a URL anterior da demo continua disponível para os links já enviados.
 
 Agent de atendimento do service desk de TI da Nexo. O funcionário descreve o problema com as próprias palavras. O agent consulta os chamados dele, busca na central de ajuda, abre ou atualiza chamados (sempre com confirmação) e chama um analista quando precisa. O analista atende pelo console: vê a fila, assume a conversa com o agent pausado e depois devolve ou encerra.
 
 Cada resposta do agent mostra **o que ele entendeu, o que fez e por quê**: passos ao vivo, decisão com confiança, chamadas de tool com entrada e saída, regras que agiram, tokens e latência.
 
-**Demo pública:** https://nexo-assist-puce.vercel.app. Na tela de login, entre como **Ana · funcionária** ou **Rafael · analista** (um clique, dados fictícios, qualquer senha). Cada navegador recebe um **espaço próprio**, com uma cópia dos dados de exemplo: o que você fizer não aparece para outro avaliador. Para controlar o custo, a demo aceita até **100 mensagens por dia**, somando todos os visitantes. Depois disso, o chat avisa que o limite de hoje acabou.
+**Demo pública:** https://farol-desk.vercel.app. Na tela de login, entre como **Ana · funcionária** ou **Rafael · analista** (um clique, dados fictícios, qualquer senha). Cada navegador recebe um **espaço próprio**, com uma cópia dos dados de exemplo: o que você fizer não aparece para outro avaliador. Para controlar o custo, a demo aceita até **100 mensagens por dia**, somando todos os visitantes. Depois disso, o chat avisa que o limite de hoje acabou.
 
-**Vídeo (4:49):** [assistir no navegador](https://skarl007.github.io/nexo-assist/#video) · [estudo de caso](https://skarl007.github.io/nexo-assist/)
+**Vídeo (4:49):** [assistir no navegador](https://skarl007.github.io/farol-desk/#video) · [estudo de caso](https://skarl007.github.io/farol-desk/)
 
 **Stack:** TypeScript estrito · Next.js 16 (App Router) · Mastra (agent) · DeepSeek-V4-Flash via DeepInfra (GPT-6 Luna de 30/10 a 02/11, Gemini 3.5 Flash antes) · Drizzle + libSQL (SQLite local, Turso no deploy) · Redux Toolkit + RTK Query · Zod · shadcn/ui + Tailwind · Vitest · Playwright.
 
@@ -40,7 +40,7 @@ Cada resposta do agent mostra **o que ele entendeu, o que fez e por quê**: pass
 
 ## Como rodar
 
-Pré-requisitos: Node 22.9+ e uma chave do Gemini ([Google AI Studio](https://aistudio.google.com/apikey)), usada pelo modelo padrão local e pelos embeddings da busca. Para rodar como a produção, defina também `DEEPINFRA_API_KEY`, `LLM_MODEL=deepinfra/deepseek-ai/DeepSeek-V4-Flash`, `LLM_FALLBACK_MODEL=off` e `RELEVANCE_JUDGE_MODEL=deepinfra/deepseek-ai/DeepSeek-V4-Flash`; com a chave da DeepInfra, os embeddings da busca vêm dela primeiro (`Qwen/Qwen3-Embedding-8B`). Os tetos de gasto `LLM_DAILY_BUDGET_USD` e `LLM_TOTAL_BUDGET_USD` são opcionais ([.env.example](.env.example)).
+Pré-requisitos: Node 22.12+ (Node 24 recomendado) e uma chave do Gemini ([Google AI Studio](https://aistudio.google.com/apikey)), usada pelo modelo padrão local e pelos embeddings da busca. Para rodar como a produção, defina também `DEEPINFRA_API_KEY`, `LLM_MODEL=deepinfra/deepseek-ai/DeepSeek-V4-Flash`, `LLM_FALLBACK_MODEL=off` e `RELEVANCE_JUDGE_MODEL=deepinfra/deepseek-ai/DeepSeek-V4-Flash`; com a chave da DeepInfra, os embeddings da busca vêm dela primeiro (`Qwen/Qwen3-Embedding-8B`). Os tetos de gasto `LLM_DAILY_BUDGET_USD` e `LLM_TOTAL_BUDGET_USD` são opcionais ([.env.example](.env.example)).
 
 ```bash
 npm install
@@ -75,9 +75,9 @@ Outros comandos:
 
 ```bash
 npm run verify                    # tipos + lint + unitários + E2E + E2E da demo — sem LLM
-npm test                          # 573 testes unitários em 77 arquivos — sem LLM
+npm test                          # 574 testes unitários em 77 arquivos — sem LLM
 npx playwright install chromium   # só na primeira vez, antes do E2E
-npm run test:e2e                  # 48 testes E2E contra o build de produção — sem LLM
+npm run test:e2e                  # fluxos, landing, celular e acessibilidade no build de produção — sem LLM
 npm run test:e2e:demo             # isolamento entre visitantes na demo pública — sem LLM
 npm run eval                      # 36 cenários de decisão do agent com o modelo real (8 de ataque)
 npm run eval:sim                  # funcionário simulado por um modelo, pass^k (τ-bench)
@@ -258,12 +258,14 @@ Teste unitário não prova que um LLM decide bem, então a qualidade tem quatro 
 
 | Camada | O que cobre | Comando |
 |---|---|---|
-| **Testes unitários** (Vitest, 573 em 77 arquivos) | verificações de diagnóstico e a sincronização da central sem apagar dados, provedores de embeddings em ordem com disjuntor, avaliador de relevância (aplica, talvez ou nenhum), prazos com fim de semana, matriz de prioridade, pergunta sobre alternativa antes da prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória e só explícita, prazo × necessidade, assunto do chamado, categoria E-mail, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, espaço isolado da demo, modelo reserva, o estimador pass^k e a simulação do roteamento em cascata | `npm test` |
-| **E2E** (Playwright, 48 + 1 da demo) | login (inclusive SSO contra um provedor OIDC falso), link para o estudo de caso e prévia ao compartilhar (Open Graph), permissões, transferência de ponta a ponta, relatório, sugestão de resposta, indicadores, prazos em risco, incidente em massa, frustração, tempo real com latência medida, estados de erro e a página 404, contra o build de produção. A suíte da demo sobe o app com `PUBLIC_DEMO=1` e prova que o visitante B não lê, não assume e não pede sugestão da conversa do visitante A | `npm run test:e2e` · `npm run test:e2e:demo` |
+| **Testes unitários** (Vitest, 574 em 77 arquivos) | verificações de diagnóstico e a sincronização da central sem apagar dados, provedores de embeddings em ordem com disjuntor, avaliador de relevância (aplica, talvez ou nenhum), prazos com fim de semana, matriz de prioridade, pergunta sobre alternativa antes da prioridade, máquina de estados, privacidade, reabertura, duplicidade, retry do legado sem duplicar, confirmação obrigatória e só explícita, prazo × necessidade, assunto do chamado, categoria E-mail, clique duplo, alteração de rascunho, transferência por baixa confiança e em caso crítico, CSRF, teto atômico contra SQLite real, incidente em massa, frustração, resolução honesta, lacunas da central com mascaramento, OIDC contra tokens forjados, espaço isolado da demo, modelo reserva, o estimador pass^k e a simulação do roteamento em cascata | `npm test` |
+| **E2E** (Playwright, 69 + 1 da demo) | login (inclusive SSO contra um provedor OIDC falso), link para o estudo de caso e prévia ao compartilhar (Open Graph), permissões, transferência de ponta a ponta, relatório, sugestão de resposta, indicadores, prazos em risco, incidente em massa, frustração, tempo real com latência medida, estados de erro e a página 404, contra o build de produção. A suíte da demo sobe o app com `PUBLIC_DEMO=1` e prova que o visitante B não lê, não assume e não pede sugestão da conversa do visitante A | `npm run test:e2e` · `npm run test:e2e:demo` |
 | **Evals** (36 cenários, modelo real) | intenção, tools esperadas e proibidas, verificações de diagnóstico e o "já tentado" no chamado, transferência (e quando *não* transferir), caso crítico, reabertura, escopo de TI, vazamento de dados, incidente em massa, frustração, os achados do funcionário simulado e 8 ataques mapeados ao OWASP ([red-team](docs/validacao/RED-TEAM.md)) | `npm run eval` |
 | **Funcionário simulado** (pass^k, 10 personas) | um modelo faz o papel do funcionário, com fatos que só conta se perguntarem, e clica em Confirmar, Descartar ou numa resposta rápida; o estado no banco é conferido em k execuções, cada uma a partir do seed ([resultado e falhas](docs/validacao/SIMULACAO.md)) | `npm run eval:sim` |
 
-**Resultados com o modelo real:**
+**Estado da entrega (13/11):** [relatório atual](docs/validacao/ENTREGA-2026-11-13.md), com acessibilidade, desempenho e limitações. O agente teve 33 acertos e 2 falhas em 35 cenários executados; 1 ficou bloqueado pelo teto. A base é própria, com 14 artigos fictícios, sem dataset externo conectado.
+
+**Resultados históricos com o modelo real:**
 
 - **Evals de 03/11:** 35/36 com o DeepSeek-V4-Flash (8/8 ataques, US$ 0,07). No incidente em massa do sistema de ponto, a ferramenta pediu confirmação sobre uma alternativa de trabalho e não entregou o rascunho esperado. [Resultado e limites da rodada](docs/validacao/README.md#revisão-de-3-de-novembro).
 - **Rodadas anteriores:** 36/36 com o DeepSeek-V4-Flash em 02/11 (US$ 0,07 a rodada), o modelo de produção desde esse dia. Antes, 36/36 com o GPT-6 Luna em 30/10 (US$ 0,04 a rodada). Na primeira rodada com ele, o cenário da resposta rápida de urgência falhou 3 de 3: o Luna perguntava se a funcionária já tinha olhado o portal de softwares, como o artigo manda, e o rascunho que o cenário precisa não aparecia. O cenário passou a dizer que ela já procurou no portal. Com o Gemini 3.5 Flash, a última rodada completa deu 35/36 em 29/10, antes da tool de verificações.
@@ -348,7 +350,7 @@ Houve cinco rodadas de revisão de segurança: antes do deploy, depois do deploy
 - **CSP sem nonce** (`'unsafe-inline'` em scripts): mantém as páginas estáticas e o deploy simples.
 - **Login sem senha real**, como pede o desafio. **SSO OpenID Connect opcional** (PKCE, state, nonce, JWKS), testado de ponta a ponta contra um provedor falso. Não foi testado contra Entra ID ou Okta de verdade, por falta de conta ([detalhes](docs/validacao/OBSERVABILIDADE-E-SSO.md)).
 - **Sair não revoga o JWT no servidor:** um token copiado antes continua válido até vencer (8 horas, ou 7 dias com "Manter conectado"). Revogar exigiria uma lista consultada a cada pedido.
-- **Interface pensada para desktop** (como o protótipo): o chat funciona no celular, mas o console do analista precisa de tela larga.
+- **Interface responsiva:** atendimento, login, perfil, console e indicadores se adaptam ao celular. Abaixo de 1024 px, o console mostra um painel por vez; em telas largas, mostra fila e conversa lado a lado. [Critérios e testes](docs/specs/06-layout-responsivo.md).
 
 ## O que eu faria com mais tempo
 
@@ -364,7 +366,7 @@ Houve cinco rodadas de revisão de segurança: antes do deploy, depois do deploy
 - Artigo da central gerado a partir de chamado resolvido, como rascunho para o analista revisar (fecha o ciclo com as lacunas).
 - Push de verdade (Redis pub/sub) no lugar da conferência a cada 1 s, se o número de analistas crescer.
 - Rate limit por IP na borda.
-- Layout de celular completo e revisão de acessibilidade (contraste, leitor de tela).
+- Testes de usabilidade com pessoas que usam leitores de tela, complementando as verificações automatizadas de acessibilidade.
 
 ---
 
@@ -386,9 +388,9 @@ No primeiro ciclo, as specs (`docs/specs/`) foram consolidadas a partir do PRD j
 
 ## Vídeo de demonstração
 
-[![Vídeo de demonstração do Farol Desk (4:49)](docs/demo/poster.png)](https://skarl007.github.io/nexo-assist/#video)
+[![Vídeo de demonstração do Farol Desk (4:49)](docs/demo/poster.png)](https://skarl007.github.io/farol-desk/#video)
 
-[Assistir no navegador](https://skarl007.github.io/nexo-assist/#video) (o GitHub não toca o mp4 do repositório na página) · [baixar o mp4](docs/demo/nexo-assist-demo.mp4)
+[Assistir no navegador](https://skarl007.github.io/farol-desk/#video) (o GitHub não toca o mp4 do repositório na página) · [baixar o mp4](docs/demo/nexo-assist-demo.mp4)
 
 <details>
 <summary>Capítulos e como o vídeo foi feito</summary>

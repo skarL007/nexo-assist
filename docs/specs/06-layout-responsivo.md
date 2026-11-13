@@ -42,3 +42,7 @@ Abaixo de 1024 px:
 5. Em 1440 × 900, nada muda: lista e conversa aparecem lado a lado e não existe botão de voltar visível.
 
 Testes: `e2e/console-mobile.spec.ts`.
+
+## Acessibilidade da entrega
+
+Landing, login, atendimento, console e indicadores não apresentam violações automaticamente detectáveis de WCAG 2.1 A/AA pelo axe, em 390 e 1440 px. Controles têm nome acessível e texto pequeno mantém contraste de pelo menos 4,5:1. A navegação principal e o login funcionam pelo teclado com foco visível. Essa verificação complementa a inspeção visual e não substitui testes com pessoas que usam leitores de tela.

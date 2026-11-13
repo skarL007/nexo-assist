@@ -1,8 +1,8 @@
 import { test, type Locator } from "@playwright/test";
 import { ANA, expect, login } from "./helpers";
 
-const CASE_STUDY = "https://skarl007.github.io/nexo-assist/";
-const DEMO_URL = "https://nexo-assist-puce.vercel.app";
+const CASE_STUDY = "https://skarl007.github.io/farol-desk/";
+const DEMO_URL = "https://farol-desk.vercel.app";
 
 async function expectCaseStudyLink(link: Locator) {
   await expect(link).toBeVisible();

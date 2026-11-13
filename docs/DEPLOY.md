@@ -1,5 +1,13 @@
 # Deploy e histórico de segurança
 
+## Farol Desk (13/11/2026)
+
+Endereço principal: **https://farol-desk.vercel.app**. O alias `nexo-assist-puce.vercel.app` permanece no mesmo projeto para manter os links antigos funcionando. O projeto na Vercel, o repositório e a imagem Docker mantêm seus identificadores técnicos; as telas e as prévias de compartilhamento usam Farol Desk. A validação atual e as limitações do agente estão em [ENTREGA-2026-11-13](validacao/ENTREGA-2026-11-13.md).
+
+O verificador `node scripts/checar-demo.mjs` agora exige a landing do Farol Desk em `/`, além do login, leitura autenticada do banco e estudo de caso. Uma versão antiga que apenas redireciona ao login é reprovada.
+
+## Configuração e histórico
+
 O deploy roda na **Vercel** com o banco no **Turso** (libSQL, compatível com o SQLite local). App: https://nexo-assist-puce.vercel.app, **aberto ao público desde 29/10/2026** (`PUBLIC_DEMO=1`), com teto de **100 mensagens em 24 horas** somando todos os visitantes (`DAILY_AGENT_TURN_LIMIT=100`), além dos limites por pessoa e do teto total (`TOTAL_AGENT_TURN_LIMIT`). Atingido o teto, o chat avisa que o limite de hoje acabou e nada chama o modelo. Para voltar a exigir o link de acesso, apague `PUBLIC_DEMO` na Vercel e publique de novo.
 
 ## Como fiz o deploy

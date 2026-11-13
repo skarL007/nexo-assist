@@ -2,6 +2,10 @@
 
 Cada melhoria grande tem uma pergunta, um método que outra pessoa pode repetir, os números e os limites. Os testes de unidade e E2E rodam sem LLM. Os evals usam o modelo identificado em cada rodada.
 
+## Estado atual: 13 de novembro
+
+[Validação da entrega do Farol Desk](ENTREGA-2026-11-13.md): 574 unitários, 69 E2E, isolamento da demo, acessibilidade e desempenho. O agente teve 33 acertos e 2 falhas em 35 cenários executados; o último foi bloqueado pelo teto de gasto. As correções do agente ainda precisam de nova validação paga. A base contém 14 artigos próprios; nenhum dataset externo está conectado.
+
 ## Revisão de 3 de novembro
 
 - **Aplicação.** O `npm run verify` passou em uma instalação limpa. Foram 563 testes unitários em 77 arquivos, 48 E2E e um E2E de isolamento entre visitantes. A suíte executou o build de produção e aplicou as migrações em bancos SQLite de teste.

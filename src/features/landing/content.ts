@@ -2,8 +2,10 @@
  * Textos e links da landing. Regra: nenhum fato ou número inventado. Tudo aqui sai do README,
  * de docs/validacao/ ou das telas do app; cada número leva a fonte junto.
  */
+import { CASE_STUDY_URL } from "@/lib/brand";
+
 export const DEMO_HREF = "/login";
-export const HOW_IT_WAS_MADE_URL = "https://skarl007.github.io/farol-desk/";
+export const HOW_IT_WAS_MADE_URL = CASE_STUDY_URL;
 export const CODE_URL = "https://github.com/skarL007/nexo-assist";
 
 /** Cor do céu no alto da cena do topo (com o véu): pinta a barra do navegador no celular. */
@@ -70,22 +72,22 @@ export const ANALYST_FEATURES = [
 
 export const NUMBERS = [
   {
-    value: "573",
+    value: "574",
     caption: "testes unitários em 77 arquivos, sem chamar o modelo",
-    source: "Revisão de 11/11/2026",
-    href: `${DOCS}/REVISAO-2026-11-11.md`,
+    source: "Validação de 13/11/2026",
+    href: `${DOCS}/ENTREGA-2026-11-13.md`,
   },
   {
-    value: "48/48",
+    value: "69/69",
     caption: "testes E2E contra o build de produção",
-    source: "Revisão de 11/11/2026",
-    href: `${DOCS}/REVISAO-2026-11-11.md`,
+    source: "Validação de 13/11/2026",
+    href: `${DOCS}/ENTREGA-2026-11-13.md`,
   },
   {
-    value: "35/36",
-    caption: "cenários de decisão com o modelo real, 8 de 8 ataques",
-    source: "Evals de 03/11/2026",
-    href: `${DOCS}/README.md#revisão-de-3-de-novembro`,
+    value: "33/35",
+    caption: "cenários executados com o modelo real; 1 adicional bloqueado pelo teto",
+    source: "Evals de 13/11/2026 · 2 falhas registradas",
+    href: `${DOCS}/ENTREGA-2026-11-13.md`,
   },
   {
     value: "21/21",

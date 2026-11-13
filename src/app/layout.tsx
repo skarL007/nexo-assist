@@ -13,7 +13,7 @@ const description = PRODUCT_DESCRIPTION;
 
 /** A imagem da prévia vem de opengraph-image.png e twitter-image.png (convenção de arquivos do App Router). */
 export const metadata: Metadata = {
-  metadataBase: new URL("https://nexo-assist-puce.vercel.app"),
+  metadataBase: new URL("https://farol-desk.vercel.app"),
   title,
   description,
   openGraph: { type: "website", locale: "pt_BR", siteName: title, title, description },

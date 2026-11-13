@@ -54,7 +54,13 @@ with_agent ──handoff──▶ waiting_analyst ──assume──▶ with_ana
 - Console: se abrir uma conversa falhar, mostra o erro com "Tentar de novo". Os chamados do painel vêm do sistema legado; se ele cair, a conversa abre mesmo assim e o painel avisa que está tentando de novo.
 - Trocar de conversa no console limpa o texto digitado (não vai para outra pessoa).
 
-## Sessão
+## Identidade e estudo de caso
+
+O produto se chama **Farol Desk** em todas as telas. A Nexo é apenas a empresa fictícia dos dados de demonstração. Os links "Sobre este protótipo" e "Como foi feito" levam ao estudo de caso `https://skarl007.github.io/farol-desk/`, em nova aba com `noopener noreferrer`. Aceite: login, chat e landing usam o mesmo destino; o verificador público recusa uma página com a marca antiga.
+
+A URL pública principal é `https://farol-desk.vercel.app`; as prévias de compartilhamento usam esse endereço. O endereço antigo continua disponível para não quebrar links já enviados.
+
+## Sessão do funcionário
 
 - Uma conversa aberta por funcionário. Ao voltar, ele continua nela (história 6). Quem garante é o banco: índice único parcial `conversations_one_open_idx` (`employee_id` onde `status != 'closed'`, migração 0008, que antes encerra duplicatas antigas e mantém a mais recente). Se dois pedidos simultâneos tentam abrir, o segundo recebe a conversa do primeiro. Aceite: `repositories.test.ts` (20 pedidos simultâneos → uma conversa, o mesmo id para todos). Auditoria de 02/11, P2.
 - Limite: 30 mensagens do funcionário por conversa. "Nova conversa" encerra a atual.

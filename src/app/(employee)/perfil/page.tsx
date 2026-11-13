@@ -32,9 +32,9 @@ export default async function ProfilePage() {
                 <dt className="text-[13px] text-muted-foreground">{label}</dt>
                 <dd className="min-w-0 font-medium break-words">{value}</dd>
                 {label === "E-mail corporativo" && (
-                  <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <dd className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Lock className="size-3.5" /> Gerenciado pela TI
-                  </span>
+                  </dd>
                 )}
               </div>
             ))}
