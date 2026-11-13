@@ -22,6 +22,7 @@ export function LandingNav() {
   useEffect(() => {
     const hero = document.getElementById("topo");
     const mist = hero?.querySelector<HTMLElement>("[data-mist]");
+    const immersion = document.getElementById("imersao");
     let frame = 0;
     const update = () => {
       frame = 0;
@@ -29,7 +30,10 @@ export function LandingNav() {
       // (antes disso o texto branco ainda tem contraste; depois, não teria).
       const bar = header.current?.offsetHeight ?? 48;
       const limit = hero ? hero.offsetHeight - (mist?.offsetHeight ?? hero.offsetHeight * 0.3) * 0.62 - bar : 0;
-      setSolid(window.scrollY > Math.max(0, limit));
+      const sceneRange = immersion ? immersion.offsetHeight - window.innerHeight : 0;
+      const sceneProgress = sceneRange > 0 && immersion ? -immersion.getBoundingClientRect().top / sceneRange : -1;
+      const overScene = sceneProgress > 0.07 && sceneProgress < 0.82;
+      setSolid(!overScene && window.scrollY > Math.max(0, limit));
     };
     const schedule = () => {
       if (!frame) frame = requestAnimationFrame(update);

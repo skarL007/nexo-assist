@@ -46,3 +46,8 @@ Testes: `e2e/console-mobile.spec.ts`.
 ## Acessibilidade da entrega
 
 Landing, login, atendimento, console e indicadores não apresentam violações automaticamente detectáveis de WCAG 2.1 A/AA pelo axe, em 390 e 1440 px. Controles têm nome acessível e texto pequeno mantém contraste de pelo menos 4,5:1. A navegação principal e o login funcionam pelo teclado com foco visível. Essa verificação complementa a inspeção visual e não substitui testes com pessoas que usam leitores de tela.
+## Cena imersiva do farol (13/11)
+
+O polimento visual fica restrito à seção `#imersao`: a tomada 3D existente ganha resposta suave ao ponteiro, indicação de progresso e navegação por três capítulos. Os controles funcionam por teclado, não bloqueiam a rolagem nativa e permitem pular para a explicação do produto. Toque e movimento reduzido não recebem inclinação; sem canvas ou com falha dos quadros, o pôster e as três frases permanecem legíveis. Aceite: ponteiro move apenas a cena; selecionar capítulo avança o quadro e sua frase; 375px não tem overflow; reduced motion não baixa a sequência.
+
+A navegação fica transparente somente sobre o trecho escuro da cena, com um véu que mantém contraste. Ao sair para a página clara, recupera sua aparência original.

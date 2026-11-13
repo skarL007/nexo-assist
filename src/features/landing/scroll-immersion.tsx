@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
+import "./scroll-immersion.css";
 
 /**
  * Imersão comandada pela rolagem: uma tomada contínua do farol (Blender, Cycles), desenhada quadro a quadro
@@ -41,6 +42,7 @@ const PHRASES = [
   },
 ] as const;
 const FADE = 0.05;
+const CHAPTERS = ["Conversar", "Consultar", "Entender"] as const;
 
 function phraseStyle(from: number, to: number) {
   const p = "var(--imm-p, 0)";
@@ -75,10 +77,15 @@ export function ScrollImmersion() {
     const section = sectionRef.current;
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d", { alpha: true });
-    if (!section || !canvas || !ctx) return;
+    if (!section || !canvas) return;
+    if (!ctx) {
+      section.dataset.sceneState = "fallback";
+      return;
+    }
 
     const reduced = window.matchMedia(REDUCED);
     const tall = window.matchMedia(PORTRAIT);
+    const pointer = window.matchMedia("(hover: hover) and (pointer: fine)");
     let set = tall.matches ? TALL : WIDE;
     let images: (HTMLImageElement | null)[] = [];
     let generation = 0;
@@ -89,6 +96,12 @@ export function ScrollImmersion() {
     let target = 0;
     let current = -1;
     let drawn = "";
+    let pointerX = 0;
+    let pointerY = 0;
+    let sceneX = 0;
+    let sceneY = 0;
+    let chapter = -1;
+    let disposed = false;
 
     const progress = () => {
       const rect = section.getBoundingClientRect();
@@ -146,6 +159,7 @@ export function ScrollImmersion() {
 
     const tick = (now: number) => {
       frame = 0;
+      if (reduced.matches || disposed || document.hidden) return;
       const dt = last ? Math.min(64, now - last) : 16;
       last = now;
       if (current < 0) current = target;
@@ -153,13 +167,31 @@ export function ScrollImmersion() {
       current += (target - current) * (1 - Math.exp(-dt / 110));
       if (Math.abs(target - current) < 0.0004) current = target;
       section.style.setProperty("--imm-p", current.toFixed(4));
+      section.querySelectorAll<HTMLElement>("[data-scene-controls]").forEach(control => {
+        control.inert = current > 0.9;
+        control.style.visibility = current > 0.9 ? "hidden" : "visible";
+      });
+      const nextChapter = current < 0.33 ? 0 : current < 0.61 ? 1 : 2;
+      if (chapter !== nextChapter) {
+        chapter = nextChapter;
+        section.querySelectorAll("[data-chapter]").forEach((button, index) => {
+          if (index === chapter) button.setAttribute("aria-current", "step");
+          else button.removeAttribute("aria-current");
+        });
+      }
+      sceneX += (pointerX - sceneX) * (1 - Math.exp(-dt / 180));
+      sceneY += (pointerY - sceneY) * (1 - Math.exp(-dt / 180));
+      if (Math.abs(pointerX - sceneX) < 0.001) sceneX = pointerX;
+      if (Math.abs(pointerY - sceneY) < 0.001) sceneY = pointerY;
+      section.style.setProperty("--scene-x", sceneX.toFixed(3));
+      section.style.setProperty("--scene-y", sceneY.toFixed(3));
       draw(current * (set.count - 1));
-      if (current !== target) frame = requestAnimationFrame(tick);
+      if (current !== target || sceneX !== pointerX || sceneY !== pointerY) frame = requestAnimationFrame(tick);
       else last = 0;
     };
 
     const schedule = () => {
-      if (reduced.matches) return;
+      if (reduced.matches || disposed || document.hidden) return;
       target = progress();
       if (!frame) frame = requestAnimationFrame(tick);
     };
@@ -171,6 +203,7 @@ export function ScrollImmersion() {
       const order = loadOrder(set.count);
       images = new Array(set.count).fill(null);
       let next = 0;
+      let finished = 0;
       const worker = async () => {
         while (next < order.length && mine === generation) {
           const index = order[next++] as number;
@@ -180,10 +213,14 @@ export function ScrollImmersion() {
           try {
             await img.decode();
           } catch {
+            finished++;
+            if (mine === generation && finished === order.length && !images.some(Boolean)) section.dataset.sceneState = "fallback";
             continue;
           }
           if (mine !== generation) return;
           images[index] = img;
+          finished++;
+          section.dataset.sceneState = "ready";
           drawn = "";
           schedule();
         }
@@ -212,11 +249,20 @@ export function ScrollImmersion() {
       loading = false;
       images = [];
       drawn = "";
+      section.dataset.sceneState = "loading";
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       load();
     };
     const onMotion = () => {
       if (reduced.matches) {
+        generation++;
+        loading = false;
+        images = [];
+        cancelAnimationFrame(frame);
+        frame = 0;
+        pointerX = pointerY = sceneX = sceneY = 0;
+        section.style.removeProperty("--scene-x");
+        section.style.removeProperty("--scene-y");
         section.style.removeProperty("--imm-p");
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawn = "";
@@ -229,6 +275,13 @@ export function ScrollImmersion() {
       resize();
       schedule();
     };
+    const onPointer = (event: PointerEvent) => {
+      if (!pointer.matches || reduced.matches || event.pointerType === "touch") return;
+      pointerX = Math.max(-1, Math.min(1, event.clientX / window.innerWidth * 2 - 1));
+      pointerY = Math.max(-1, Math.min(1, event.clientY / window.innerHeight * 2 - 1));
+      schedule();
+    };
+    const resetPointer = () => { pointerX = 0; pointerY = 0; schedule(); };
 
     resize();
     if (!reduced.matches) {
@@ -241,7 +294,11 @@ export function ScrollImmersion() {
     window.addEventListener("resize", onResize);
     tall.addEventListener("change", onShape);
     reduced.addEventListener("change", onMotion);
+    section.addEventListener("pointermove", onPointer, { passive: true });
+    section.addEventListener("pointerleave", resetPointer);
+    document.addEventListener("visibilitychange", schedule);
     return () => {
+      disposed = true;
       generation++;
       cancelAnimationFrame(frame);
       observer.disconnect();
@@ -250,6 +307,9 @@ export function ScrollImmersion() {
       window.removeEventListener("resize", onResize);
       tall.removeEventListener("change", onShape);
       reduced.removeEventListener("change", onMotion);
+      section.removeEventListener("pointermove", onPointer);
+      section.removeEventListener("pointerleave", resetPointer);
+      document.removeEventListener("visibilitychange", schedule);
     };
   }, []);
 
@@ -261,17 +321,19 @@ export function ScrollImmersion() {
       id="imersao"
       aria-label="O Farol Desk em três frases"
       data-ready="false"
-      className="relative bg-[#3b394c] text-white motion-safe:h-[460svh]"
+      data-scene-state="loading"
+      className={cn("immersion-scene", "relative bg-[#3b394c] text-white motion-safe:h-[400svh]")}
     >
       {/* Sem JavaScript: a primeira imagem e as três frases, sem rolagem presa. */}
       <noscript>
         <style>
           {
-            "#imersao{height:auto!important}#imersao [data-frase]{opacity:1!important;translate:none!important}#imersao [data-frases]{display:flex!important;flex-direction:column;gap:1.25rem}#imersao canvas{display:none}"
+            "#imersao{height:auto!important}#imersao [data-frase]{opacity:1!important;translate:none!important}#imersao [data-frases]{display:flex!important;flex-direction:column;gap:1.25rem}#imersao canvas,#imersao [data-scene-controls]{display:none}"
           }
         </style>
       </noscript>
-      <div className="sticky top-0 h-svh min-h-[34rem] overflow-hidden motion-reduce:relative">
+      <div className={cn("immersion-viewport", "sticky top-0 h-svh min-h-[34rem] overflow-hidden motion-reduce:relative")}>
+        <div data-scene-layer="" className={"immersion-layer"}>
         <picture>
           <source media={`${REDUCED} and ${PORTRAIT}`} srcSet={frameUrl(TALL, TALL.still)} type="image/webp" />
           <source media={REDUCED} srcSet={frameUrl(WIDE, WIDE.still)} type="image/webp" />
@@ -289,6 +351,9 @@ export function ScrollImmersion() {
           />
         </picture>
         <canvas ref={canvasRef} aria-hidden="true" className="absolute inset-0 size-full motion-reduce:hidden" />
+        </div>
+        <div aria-hidden="true" className="immersion-atmosphere" />
+        <div aria-hidden="true" className="immersion-headerShade" />
 
         {/* Véus: do lado do texto (horizontal) ou embaixo (vertical), da cor das sombras do céu. */}
         <div
@@ -321,7 +386,7 @@ export function ScrollImmersion() {
         />
 
         {/* As frases ficam embaixo, sobre o mar escuro: o feixe corta a altura do meio da tela e passaria atrás delas. */}
-        <div className="absolute inset-0 mx-auto flex w-full max-w-[1120px] items-end px-5 pb-[13svh] sm:px-8 [@media(max-aspect-ratio:4/5)]:pb-[16svh] motion-reduce:pb-[27svh] motion-reduce:[@media(max-aspect-ratio:4/5)]:pb-[27svh]">
+        <div className={cn("immersion-copy", "pointer-events-none absolute inset-0 mx-auto flex w-full max-w-[1120px] items-end px-5 pb-[17svh] sm:px-8 [@media(max-aspect-ratio:4/5)]:pb-[20svh] motion-reduce:pb-[27svh] motion-reduce:[@media(max-aspect-ratio:4/5)]:pb-[27svh]")}>
           <div
             data-frases=""
             className="grid max-w-[min(30rem,92%)] [grid-template-areas:'frase'] motion-reduce:flex motion-reduce:flex-col motion-reduce:gap-5 sm:max-w-[34rem] lg:max-w-[38rem]"
@@ -338,6 +403,27 @@ export function ScrollImmersion() {
             ))}
           </div>
         </div>
+        <div data-scene-controls="" className={"immersion-topline"}>
+          <span className={"immersion-eyebrow"}><span aria-hidden="true" /> Siga a luz</span>
+          <a href="#por-que" className={"immersion-skip"}>Pular cena <span aria-hidden="true">↗</span></a>
+        </div>
+        <nav data-scene-controls="" aria-label="Capítulos da cena" className={"immersion-chapters"}>
+          <div aria-hidden="true" className={"immersion-track"}><span /></div>
+          <div className={"immersion-chapterRow"}>
+            {CHAPTERS.map((label, index) => (
+              <button key={label} type="button" data-chapter="" aria-current={index === 0 ? "step" : undefined}
+                onClick={() => {
+                  const section = sectionRef.current;
+                  if (!section) return;
+                  const phrase = PHRASES[index];
+                  window.scrollTo({ top: section.getBoundingClientRect().top + window.scrollY + (section.offsetHeight - window.innerHeight) * ((phrase.from + phrase.to) / 2), behavior: window.matchMedia(REDUCED).matches ? "instant" : "smooth" });
+                }}>
+                <span className={"immersion-number"}>0{index + 1}</span> {label}
+              </button>
+            ))}
+            <span className={"immersion-hint"}>Role para explorar <span aria-hidden="true">↓</span></span>
+          </div>
+        </nav>
       </div>
     </section>
   );

@@ -1,0 +1,71 @@
+.immersion-scene {
+  --scene-x: 0;
+  --scene-y: 0;
+}
+.immersion-viewport { perspective: 1400px; }
+.immersion-layer {
+  position: absolute;
+  inset: -2%;
+  transform: translate3d(calc(var(--scene-x) * -10px), calc(var(--scene-y) * -6px), 0)
+    rotateX(calc(var(--scene-y) * .35deg)) rotateY(calc(var(--scene-x) * -.65deg));
+  transform-origin: 56% 42%;
+  will-change: transform;
+}
+.immersion-atmosphere {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at calc(55% + var(--scene-x) * 15%) calc(30% + var(--scene-y) * 8%), color-mix(in srgb, var(--beam) 5%, transparent), transparent 65%);
+  opacity: clamp(0, calc((.86 - var(--imm-p, 0)) / .08), 1);
+}
+.immersion-headerShade {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 180px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--foreground) 75%, transparent), transparent);
+  opacity: clamp(0, calc((.86 - var(--imm-p, 0)) / .06), 1);
+}
+.immersion-topline, .immersion-chapters {
+  position: absolute;
+  left: 0;
+  right: 0;
+  width: calc(100% - 64px);
+  max-width: 1056px;
+  margin-inline: auto;
+  opacity: clamp(0, calc((.92 - var(--imm-p, 0)) / .06), 1);
+}
+.immersion-topline { top: max(96px, 12svh); display: flex; align-items: center; justify-content: space-between; }
+.immersion-eyebrow { display: flex; align-items: center; gap: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .16em; }
+.immersion-eyebrow > span { width: 6px; height: 6px; border-radius: 50%; background: var(--beam); box-shadow: 0 0 16px var(--beam); }
+.immersion-skip { display: flex; align-items: center; gap: 12px; font-size: 12px; padding: 12px 16px; border: 1px solid color-mix(in srgb, white 24%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--foreground) 48%, transparent); backdrop-filter: blur(12px); }
+.immersion-skip:hover { border-color: var(--beam); }
+.immersion-chapters { bottom: max(24px, 5svh); }
+.immersion-track { height: 1px; background: color-mix(in srgb, white 30%, transparent); }
+.immersion-track > span { display: block; width: 100%; height: 1px; transform: scaleX(var(--imm-p, 0)); transform-origin: left; background: var(--beam); box-shadow: 0 0 12px color-mix(in srgb, var(--beam) 70%, transparent); }
+.immersion-chapterRow { display: flex; align-items: center; gap: 32px; padding-top: 12px; }
+.immersion-chapterRow button { display: flex; align-items: center; gap: 12px; min-height: 44px; color: white; font-size: 13px; cursor: pointer; background: none; border: 0; padding: 4px 0; opacity: .78; transition: opacity .2s; }
+.immersion-chapterRow button:hover, .immersion-chapterRow button[aria-current] { opacity: 1; }
+.immersion-number { font-family: var(--font-mono); font-size: 11px; }
+.immersion-chapterRow button[aria-current] .immersion-number { color: var(--beam); }
+.immersion-chapterRow button[aria-current] { text-decoration: underline; text-underline-offset: 6px; text-decoration-color: var(--beam); }
+.immersion-hint { margin-left: auto; font-size: 11px; color: white; }
+.immersion-hint > span { margin-left: 12px; }
+.immersion-scene :is(button, a):focus-visible { outline: 2px solid var(--beam); outline-offset: 6px; border-radius: 4px; }
+.immersion-scene[data-scene-state="fallback"] { height: auto; }
+.immersion-scene[data-scene-state="fallback"] .immersion-viewport { position: relative; }
+.immersion-scene[data-scene-state="fallback"] :is(canvas, [data-scene-controls]) { display: none; }
+.immersion-scene[data-scene-state="fallback"] [data-frases] { display: flex; flex-direction: column; gap: 20px; }
+.immersion-scene[data-scene-state="fallback"] [data-frase] { opacity: 1 !important; translate: none !important; font-size: clamp(1.75rem, 3.6vw, 3rem); }
+.immersion-scene[data-scene-state="fallback"] .immersion-copy { padding-bottom: 16svh; }
+@media (max-width: 600px) {
+  .immersion-topline, .immersion-chapters { width: calc(100% - 40px); }
+  .immersion-chapterRow { justify-content: space-between; gap: 12px; }
+  .immersion-chapterRow button { gap: 8px; font-size: 12px; }
+  .immersion-hint { display: none; }
+}
+@media (hover: none), (pointer: coarse) { .immersion-layer { transform: none; will-change: auto; } }
+@media (prefers-reduced-motion: reduce) {
+  .immersion-layer { inset: 0; transform: none; will-change: auto; }
+  .immersion-atmosphere, .immersion-topline, .immersion-chapters { display: none; }
+}
